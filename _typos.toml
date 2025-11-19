@@ -1,0 +1,19 @@
+# Typos configuration for UZKV project
+
+[default]
+extend-ignore-re = [
+  # Allow cryptographic terms
+  "Groth16",  # Jens Groth's 2016 proof system
+  "groth16",
+  "GROTH16",
+  "Groth",    # Cryptographer name (Jens Groth)
+  "groth",
+  # Git commit hashes (7-40 hex characters)
+  "[0-9a-f]{7,40}",
+]
+
+[default.extend-words]
+# Additional allowed words
+groth = "groth"
+Groth = "Groth"
+GROTH = "GROTH"

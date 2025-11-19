@@ -1,0 +1,6 @@
+[build]
+target = "wasm32-unknown-unknown"
+rustflags = ["-C", "link-arg=-s"] # Strip symbols for smaller WASM
+
+[unstable]
+build-std = ["std", "panic_abort"]

@@ -1,0 +1,27 @@
+pre-commit:
+  parallel: true
+  commands:
+    rust-fmt:
+      glob: "*.rs"
+      run: cd packages/stylus && cargo fmt --check
+    # rust-clippy temporarily disabled on Windows due to stylus-sdk proc-macro linking issue
+    # Will be re-enabled in CI/CD on Linux
+    # rust-clippy:
+    #   glob: "*.rs"
+    #   run: cd packages/stylus && cargo clippy -- -D warnings
+    solidity-fmt:
+      glob: "*.sol"
+      run: cd packages/contracts && forge fmt --check
+    typos:
+      run: typos
+    prettier:
+      glob: "*.{ts,tsx,js,jsx,json,md}"
+      run: pnpm exec prettier --check {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    rust-test:
+      run: cd packages/stylus && cargo test
+    solidity-test:
+      run: cd packages/contracts && forge test
