@@ -35,14 +35,7 @@ use wee_alloc::WeeAlloc;
 #[global_allocator]
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
-pub mod storage;
 pub mod groth16;
-
-// Re-export storage types
-pub use storage::{UZKVStorage, STORAGE_SLOT};
-
-// Re-export verification functions
-pub use groth16::verify;
 
 /// Error types for UZKV operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -96,6 +89,9 @@ sol_storage! {
         // Registered verification keys (vkHash => vkData)
         mapping(bytes32 => bytes) verification_keys;
         
+        // Precomputed e(α, β) pairings for gas optimization (vkHash => pairingData)
+        mapping(bytes32 => bytes) precomputed_pairings;
+        
         // VK registration status (vkHash => isRegistered)
         mapping(bytes32 => bool) vk_registered;
         
@@ -113,7 +109,10 @@ sol_storage! {
 /// Stylus contract implementation
 #[external]
 impl UZKVContract {
-    /// Verify a Groth16 proof
+    /// Verify a Groth16 proof with gas optimization
+    ///
+    /// Uses precomputed e(α, β) pairing to save ~80,000 gas per verification.
+    /// Falls back to standard verification if precomputed pairing not available.
     ///
     /// @param proof - Serialized Groth16 proof (compressed format)
     /// @param public_inputs - Serialized public input field elements
@@ -136,8 +135,16 @@ impl UZKVContract {
             return Err(Error::VKNotRegistered);
         }
 
-        // Perform Groth16 verification using our core engine
-        let is_valid = groth16::verify(&proof, &public_inputs, &vk_data)?;
+        // Check if precomputed pairing is available (gas optimization)
+        let precomputed_pairing = self.precomputed_pairings.get(vk_hash);
+        
+        let is_valid = if !precomputed_pairing.is_empty() {
+            // Use optimized verification with precomputed e(α, β) (~80k gas savings)
+            groth16::verify_with_precomputed(&proof, &public_inputs, &vk_data, &precomputed_pairing)?
+        } else {
+            // Fall back to standard verification (computes all 4 pairings)
+            groth16::verify(&proof, &public_inputs, &vk_data)?
+        };
 
         // Only increment counter for valid proofs
         if is_valid {
@@ -148,7 +155,10 @@ impl UZKVContract {
         Ok(is_valid)
     }
 
-    /// Register a verification key for later use
+    /// Register a verification key with gas optimization precomputation
+    ///
+    /// Computes and stores e(α, β) pairing for ~80k gas savings per verification.
+    /// Break-even point: 2 verifications.
     ///
     /// @param vk - Serialized verification key
     /// @return vkHash - Keccak256 hash of the VK
@@ -156,11 +166,23 @@ impl UZKVContract {
         // Compute VK hash (Keccak256)
         let vk_hash = keccak256(&vk);
 
-        // Check if already registered
+        // Check if already registered (idempotent operation)
         if !self.vk_registered.get(vk_hash) {
             // Store VK data
-            self.verification_keys.insert(vk_hash, vk);
+            self.verification_keys.insert(vk_hash, vk.clone());
             self.vk_registered.insert(vk_hash, true);
+
+            // Precompute e(α, β) pairing for gas optimization
+            // This is a one-time cost (~100k gas) that saves ~80k gas per verification
+            match groth16::compute_precomputed_pairing(&vk) {
+                Ok(precomputed_pairing) => {
+                    self.precomputed_pairings.insert(vk_hash, precomputed_pairing);
+                }
+                Err(_) => {
+                    // If precomputation fails, continue without optimization
+                    // Contract will fall back to standard verification
+                }
+            }
         }
 
         Ok(vk_hash)

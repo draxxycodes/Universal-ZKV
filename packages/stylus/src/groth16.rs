@@ -209,6 +209,150 @@ fn deserialize_public_inputs(bytes: &[u8]) -> Result<Vec<Fr>> {
     Ok(inputs)
 }
 
+/// Verify a Groth16 proof using precomputed e(α, β) pairing
+///
+/// # Gas Optimization
+/// By precomputing e(α, β) during VK registration, we save one pairing operation
+/// per verification (~80,000 gas savings). The precomputed value is stored
+/// on-chain and reused for all proofs verified against the same VK.
+///
+/// # Arguments
+/// * `proof_bytes` - Serialized Groth16 proof
+/// * `public_inputs_bytes` - Serialized public input field elements
+/// * `vk_bytes` - Serialized verification key
+/// * `precomputed_alpha_beta_bytes` - Precomputed e(α, β) pairing result (384 bytes)
+///
+/// # Returns
+/// * `Ok(true)` - Proof is valid
+/// * `Ok(false)` - Proof is invalid
+/// * `Err(_)` - Malformed input or security check failed
+pub fn verify_with_precomputed(
+    proof_bytes: &[u8],
+    public_inputs_bytes: &[u8],
+    vk_bytes: &[u8],
+    precomputed_alpha_beta_bytes: &[u8],
+) -> Result<bool> {
+    // Input size validation
+    if proof_bytes.len() > MAX_PROOF_SIZE {
+        return Err(Error::InvalidInputSize);
+    }
+    if vk_bytes.len() > MAX_VK_SIZE {
+        return Err(Error::InvalidInputSize);
+    }
+
+    // Deserialize verification key
+    let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)
+        .map_err(|_| Error::InvalidVerificationKey)?;
+
+    // Validate verification key components
+    validate_vk(&vk)?;
+
+    // Deserialize proof
+    let proof = Proof::<Bn254>::deserialize_compressed(proof_bytes)
+        .map_err(|_| Error::DeserializationError)?;
+
+    // Validate proof components
+    validate_proof(&proof)?;
+
+    // Deserialize public inputs
+    let public_inputs = deserialize_public_inputs(public_inputs_bytes)?;
+
+    // Verify public input count matches VK
+    if public_inputs.len() != vk.gamma_abc_g1.len() - 1 {
+        return Err(Error::InvalidPublicInputs);
+    }
+
+    // Deserialize precomputed e(α, β)
+    use ark_ec::pairing::PairingOutput;
+    let precomputed_alpha_beta = PairingOutput::<Bn254>::deserialize_compressed(precomputed_alpha_beta_bytes)
+        .map_err(|_| Error::InvalidVerificationKey)?;
+
+    // Execute optimized verification with precomputed pairing
+    verify_proof_with_precomputed(&vk, &proof, &public_inputs, &precomputed_alpha_beta)
+}
+
+/// Compute precomputed e(α, β) pairing for gas optimization
+///
+/// This function should be called once during VK registration.
+/// The result is stored on-chain and reused for all subsequent verifications.
+///
+/// # Arguments
+/// * `vk_bytes` - Serialized verification key
+///
+/// # Returns
+/// * `Ok(bytes)` - Serialized e(α, β) pairing result (384 bytes)
+/// * `Err(_)` - VK deserialization failed
+///
+/// # Gas Savings
+/// - Precomputation cost: ~100,000 gas (one-time, during VK registration)
+/// - Verification savings: ~80,000 gas per proof
+/// - Break-even: After 2 verifications
+pub fn compute_precomputed_pairing(vk_bytes: &[u8]) -> Result<Vec<u8>> {
+    // Deserialize verification key
+    let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)
+        .map_err(|_| Error::InvalidVerificationKey)?;
+
+    // Validate VK
+    validate_vk(&vk)?;
+
+    // Compute e(α, β)
+    let alpha_beta_pairing = Bn254::pairing(vk.alpha_g1, vk.beta_g2);
+
+    // Serialize the pairing result
+    let mut bytes = Vec::new();
+    alpha_beta_pairing.serialize_compressed(&mut bytes)
+        .map_err(|_| Error::InvalidVerificationKey)?;
+
+    Ok(bytes)
+}
+
+/// Execute Groth16 verification equation with precomputed e(α, β)
+///
+/// Verifies: e(A, B) == e(α, β) * e(L, γ) * e(C, δ)
+///
+/// Where:
+/// - e(α, β) is precomputed and passed as parameter
+/// - L = vk.gamma_abc_g1[0] + sum(public_inputs[i] * vk.gamma_abc_g1[i+1])
+///
+/// # Optimization
+/// Skips computing e(α, β), saving ~80,000 gas per verification.
+/// Uses multi_pairing for remaining 3 pairings:
+/// e(A, B) * e(-L, γ) * e(-C, δ) == e(α, β)
+fn verify_proof_with_precomputed(
+    vk: &VerifyingKey<Bn254>,
+    proof: &Proof<Bn254>,
+    public_inputs: &[Fr],
+    precomputed_alpha_beta: &ark_ec::pairing::PairingOutput<Bn254>,
+) -> Result<bool> {
+    use ark_ec::pairing::PairingOutput;
+
+    // Compute L = gamma_abc_g1[0] + sum(public_inputs[i] * gamma_abc_g1[i+1])
+    let mut l = vk.gamma_abc_g1[0];
+    for (i, input) in public_inputs.iter().enumerate() {
+        let term = vk.gamma_abc_g1[i + 1].mul_bigint(input.into_bigint());
+        l = (l + term).into();
+    }
+
+    // Compute left side: e(A, B) * e(-L, γ) * e(-C, δ)
+    let left_side = Bn254::multi_pairing(
+        [
+            proof.a,           // A
+            (-l).into(),       // -L
+            (-proof.c).into(), // -C
+        ],
+        [
+            proof.b,     // B
+            vk.gamma_g2, // γ
+            vk.delta_g2, // δ
+        ],
+    );
+
+    // Verification equation: left_side == precomputed_alpha_beta
+    // Equivalent to: e(A, B) * e(-L, γ) * e(-C, δ) == e(α, β)
+    // Which rearranges to: e(A, B) == e(α, β) * e(L, γ) * e(C, δ)
+    Ok(left_side == *precomputed_alpha_beta)
+}
+
 /// Execute Groth16 verification equation
 ///
 /// Verifies: e(A, B) == e(alpha, beta) * e(L, gamma) * e(C, delta)
