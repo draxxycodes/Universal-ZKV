@@ -1,0 +1,349 @@
+//! Groth16 zkSNARK Verifier
+//!
+//! Production-grade Groth16 proof verification using the BN254 curve.
+//! Implements the Groth16 verification equation with strict security validations.
+//!
+//! # Security
+//! - All curve points validated (on_curve + correct_subgroup checks)
+//! - Input size limits enforced (max 256 public inputs)
+//! - Panic-free implementation for WASM safety
+//! - Constant-time operations where applicable
+//!
+//! # References
+//! - Groth16 Paper: https://eprint.iacr.org/2016/260.pdf
+//! - BN254 Curve: Ethereum Yellow Paper Appendix E
+
+use alloc::vec::Vec;
+use ark_bn254::{Bn254, Fr, G1Affine, G2Affine};
+use ark_ec::pairing::Pairing;
+use ark_ec::AffineRepr;
+use ark_groth16::{Proof, VerifyingKey};
+use ark_serialize::CanonicalDeserialize;
+
+use crate::{Error, Result};
+
+/// Maximum number of public inputs allowed (gas safety limit)
+const MAX_PUBLIC_INPUTS: usize = 256;
+
+/// Maximum proof size in bytes (3 G1 points + 1 G2 point = ~256 bytes)
+const MAX_PROOF_SIZE: usize = 512;
+
+/// Maximum verification key size in bytes (conservative upper bound)
+const MAX_VK_SIZE: usize = 4096;
+
+/// Verify a Groth16 proof
+///
+/// # Arguments
+/// * `proof_bytes` - Serialized Groth16 proof (G1: A, C and G2: B points)
+/// * `public_inputs_bytes` - Serialized public input field elements
+/// * `vk_bytes` - Serialized verification key
+///
+/// # Returns
+/// * `Ok(true)` - Proof is valid
+/// * `Ok(false)` - Proof is invalid (verification equation failed)
+/// * `Err(_)` - Malformed input or security check failed
+///
+/// # Security Guarantees
+/// - All curve points validated before use
+/// - Subgroup membership checked (prevents small subgroup attacks)
+/// - Input size limits enforced
+/// - No panics (returns errors instead)
+///
+/// # Example
+/// ```ignore
+/// let proof = vec![...]; // Serialized proof
+/// let inputs = vec![...]; // Public inputs
+/// let vk = vec![...]; // Verification key
+///
+/// match verify(&proof, &inputs, &vk) {
+///     Ok(true) => println!("Valid proof"),
+///     Ok(false) => println!("Invalid proof"),
+///     Err(e) => println!("Error: {}", e),
+/// }
+/// ```
+pub fn verify(
+    proof_bytes: &[u8],
+    public_inputs_bytes: &[u8],
+    vk_bytes: &[u8],
+) -> Result<bool> {
+    // Input size validation (prevent DoS via oversized inputs)
+    if proof_bytes.len() > MAX_PROOF_SIZE {
+        return Err(Error::InvalidInputSize);
+    }
+    if vk_bytes.len() > MAX_VK_SIZE {
+        return Err(Error::InvalidInputSize);
+    }
+
+    // Deserialize verification key
+    let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)
+        .map_err(|_| Error::InvalidVerificationKey)?;
+
+    // Validate verification key components
+    validate_vk(&vk)?;
+
+    // Deserialize proof
+    let proof = Proof::<Bn254>::deserialize_compressed(proof_bytes)
+        .map_err(|_| Error::DeserializationError)?;
+
+    // Validate proof components (critical security check)
+    validate_proof(&proof)?;
+
+    // Deserialize public inputs
+    let public_inputs = deserialize_public_inputs(public_inputs_bytes)?;
+
+    // Verify public input count matches VK
+    if public_inputs.len() != vk.gamma_abc_g1.len() - 1 {
+        return Err(Error::InvalidPublicInputs);
+    }
+
+    // Execute Groth16 verification equation
+    verify_proof_internal(&vk, &proof, &public_inputs)
+}
+
+/// Validate verification key components
+///
+/// Ensures all VK curve points are:
+/// 1. On the correct curve
+/// 2. In the correct prime-order subgroup
+fn validate_vk(vk: &VerifyingKey<Bn254>) -> Result<()> {
+    // Validate alpha_g1 (G1 point)
+    if !vk.alpha_g1.is_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+    if !vk.alpha_g1.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+
+    // Validate beta_g2 (G2 point)
+    if !vk.beta_g2.is_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+    if !vk.beta_g2.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+
+    // Validate gamma_g2 (G2 point)
+    if !vk.gamma_g2.is_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+    if !vk.gamma_g2.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+
+    // Validate delta_g2 (G2 point)
+    if !vk.delta_g2.is_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+    if !vk.delta_g2.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::InvalidVerificationKey);
+    }
+
+    // Validate gamma_abc_g1 points (G1 points for public input encoding)
+    for point in &vk.gamma_abc_g1 {
+        if !point.is_on_curve() {
+            return Err(Error::InvalidVerificationKey);
+        }
+        if !point.is_in_correct_subgroup_assuming_on_curve() {
+            return Err(Error::InvalidVerificationKey);
+        }
+    }
+
+    Ok(())
+}
+
+/// Validate proof components
+///
+/// CRITICAL SECURITY CHECK: Ensures all proof points are:
+/// 1. On the BN254 curve (prevents invalid curve attacks)
+/// 2. In the correct prime-order subgroup (prevents small subgroup attacks)
+fn validate_proof(proof: &Proof<Bn254>) -> Result<()> {
+    // Validate A (G1 point)
+    if !proof.a.is_on_curve() {
+        return Err(Error::MalformedProof);
+    }
+    if !proof.a.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::MalformedProof);
+    }
+
+    // Validate B (G2 point)
+    if !proof.b.is_on_curve() {
+        return Err(Error::MalformedProof);
+    }
+    if !proof.b.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::MalformedProof);
+    }
+
+    // Validate C (G1 point)
+    if !proof.c.is_on_curve() {
+        return Err(Error::MalformedProof);
+    }
+    if !proof.c.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(Error::MalformedProof);
+    }
+
+    Ok(())
+}
+
+/// Deserialize public inputs from byte array
+///
+/// Each field element is serialized in compressed form (32 bytes).
+/// Maximum 256 public inputs allowed for gas safety.
+fn deserialize_public_inputs(bytes: &[u8]) -> Result<Vec<Fr>> {
+    // Check if bytes length is multiple of field element size
+    if bytes.len() % 32 != 0 {
+        return Err(Error::InvalidPublicInputs);
+    }
+
+    let num_inputs = bytes.len() / 32;
+    if num_inputs > MAX_PUBLIC_INPUTS {
+        return Err(Error::InvalidInputSize);
+    }
+
+    let mut inputs = Vec::with_capacity(num_inputs);
+    for chunk in bytes.chunks(32) {
+        let input = Fr::deserialize_compressed(chunk)
+            .map_err(|_| Error::InvalidPublicInputs)?;
+        inputs.push(input);
+    }
+
+    Ok(inputs)
+}
+
+/// Execute Groth16 verification equation
+///
+/// Verifies: e(A, B) == e(alpha, beta) * e(L, gamma) * e(C, delta)
+///
+/// Where L = vk.gamma_abc_g1[0] + sum(public_inputs[i] * vk.gamma_abc_g1[i+1])
+///
+/// # Optimization
+/// Uses multi_pairing for batch pairing computation:
+/// e(A, B) * e(-alpha, beta) * e(-L, gamma) * e(-C, delta) == 1
+fn verify_proof_internal(
+    vk: &VerifyingKey<Bn254>,
+    proof: &Proof<Bn254>,
+    public_inputs: &[Fr],
+) -> Result<bool> {
+    // Compute L = gamma_abc_g1[0] + sum(public_inputs[i] * gamma_abc_g1[i+1])
+    // This encodes the public inputs into the verification equation
+    let mut l = vk.gamma_abc_g1[0];
+
+    for (i, input) in public_inputs.iter().enumerate() {
+        // Scalar multiplication: input * gamma_abc_g1[i+1]
+        let term = vk.gamma_abc_g1[i + 1].mul_bigint(input.into_bigint());
+        // Add to accumulator
+        l = (l + term).into();
+    }
+
+    // Groth16 verification equation using multi_pairing:
+    // e(A, B) * e(-alpha, beta) * e(-L, gamma) * e(-C, delta) == 1
+    //
+    // This is equivalent to:
+    // e(A, B) == e(alpha, beta) * e(L, gamma) * e(C, delta)
+    //
+    // We use the multiplicative form for efficiency (single multi_pairing call)
+    let pairing_check = Bn254::multi_pairing(
+        [
+            proof.a,           // A
+            (-vk.alpha_g1).into(), // -alpha
+            (-l).into(),       // -L
+            (-proof.c).into(), // -C
+        ],
+        [
+            proof.b,     // B
+            vk.beta_g2,  // beta
+            vk.gamma_g2, // gamma
+            vk.delta_g2, // delta
+        ],
+    );
+
+    // Verification succeeds if pairing product equals 1 (identity element)
+    Ok(pairing_check.is_zero())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ark_bn254::{Fq, Fq2, G1Projective, G2Projective};
+    use ark_ec::CurveGroup;
+    use ark_serialize::CanonicalSerialize;
+    use ark_std::UniformRand;
+
+    #[test]
+    fn test_validate_proof_on_curve() {
+        // Create a valid proof with points on curve
+        let mut rng = ark_std::test_rng();
+        let proof = Proof {
+            a: G1Projective::rand(&mut rng).into_affine(),
+            b: G2Projective::rand(&mut rng).into_affine(),
+            c: G1Projective::rand(&mut rng).into_affine(),
+        };
+
+        // Should pass validation
+        assert!(validate_proof(&proof).is_ok());
+    }
+
+    #[test]
+    fn test_validate_proof_identity_point() {
+        // Create proof with identity point (point at infinity)
+        let mut rng = ark_std::test_rng();
+        let proof = Proof {
+            a: G1Affine::identity(),
+            b: G2Projective::rand(&mut rng).into_affine(),
+            c: G1Projective::rand(&mut rng).into_affine(),
+        };
+
+        // Identity point is valid (on curve and in subgroup)
+        assert!(validate_proof(&proof).is_ok());
+    }
+
+    #[test]
+    fn test_deserialize_public_inputs() {
+        // Create valid field elements
+        let mut rng = ark_std::test_rng();
+        let inputs = vec![Fr::rand(&mut rng), Fr::rand(&mut rng)];
+
+        // Serialize
+        let mut bytes = Vec::new();
+        for input in &inputs {
+            input.serialize_compressed(&mut bytes).unwrap();
+        }
+
+        // Deserialize
+        let deserialized = deserialize_public_inputs(&bytes).unwrap();
+        assert_eq!(deserialized, inputs);
+    }
+
+    #[test]
+    fn test_deserialize_public_inputs_invalid_size() {
+        // Invalid size (not multiple of 32)
+        let bytes = vec![0u8; 31];
+        assert!(deserialize_public_inputs(&bytes).is_err());
+    }
+
+    #[test]
+    fn test_deserialize_public_inputs_too_many() {
+        // Exceeds MAX_PUBLIC_INPUTS
+        let bytes = vec![0u8; (MAX_PUBLIC_INPUTS + 1) * 32];
+        assert_eq!(
+            deserialize_public_inputs(&bytes),
+            Err(Error::InvalidInputSize)
+        );
+    }
+
+    #[test]
+    fn test_input_size_validation() {
+        // Test proof size limit
+        let oversized_proof = vec![0u8; MAX_PROOF_SIZE + 1];
+        assert_eq!(
+            verify(&oversized_proof, &[], &[]),
+            Err(Error::InvalidInputSize)
+        );
+
+        // Test VK size limit
+        let oversized_vk = vec![0u8; MAX_VK_SIZE + 1];
+        assert_eq!(
+            verify(&[], &[], &oversized_vk),
+            Err(Error::InvalidInputSize)
+        );
+    }
+}
