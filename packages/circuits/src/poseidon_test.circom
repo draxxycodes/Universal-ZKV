@@ -1,6 +1,7 @@
 pragma circom 2.1.6;
 
-include "../../../node_modules/circomlib/circuits/poseidon.circom";
+include "circomlib/circuits/poseidon.circom";
+include "circomlib/circuits/comparators.circom";
 
 // Production-grade Poseidon Hash Verification Circuit
 // Purpose: Verify that a preimage hashes to an expected value

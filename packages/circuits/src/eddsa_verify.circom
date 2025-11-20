@@ -1,7 +1,7 @@
 pragma circom 2.1.6;
 
-include "../../../node_modules/circomlib/circuits/eddsamimc.circom";
-include "../../../node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/eddsamimc.circom";
+include "circomlib/circuits/bitify.circom";
 
 // Production-grade EdDSA Signature Verification Circuit
 // Purpose: Verify EdDSA signatures using MiMC hash

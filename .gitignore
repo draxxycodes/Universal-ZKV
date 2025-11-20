@@ -45,3 +45,13 @@ tmp/
 # Circuit files (large files)
 packages/circuits/ptau/*.ptau
 packages/stylus/stark-simple/generated_proofs/
+
+# Trusted setup files (zkeys - regenerate locally)
+packages/circuits/build/*.zkey
+packages/circuits/build/*_js/
+packages/circuits/build/*.r1cs
+packages/circuits/build/*.sym
+packages/circuits/build/*.wtns
+
+# Keep verification keys (needed for integration)
+!packages/circuits/build/*_vk.json

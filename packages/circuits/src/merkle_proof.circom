@@ -1,8 +1,8 @@
 pragma circom 2.1.6;
 
-include "../../../node_modules/circomlib/circuits/mimc.circom";
-include "../../../node_modules/circomlib/circuits/mux1.circom";
-include "../../../node_modules/circomlib/circuits/comparators.circom";
+include "circomlib/circuits/mimc.circom";
+include "circomlib/circuits/mux1.circom";
+include "circomlib/circuits/comparators.circom";
 
 // Production-grade Merkle Tree Membership Proof Circuit
 // Purpose: Prove that a leaf exists in a Merkle tree without revealing the leaf or path
