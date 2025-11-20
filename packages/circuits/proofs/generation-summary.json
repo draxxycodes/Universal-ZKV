@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-11-20T16:28:51.361Z",
+  "configuration": {
+    "proofsPerCircuit": 10,
+    "circuits": [
+      "poseidon_test",
+      "eddsa_verify",
+      "merkle_proof"
+    ],
+    "totalProofs": 30
+  },
+  "statistics": {
+    "totalProofs": 30,
+    "successCount": 30,
+    "errorCount": 0,
+    "totalTimeSeconds": 31.37,
+    "avgTimePerProof": 1.046
+  },
+  "byCircuit": {
+    "poseidon_test": {
+      "startTime": 1763656100017,
+      "count": 10,
+      "errors": 0
+    },
+    "eddsa_verify": {
+      "startTime": 1763656105939,
+      "count": 10,
+      "errors": 0
+    },
+    "merkle_proof": {
+      "startTime": 1763656125640,
+      "count": 10,
+      "errors": 0
+    }
+  }
+}
