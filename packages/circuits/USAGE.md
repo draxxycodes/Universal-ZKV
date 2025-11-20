@@ -15,12 +15,34 @@ Ensure you have:
 
 PTAU files are **not stored in git** due to their large size. Generate them locally:
 
-### For Development (32k constraints max)
+### Production Setup (RECOMMENDED - Industry Grade) ⭐
 
 ```bash
 cd packages/circuits/ptau
 
-# Create initial ceremony
+# Create initial ceremony (2^28 = 268M constraints)
+snarkjs powersoftau new bn128 28 powersOfTau28_hez_0000.ptau
+
+# Add contribution (takes ~10 minutes)
+snarkjs powersoftau contribute powersOfTau28_hez_0000.ptau powersOfTau28_hez_0001.ptau \
+  --name="UZKV production contribution" \
+  -e="production entropy for universal zkv"
+
+# Prepare for phase 2 (takes ~2-3 hours)
+snarkjs powersoftau prepare phase2 powersOfTau28_hez_0001.ptau powersOfTau28_hez_final.ptau
+
+# Verify
+snarkjs powersoftau verify powersOfTau28_hez_final.ptau
+```
+
+**Result:** `powersOfTau28_hez_final.ptau` (2.3 GB) - **Production-grade, ready for circuits up to 268,435,456 constraints**
+
+### Quick Testing Setup (Optional - NOT for Production)
+
+```bash
+cd packages/circuits/ptau
+
+# Create smaller ceremony (2^15 = 32k constraints)
 snarkjs powersoftau new bn128 15 pot15_0000.ptau
 
 # Add contribution
@@ -28,36 +50,16 @@ snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau \
   --name="First contribution" \
   -e="random entropy for uzkv project"
 
-# Prepare for phase 2 (circuit-specific setup)
+# Prepare for phase 2
 snarkjs powersoftau prepare phase2 pot15_0001.ptau pot15_final.ptau
 
 # Verify
 snarkjs powersoftau verify pot15_final.ptau
 ```
 
-**Result:** `pot15_final.ptau` (37 MB) ready for circuits up to 32,768 constraints
+**Result:** `pot15_final.ptau` (37 MB) - **Testing only, up to 32,768 constraints**
 
-### For Production (268M constraints max)
-
-```bash
-cd packages/circuits/ptau
-
-# Download or create large ceremony
-snarkjs powersoftau new bn128 28 pot28_0000.ptau
-
-# Add contribution (takes ~10 minutes)
-snarkjs powersoftau contribute pot28_0000.ptau pot28_0001.ptau \
-  --name="Production contribution" \
-  -e="production entropy"
-
-# Prepare phase 2 (takes ~2-3 hours)
-snarkjs powersoftau prepare phase2 pot28_0001.ptau pot28_final.ptau
-
-# Verify
-snarkjs powersoftau verify pot28_final.ptau
-```
-
-**Result:** `pot28_final.ptau` (2.3 GB) ready for large production circuits
+⚠️ **Always use powersOfTau28_hez_final.ptau for production circuits!**
 
 ---
 
@@ -111,15 +113,15 @@ snarkjs r1cs info build/multiplier.r1cs
 
 ## Step 4: Generate Proving/Verification Keys
 
-### Using Groth16 (Recommended for Stylus)
+### Using Groth16 (Recommended for Stylus) - Production Grade ⭐
 
 ```bash
 cd packages/circuits
 
-# Setup (creates zkey)
+# Setup with production PTAU (creates zkey)
 snarkjs groth16 setup \
   build/multiplier.r1cs \
-  ptau/pot15_final.ptau \
+  ptau/powersOfTau28_hez_final.ptau \
   build/multiplier_0000.zkey
 
 # Contribute to phase 2
@@ -135,15 +137,15 @@ snarkjs zkey export verificationkey \
   build/verification_key.json
 ```
 
-### Using PLONK (Alternative)
+### Using PLONK (Alternative) - Production Grade
 
 ```bash
 cd packages/circuits
 
-# Setup
+# Setup with production PTAU
 snarkjs plonk setup \
   build/multiplier.r1cs \
-  ptau/pot15_final.ptau \
+  ptau/powersOfTau28_hez_final.ptau \
   build/multiplier_plonk.zkey
 
 # Export verification key
@@ -282,23 +284,25 @@ cat build/proof_plonk.json
 
 ```bash
 #!/bin/bash
-# Complete workflow for multiplier circuit
+# Complete workflow for multiplier circuit - PRODUCTION GRADE
 
 cd packages/circuits
 
-# 1. Generate PTAU (one-time setup)
+# 1. Generate PTAU (one-time setup) - INDUSTRY GRADE
 cd ptau
-snarkjs powersoftau new bn128 15 pot15_0000.ptau
-snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau --name="First" -e="entropy"
-snarkjs powersoftau prepare phase2 pot15_0001.ptau pot15_final.ptau
+snarkjs powersoftau new bn128 28 powersOfTau28_hez_0000.ptau
+snarkjs powersoftau contribute powersOfTau28_hez_0000.ptau powersOfTau28_hez_0001.ptau \
+  --name="UZKV production" -e="production entropy"
+snarkjs powersoftau prepare phase2 powersOfTau28_hez_0001.ptau powersOfTau28_hez_final.ptau
 cd ..
 
 # 2. Compile circuit
 circom src/multiplier.circom --r1cs --wasm --sym -o build/
 
-# 3. Setup Groth16
-snarkjs groth16 setup build/multiplier.r1cs ptau/pot15_final.ptau build/multiplier_0000.zkey
-snarkjs zkey contribute build/multiplier_0000.zkey build/multiplier_final.zkey --name="Circuit" -e="entropy"
+# 3. Setup Groth16 with production PTAU
+snarkjs groth16 setup build/multiplier.r1cs ptau/powersOfTau28_hez_final.ptau build/multiplier_0000.zkey
+snarkjs zkey contribute build/multiplier_0000.zkey build/multiplier_final.zkey \
+  --name="Circuit" -e="circuit entropy"
 snarkjs zkey export verificationkey build/multiplier_final.zkey build/verification_key.json
 
 # 4. Generate proof
@@ -313,7 +317,7 @@ snarkjs groth16 verify build/verification_key.json build/public.json build/proof
 snarkjs zkey export solidityverifier build/multiplier_final.zkey build/Groth16Verifier.sol
 snarkjs zkey export soliditycalldata build/public.json build/proof.json > build/calldata.txt
 
-echo "✅ Complete! Check build/ directory for all outputs"
+echo "✅ Complete! Production-grade setup ready. Check build/ directory for all outputs"
 ```
 
 ---
@@ -324,19 +328,19 @@ echo "✅ Complete! Check build/ directory for all outputs"
 packages/circuits/
 ├── ptau/
 │   ├── README.md
-│   ├── pot15_final.ptau          # 37 MB (local only)
-│   └── pot28_final.ptau          # 2.3 GB (local only, optional)
+│   ├── powersOfTau28_hez_final.ptau  # 2.3 GB (PRODUCTION - local only) ⭐
+│   └── pot15_final.ptau              # 37 MB (testing only - local only)
 ├── src/
-│   └── multiplier.circom         # Your circuit code
+│   └── multiplier.circom             # Your circuit code
 ├── build/
-│   ├── multiplier.r1cs           # Compiled circuit
-│   ├── multiplier.wasm           # WASM witness generator
-│   ├── multiplier_final.zkey     # Proving key
-│   ├── verification_key.json     # Verification key
-│   ├── proof.json                # Generated proof
-│   ├── public.json               # Public signals
-│   └── Groth16Verifier.sol       # Solidity verifier
-└── USAGE.md                      # This file
+│   ├── multiplier.r1cs               # Compiled circuit
+│   ├── multiplier.wasm               # WASM witness generator
+│   ├── multiplier_final.zkey         # Proving key (from production PTAU)
+│   ├── verification_key.json         # Verification key
+│   ├── proof.json                    # Generated proof
+│   ├── public.json                   # Public signals
+│   └── Groth16Verifier.sol           # Solidity verifier
+└── USAGE.md                          # This file
 ```
 
 ---
@@ -359,19 +363,20 @@ Based on Arbitrum Stylus benchmarks:
 
 ### "Powers of Tau file not found"
 ```bash
-# Generate pot15_final.ptau as shown in Step 1
+# Generate production PTAU (RECOMMENDED)
 cd packages/circuits/ptau
-snarkjs powersoftau new bn128 15 pot15_0000.ptau
-snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau --name="First" -e="entropy"
-snarkjs powersoftau prepare phase2 pot15_0001.ptau pot15_final.ptau
+snarkjs powersoftau new bn128 28 powersOfTau28_hez_0000.ptau
+snarkjs powersoftau contribute powersOfTau28_hez_0000.ptau powersOfTau28_hez_0001.ptau \
+  --name="UZKV production" -e="production entropy"
+snarkjs powersoftau prepare phase2 powersOfTau28_hez_0001.ptau powersOfTau28_hez_final.ptau
 ```
 
 ### "Not enough constraints in Powers of Tau"
 ```bash
-# Your circuit has too many constraints for pot15 (32k max)
-# Generate larger PTAU file (takes hours):
-snarkjs powersoftau new bn128 20 pot20_0000.ptau  # 1M constraints
-# Or use pot28 for production (268M constraints)
+# Ensure you're using powersOfTau28_hez_final.ptau (268M constraints)
+# This should handle virtually all production circuits
+# If you need more, increase the power:
+snarkjs powersoftau new bn128 29 pot29_0000.ptau  # 536M constraints (rarely needed)
 ```
 
 ### "Proof verification failed"
@@ -379,8 +384,8 @@ snarkjs powersoftau new bn128 20 pot20_0000.ptau  # 1M constraints
 # Ensure witness matches circuit
 snarkjs wtns check build/multiplier.r1cs build/witness.wtns
 
-# Verify setup
-snarkjs zkey verify build/multiplier.r1cs ptau/pot15_final.ptau build/multiplier_final.zkey
+# Verify setup with production PTAU
+snarkjs zkey verify build/multiplier.r1cs ptau/powersOfTau28_hez_final.ptau build/multiplier_final.zkey
 ```
 
 ---

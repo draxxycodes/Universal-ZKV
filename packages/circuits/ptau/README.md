@@ -4,47 +4,70 @@
 
 ## Quick Setup
 
-Generate the required PTAU files for development:
+Generate the production-grade PTAU file (recommended):
 
 ```bash
 cd packages/circuits/ptau
 
-# Generate Powers of Tau (2^15 = 32k constraints)
+# Generate Powers of Tau (2^28 = 268M constraints) - PRODUCTION GRADE
+snarkjs powersoftau new bn128 28 powersOfTau28_hez_0000.ptau
+
+# Add contribution (takes ~10 minutes)
+snarkjs powersoftau contribute powersOfTau28_hez_0000.ptau powersOfTau28_hez_0001.ptau \
+  --name="UZKV production contribution" \
+  -e="production entropy for universal zkv"
+
+# Prepare for phase 2 (takes ~2-3 hours)
+snarkjs powersoftau prepare phase2 powersOfTau28_hez_0001.ptau powersOfTau28_hez_final.ptau
+
+# Verify
+snarkjs powersoftau verify powersOfTau28_hez_final.ptau
+```
+
+**Result:** `powersOfTau28_hez_final.ptau` (2.3 GB) ready for circuits up to 268,435,456 constraints.
+
+### Quick Development Setup (Optional - Lower Constraints)
+
+For faster setup with limited constraints (testing only):
+
+```bash
+cd packages/circuits/ptau
+
+# Generate smaller file (2^15 = 32k constraints)
 snarkjs powersoftau new bn128 15 pot15_0000.ptau
 snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau \
   --name="First contribution" -e="random entropy"
 snarkjs powersoftau prepare phase2 pot15_0001.ptau pot15_final.ptau
-
-# Verify
 snarkjs powersoftau verify pot15_final.ptau
 ```
 
-This creates `pot15_final.ptau` (37 MB) ready for circuits up to 32,768 constraints.
+This creates `pot15_final.ptau` (37 MB) - **NOT recommended for production**.
 
 ---
 
 ## Production-Ready Files
 
+### **powersOfTau28_hez_final.ptau** (2.3 GB) ⭐ RECOMMENDED
+- **Power:** 2^28 (268,435,456 constraints max)
+- **Contributions:** 1 ("UZKV production contribution")
+- **Phase 2 Ready:** ✅ Yes
+- **Use Case:** Production circuits (industry-grade)
+- **Status:** Ready for production use
+- **Default:** Use this for all circuits unless testing only
+
 ### **pot15_final.ptau** (37 MB)
 - **Power:** 2^15 (32,768 constraints max)
 - **Contributions:** 1 ("First contribution")
 - **Phase 2 Ready:** ✅ Yes
-- **Use Case:** Development & testing circuits
-- **Status:** Ready to use immediately
+- **Use Case:** Quick testing & development only
+- **Status:** NOT recommended for production
 
 ### **pot15_0001_final.ptau** (37 MB)
 - **Power:** 2^15 (32,768 constraints max)
 - **Contributions:** 1 ("First contribution")
 - **Phase 2 Ready:** ✅ Yes
 - **Use Case:** Alternative development file
-- **Status:** Ready to use immediately
-
-### **powersOfTau28_hez_final.ptau** (2.3 GB)
-- **Power:** 2^28 (268,435,456 constraints max)
-- **Contributions:** 1 ("UZKV production contribution")
-- **Phase 2 Ready:** ✅ Yes
-- **Use Case:** Large production circuits
-- **Status:** Ready for production use
+- **Status:** NOT recommended for production
 
 ## Intermediate Files (Reference)
 
@@ -72,17 +95,19 @@ This creates `pot15_final.ptau` (37 MB) ready for circuits up to 32,768 constrai
 
 ## Usage Guide
 
-### For Development/Testing (< 32k constraints)
+### For Production (RECOMMENDED - Default for All Circuits)
 ```bash
-# Use pot15_final.ptau
-snarkjs groth16 setup circuit.r1cs pot15_final.ptau circuit_0000.zkey
+# Use powersOfTau28_hez_final.ptau (2^28 = 268M constraints)
+snarkjs groth16 setup circuit.r1cs ptau/powersOfTau28_hez_final.ptau circuit_0000.zkey
 ```
 
-### For Production (> 32k constraints, up to 268M)
+### For Quick Testing Only (< 32k constraints)
 ```bash
-# Use powersOfTau28_hez_final.ptau
-snarkjs groth16 setup circuit.r1cs powersOfTau28_hez_final.ptau circuit_0000.zkey
+# Use pot15_final.ptau (NOT FOR PRODUCTION)
+snarkjs groth16 setup circuit.r1cs ptau/pot15_final.ptau circuit_0000.zkey
 ```
+
+**⚠️ Always use powersOfTau28_hez_final.ptau for production deployments!**
 
 ---
 
@@ -105,11 +130,11 @@ $ snarkjs powersoftau verify powersOfTau28_hez_final.ptau
 
 ## File Sizes Summary
 
-| File | Size | Constraints | Status |
-|------|------|-------------|--------|
-| pot15_final.ptau | 37 MB | 32,768 | ✅ Ready |
-| pot15_0001_final.ptau | 37 MB | 32,768 | ✅ Ready |
-| powersOfTau28_hez_final.ptau | 2.3 GB | 268M+ | ✅ Ready |
+| File | Size | Constraints | Status | Use |
+|------|------|-------------|--------|-----|
+| **powersOfTau28_hez_final.ptau** | **2.3 GB** | **268M+** | ✅ **PRODUCTION** | ⭐ **Default** |
+| pot15_final.ptau | 37 MB | 32,768 | ⚠️ Testing only | Not recommended |
+| pot15_0001_final.ptau | 37 MB | 32,768 | ⚠️ Testing only | Not recommended |
 
-**Total Production Files:** 3  
-**Total Space (production):** ~2.4 GB
+**Recommended File:** powersOfTau28_hez_final.ptau (2.3 GB)
+**Total Space (with testing files):** ~2.4 GB
