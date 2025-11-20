@@ -1,9 +1,0 @@
-{
-  "trace_length": 64,
-  "security_level": "test96",
-  "num_queries": 27,
-  "trace_commitment": "687a6004d1885aa46adb313365955f1d3abec494727050004367fb2620706a40",
-  "query_values": [{"position": 29, "value": 832040}, {"position": 43, "value": 701408733}, {"position": 10, "value": 89}, {"position": 11, "value": 144}, {"position": 47, "value": 4807526976}, {"position": 2, "value": 2}, {"position": 16, "value": 1597}, {"position": 15, "value": 987}, {"position": 57, "value": 591286729879}, {"position": 25, "value": 121393}, {"position": 29, "value": 832040}, {"position": 1, "value": 1}, {"position": 37, "value": 39088169}, {"position": 15, "value": 987}, {"position": 41, "value": 267914296}, {"position": 59, "value": 1548008755920}, {"position": 42, "value": 433494437}, {"position": 16, "value": 1597}, {"position": 8, "value": 34}, {"position": 13, "value": 377}, {"position": 42, "value": 433494437}, {"position": 47, "value": 4807526976}, {"position": 30, "value": 1346269}, {"position": 10, "value": 89}, {"position": 6, "value": 13}, {"position": 28, "value": 514229}, {"position": 20, "value": 10946}],
-  "expected_result": 10610209857723,
-  "verified": true
-}
