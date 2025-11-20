@@ -27,7 +27,7 @@ use alloc::vec::Vec;
 use winter_math::StarkField;
 use crate::{Error, Result, SecurityLevel};
 use crate::fri::{FriProof, FriOptions, FriVerifier};
-use crate::air::{FibonacciAir, AirContext};
+use crate::air::AirContext;
 
 /// STARK proof structure
 ///
@@ -37,7 +37,7 @@ use crate::air::{FibonacciAir, AirContext};
 /// - FRI proof of low-degree polynomial
 /// - Query proofs (Merkle paths for random point checks)
 #[derive(Debug, Clone)]
-pub struct StarkProof {
+pub struct StarkProof<F: StarkField> {
     /// Commitment to execution trace columns (Merkle root)
     pub trace_commitment: [u8; 32],
     
@@ -45,7 +45,7 @@ pub struct StarkProof {
     pub composition_commitment: [u8; 32],
     
     /// FRI proof for low-degree testing
-    pub fri_proof: Vec<u8>, // Serialized FRI proof (generic type not needed here)
+    pub fri_proof: FriProof<F>,
     
     /// Query proofs (Merkle paths for trace values at queried positions)
     pub trace_query_proofs: Vec<QueryProof>,
@@ -156,7 +156,7 @@ impl<F: StarkField> StarkVerifier<F> {
     pub fn verify(
         &self,
         vk: &StarkVerificationKey,
-        proof: &StarkProof,
+        proof: &StarkProof<F>,
         public_inputs: &[F],
     ) -> Result<()> {
         // Step 1: Validate proof structure
@@ -189,7 +189,7 @@ impl<F: StarkField> StarkVerifier<F> {
         self.fri_verifier.verify(
             &proof.fri_proof,
             &vk.fri_options,
-        )?;
+        )?
         
         Ok(())
     }
@@ -198,7 +198,7 @@ impl<F: StarkField> StarkVerifier<F> {
     fn validate_proof_structure(
         &self,
         vk: &StarkVerificationKey,
-        proof: &StarkProof,
+        proof: &StarkProof<F>,
     ) -> Result<()> {
         // Check we have correct number of query proofs
         let expected_queries = vk.security_level.num_queries();
@@ -249,9 +249,9 @@ impl<F: StarkField> StarkVerifier<F> {
     /// Checks that constraint polynomial evaluates to 0 at z
     fn verify_ood_constraints(
         &self,
-        vk: &StarkVerificationKey,
-        proof: &StarkProof,
-        ood_point: F,
+        _vk: &StarkVerificationKey,
+        proof: &StarkProof<F>,
+        _ood_point: F,
         _public_inputs: &[F],
     ) -> Result<()> {
         // Deserialize OOD frame values

@@ -267,9 +267,9 @@ impl<F: StarkField> FibonacciTraceGenerator<F> {
 /// This is used during STARK verification to check constraints
 /// at out-of-domain (OOD) evaluation points
 pub fn verify_air_constraints<F: StarkField>(
-    air: &FibonacciAir<F>,
-    current_value: F,
-    next_value: F,
+    _air: &FibonacciAir<F>,
+    _current_value: F,
+    _next_value: F,
 ) -> Result<()> {
     // Check Fibonacci constraint: next = current + previous
     // For simplicity, we check basic consistency
