@@ -44,5 +44,4 @@ tmp/
 
 # Circuit files (large files)
 packages/circuits/ptau/*.ptau
-!packages/circuits/ptau/pot15_final.ptau
 packages/stylus/stark-simple/generated_proofs/

@@ -1,8 +1,29 @@
 # Powers of Tau Files
 
-This directory contains Powers of Tau ceremony files for circuit compilation.
+**Note:** PTAU files are not stored in git due to their large size. Generate them locally using the instructions below.
 
-## Production-Ready Files ✅
+## Quick Setup
+
+Generate the required PTAU files for development:
+
+```bash
+cd packages/circuits/ptau
+
+# Generate Powers of Tau (2^15 = 32k constraints)
+snarkjs powersoftau new bn128 15 pot15_0000.ptau
+snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau \
+  --name="First contribution" -e="random entropy"
+snarkjs powersoftau prepare phase2 pot15_0001.ptau pot15_final.ptau
+
+# Verify
+snarkjs powersoftau verify pot15_final.ptau
+```
+
+This creates `pot15_final.ptau` (37 MB) ready for circuits up to 32,768 constraints.
+
+---
+
+## Production-Ready Files
 
 ### **pot15_final.ptau** (37 MB)
 - **Power:** 2^15 (32,768 constraints max)
