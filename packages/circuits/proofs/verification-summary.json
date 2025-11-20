@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-11-20T16:46:40Z",
+  "totalValid": 30,
+  "totalInvalid": 0,
+  "totalMissing": 0,
+  "totalErrors": 0,
+  "totalDuration": 33,
+  "selectedCircuit": "all",
+  "maxProofs": 10000
+}

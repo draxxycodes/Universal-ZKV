@@ -1,0 +1,23 @@
+{
+  "poseidon_test": {
+    "r1cs_hash": "2d1b693c308368ad8b84d8573b68b4cc50326b19524b032d1055200de0163d13",
+    "zkey_hash": "c8bf1ec2eddd8962a8bb215f0d132c3e1bd30f516c286c0a2b5cab788bd731cd",
+    "vk_hash": "7129aedff02156f38c31d6b52b87e9fd1b55115e8968147e83ab561472563ad5",
+    "constraints": 520,
+    "public_inputs": 1
+  },
+  "eddsa_verify": {
+    "r1cs_hash": "f992e015824816acdf9479f699e3995211ddd1f0cf8a39e62b5fbdd0fc135d64",
+    "zkey_hash": "68d6e3e55e6c24fc41d668582f3df93433c09a5d7bf442535e20ac903edff699",
+    "vk_hash": "dc0995a29b4712ef66298c9a85cbcc470702642e237467a1b3152c97bbe3d91d",
+    "constraints": 9073,
+    "public_inputs": 1
+  },
+  "merkle_proof": {
+    "r1cs_hash": "937389d3218deb6a611a71ff9aca7a21fdc5cc910443f244f745971e105e67d5",
+    "zkey_hash": "5f3058d9dbd33ab51a0410735f0c9f7429f8600743e168ce6396faeba8a8c83f",
+    "vk_hash": "1261f0638ea640247ca57eda108b21d0d7f864498ab415c52c15e14402c919a8",
+    "constraints": 7324,
+    "public_inputs": 1
+  }
+}
