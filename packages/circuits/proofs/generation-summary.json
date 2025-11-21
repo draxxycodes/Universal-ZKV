@@ -1,35 +1,35 @@
 {
-  "timestamp": "2025-11-20T16:28:51.361Z",
+  "timestamp": "2025-11-21T02:02:26.200Z",
   "configuration": {
-    "proofsPerCircuit": 10,
+    "proofsPerCircuit": 10000,
     "circuits": [
       "poseidon_test",
       "eddsa_verify",
       "merkle_proof"
     ],
-    "totalProofs": 30
+    "totalProofs": 30000
   },
   "statistics": {
-    "totalProofs": 30,
-    "successCount": 30,
+    "totalProofs": 30000,
+    "successCount": 30000,
     "errorCount": 0,
-    "totalTimeSeconds": 31.37,
-    "avgTimePerProof": 1.046
+    "totalTimeSeconds": 32546.2,
+    "avgTimePerProof": 1.085
   },
   "byCircuit": {
     "poseidon_test": {
-      "startTime": 1763656100017,
-      "count": 10,
+      "startTime": 1763657999946,
+      "count": 10000,
       "errors": 0
     },
     "eddsa_verify": {
-      "startTime": 1763656105939,
-      "count": 10,
+      "startTime": 1763663186462,
+      "count": 10000,
       "errors": 0
     },
     "merkle_proof": {
-      "startTime": 1763656125640,
-      "count": 10,
+      "startTime": 1763684082466,
+      "count": 10000,
       "errors": 0
     }
   }

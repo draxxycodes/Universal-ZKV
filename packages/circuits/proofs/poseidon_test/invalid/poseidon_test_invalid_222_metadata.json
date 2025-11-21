@@ -1,0 +1,6 @@
+{
+  "id": 222,
+  "circuit": "poseidon_test",
+  "corruptionMethod": "witness",
+  "timestamp": "2025-11-21T03:32:33.435Z"
+}
