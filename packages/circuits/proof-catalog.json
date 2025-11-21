@@ -1,13 +1,14 @@
 {
-  "version": "1.0.0",
-  "generated_at": "2025-01-23T00:00:00Z",
-  "description": "Catalog of verified zero-knowledge proofs for UZKV circuits. All proofs have been cryptographically verified using snarkjs groth16 verify.",
+  "version": "2.0.0",
+  "generated_at": "2025-11-21T00:00:00Z",
+  "description": "Catalog of verified zero-knowledge proofs for UZKV circuits. Production-scale proof corpus with 30,000+ valid proofs and 1,700+ invalid proofs for comprehensive testing.",
   "verification_summary": {
-    "total_proofs": 30,
-    "valid_proofs": 30,
-    "invalid_proofs": 0,
-    "success_rate": "100%",
-    "verification_date": "2025-01-23"
+    "total_proofs": 31731,
+    "valid_proofs": 30331,
+    "invalid_proofs": 1731,
+    "success_rate": "100% (30 test proofs verified)",
+    "full_validation": "in-progress (background job PID 8407)",
+    "verification_date": "2025-11-21"
   },
   "circuits": {
     "poseidon_test": {
@@ -30,11 +31,19 @@
         "vk_sha256": "7129aedff02156f38c31d6b52b87e9fd1b55115e8968147e83ab561472563ad5"
       },
       "proofs": {
-        "valid_count": 10,
-        "invalid_count": 0,
-        "directory": "packages/circuits/proofs/poseidon_test/valid",
+        "valid_count": 10331,
+        "invalid_count": 1000,
+        "directories": {
+          "valid": "packages/circuits/proofs/poseidon_test/valid",
+          "invalid": "packages/circuits/proofs/poseidon_test/invalid"
+        },
         "naming_pattern": "poseidon_test_{id}_{proof|public|witness}.json",
-        "id_range": "0-9"
+        "id_range": "0-10330 (valid), invalid_0-999 (invalid)",
+        "generation_stats": {
+          "valid_success_rate": "100%",
+          "invalid_success_rate": "100%",
+          "avg_generation_time": "1.93 proofs/sec (valid)"
+        }
       },
       "trusted_setup": {
         "ptau_file": "powersOfTau28_hez_final.ptau",
@@ -63,11 +72,20 @@
         "vk_sha256": "dc0995a29b4712ef66298c9a85cbcc470702642e237467a1b3152c97bbe3d91d"
       },
       "proofs": {
-        "valid_count": 10,
-        "invalid_count": 0,
-        "directory": "packages/circuits/proofs/eddsa_verify/valid",
+        "valid_count": 10000,
+        "invalid_count": 690,
+        "directories": {
+          "valid": "packages/circuits/proofs/eddsa_verify/valid",
+          "invalid": "packages/circuits/proofs/eddsa_verify/invalid"
+        },
         "naming_pattern": "eddsa_verify_{id}_{proof|public|witness}.json",
-        "id_range": "0-9"
+        "id_range": "0-9999 (valid), invalid_0-689 (invalid)",
+        "generation_stats": {
+          "valid_success_rate": "100%",
+          "invalid_success_rate": "69%",
+          "invalid_note": "Circuit assertions prevent many invalid witnesses",
+          "avg_generation_time": "0.48 proofs/sec (valid)"
+        }
       },
       "trusted_setup": {
         "ptau_file": "powersOfTau28_hez_final.ptau",
@@ -96,11 +114,20 @@
         "vk_sha256": "1261f0638ea640247ca57eda108b21d0d7f864498ab415c52c15e14402c919a8"
       },
       "proofs": {
-        "valid_count": 10,
-        "invalid_count": 0,
-        "directory": "packages/circuits/proofs/merkle_proof/valid",
+        "valid_count": 10000,
+        "invalid_count": 41,
+        "directories": {
+          "valid": "packages/circuits/proofs/merkle_proof/valid",
+          "invalid": "packages/circuits/proofs/merkle_proof/invalid"
+        },
         "naming_pattern": "merkle_proof_{id}_{proof|public|witness}.json",
-        "id_range": "0-9"
+        "id_range": "0-9999 (valid), invalid_0-40 (invalid)",
+        "generation_stats": {
+          "valid_success_rate": "100%",
+          "invalid_success_rate": "4.1%",
+          "invalid_note": "Merkle tree constraints prevent most invalid witnesses",
+          "avg_generation_time": "1.55 proofs/sec (valid)"
+        }
       },
       "trusted_setup": {
         "ptau_file": "powersOfTau28_hez_final.ptau",
@@ -117,12 +144,21 @@
     "witness_generators": "scripts/witness-generators.js"
   },
   "notes": [
-    "All proofs verified successfully on 2025-01-23",
+    "Production-scale proof corpus: 30,331 valid proofs + 1,731 invalid proofs",
+    "Full validation running in background (est. 9 hours for all 30k proofs)",
+    "Test validation: 30/30 proofs verified successfully (100% success rate)",
     "Proofs generated using snarkjs 0.7.5 and circomlibjs 0.1.7",
+    "Total generation time: 9.04 hours for 30,000 valid proofs",
+    "Invalid proof generation challenges: EdDSA and Merkle circuits have strict constraints that reject most corrupted inputs during witness generation",
+    "Poseidon circuit more permissive: 100% invalid proof success rate",
+    "EdDSA circuit: 69% invalid proof success rate (assertion failures expected)",
+    "Merkle circuit: 4.1% invalid proof success rate (strict path verification)",
     "Trusted setup uses deterministic beacon for reproducibility",
     "File hashes computed with SHA256 for integrity verification",
     "Constraint counts from circom compiler output",
     "Public inputs count includes output signals",
-    "Private inputs count includes all witness values except public signals"
+    "Private inputs count includes all witness values except public signals",
+    "Proof files excluded from git (90,000+ files) - regenerate locally using scripts",
+    "Background validation PID: 8407, output: validation-results.log"
   ]
 }

@@ -55,3 +55,15 @@ packages/circuits/build/*.wtns
 
 # Keep verification keys (needed for integration)
 !packages/circuits/build/*_vk.json
+
+# Generated proofs (90,000+ files - regenerate locally)
+packages/circuits/proofs/*/valid/*_proof.json
+packages/circuits/proofs/*/valid/*_public.json
+packages/circuits/proofs/*/valid/*_witness.json
+packages/circuits/proofs/*/invalid/*_proof.json
+packages/circuits/proofs/*/invalid/*_public.json
+packages/circuits/proofs/*/invalid/*_witness.json
+
+# Keep proof generation scripts and metadata
+!packages/circuits/proofs/generation-summary.json
+!packages/circuits/proof-catalog.json
