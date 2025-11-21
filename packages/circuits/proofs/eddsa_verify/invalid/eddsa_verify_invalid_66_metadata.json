@@ -1,0 +1,6 @@
+{
+  "id": 66,
+  "circuit": "eddsa_verify",
+  "corruptionMethod": "public",
+  "timestamp": "2025-11-21T04:25:28.860Z"
+}
