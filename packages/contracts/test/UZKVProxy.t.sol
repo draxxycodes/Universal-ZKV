@@ -16,6 +16,8 @@ contract UZKVProxyTest is Test {
     UZKVProxy public proxyAsProxy;
     
     address public admin = address(0x1);
+    address public upgrader = address(0x11);
+    address public pauser = address(0x12);
     address public user = address(0x2);
     address public stylusImpl = address(0x3);
     address public newStylusImpl = address(0x4);
@@ -23,11 +25,14 @@ contract UZKVProxyTest is Test {
     
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
     
     event ProxyInitialized(address indexed admin, address indexed implementation);
     event ImplementationUpdated(address indexed previousImplementation, address indexed newImplementation);
     event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+    event ContractPaused(address indexed account);
+    event ContractUnpaused(address indexed account);
     
     function setUp() public {
         // Deploy implementation
@@ -37,6 +42,8 @@ contract UZKVProxyTest is Test {
         bytes memory initData = abi.encodeWithSelector(
             UZKVProxy.initialize.selector,
             admin,
+            upgrader,
+            pauser,
             stylusImpl
         );
         
@@ -54,12 +61,17 @@ contract UZKVProxyTest is Test {
     // ============================================
     
     function test_Initialize_Success() public {
-        // Verify roles were granted
+        // Verify admin roles were granted
         vm.startPrank(admin);
         assertTrue(proxyAsProxy.hasRole(DEFAULT_ADMIN_ROLE, admin));
         assertTrue(proxyAsProxy.hasRole(ADMIN_ROLE, admin));
-        assertTrue(proxyAsProxy.hasRole(UPGRADER_ROLE, admin));
         vm.stopPrank();
+        
+        // Verify upgrader role was granted
+        assertTrue(proxyAsProxy.hasRole(UPGRADER_ROLE, upgrader));
+        
+        // Verify pauser role was granted
+        assertTrue(proxyAsProxy.hasRole(PAUSER_ROLE, pauser));
         
         // Verify Stylus implementation was set
         assertEq(proxyAsProxy.getImplementation(), stylusImpl);
@@ -72,6 +84,8 @@ contract UZKVProxyTest is Test {
         bytes memory initData = abi.encodeWithSelector(
             UZKVProxy.initialize.selector,
             admin,
+            upgrader,
+            pauser,
             stylusImpl
         );
         
@@ -87,6 +101,38 @@ contract UZKVProxyTest is Test {
         bytes memory initData = abi.encodeWithSelector(
             UZKVProxy.initialize.selector,
             address(0),
+            upgrader,
+            pauser,
+            stylusImpl
+        );
+        
+        vm.expectRevert(UZKVProxy.ZeroAddress.selector);
+        new ERC1967Proxy(address(newProxy), initData);
+    }
+    
+    function test_RevertWhen_InitializeWithZeroAddressUpgrader() public {
+        UZKVProxy newProxy = new UZKVProxy();
+        
+        bytes memory initData = abi.encodeWithSelector(
+            UZKVProxy.initialize.selector,
+            admin,
+            address(0),
+            pauser,
+            stylusImpl
+        );
+        
+        vm.expectRevert(UZKVProxy.ZeroAddress.selector);
+        new ERC1967Proxy(address(newProxy), initData);
+    }
+    
+    function test_RevertWhen_InitializeWithZeroAddressPauser() public {
+        UZKVProxy newProxy = new UZKVProxy();
+        
+        bytes memory initData = abi.encodeWithSelector(
+            UZKVProxy.initialize.selector,
+            admin,
+            upgrader,
+            address(0),
             stylusImpl
         );
         
@@ -100,6 +146,8 @@ contract UZKVProxyTest is Test {
         bytes memory initData = abi.encodeWithSelector(
             UZKVProxy.initialize.selector,
             admin,
+            upgrader,
+            pauser,
             address(0)
         );
         
@@ -110,7 +158,7 @@ contract UZKVProxyTest is Test {
     function test_RevertWhen_InitializeTwice() public {
         vm.prank(admin);
         vm.expectRevert();
-        proxyAsProxy.initialize(admin, stylusImpl);
+        proxyAsProxy.initialize(admin, upgrader, pauser, stylusImpl);
     }
     
     // ============================================
@@ -123,8 +171,11 @@ contract UZKVProxyTest is Test {
     }
     
     function test_HasRole_Upgrader() public {
-        vm.prank(admin);
-        assertTrue(proxyAsProxy.hasRole(UPGRADER_ROLE, admin));
+        assertTrue(proxyAsProxy.hasRole(UPGRADER_ROLE, upgrader));
+    }
+    
+    function test_HasRole_Pauser() public {
+        assertTrue(proxyAsProxy.hasRole(PAUSER_ROLE, pauser));
     }
     
     function test_HasRole_DefaultAdmin() public {
@@ -155,6 +206,69 @@ contract UZKVProxyTest is Test {
         proxyAsProxy.revokeRole(UPGRADER_ROLE, user);
         
         assertFalse(proxyAsProxy.hasRole(UPGRADER_ROLE, user));
+    }
+    
+    // ============================================
+    // PAUSABILITY TESTS
+    // ============================================
+    
+    function test_Pause_AsPauser() public {
+        vm.prank(pauser);
+        vm.expectEmit(true, false, false, false);
+        emit ContractPaused(pauser);
+        
+        proxyAsProxy.pause();
+        
+        assertTrue(proxyAsProxy.paused());
+    }
+    
+    function test_Unpause_AsPauser() public {
+        // First pause
+        vm.prank(pauser);
+        proxyAsProxy.pause();
+        
+        // Then unpause
+        vm.prank(pauser);
+        vm.expectEmit(true, false, false, false);
+        emit ContractUnpaused(pauser);
+        
+        proxyAsProxy.unpause();
+        
+        assertFalse(proxyAsProxy.paused());
+    }
+    
+    function test_RevertWhen_PauseAsNonPauser() public {
+        vm.prank(user);
+        vm.expectRevert();
+        proxyAsProxy.pause();
+    }
+    
+    function test_RevertWhen_UnpauseAsNonPauser() public {
+        // First pause with pauser
+        vm.prank(pauser);
+        proxyAsProxy.pause();
+        
+        // Try to unpause as non-pauser
+        vm.prank(user);
+        vm.expectRevert();
+        proxyAsProxy.unpause();
+    }
+    
+    function test_RevertWhen_FallbackWhenPaused() public {
+        // Deploy mock implementation
+        MockStylusImpl mockImpl = new MockStylusImpl();
+        
+        // Set it as implementation
+        vm.prank(admin);
+        proxyAsProxy.setImplementation(address(mockImpl));
+        
+        // Pause the contract
+        vm.prank(pauser);
+        proxyAsProxy.pause();
+        
+        // Try to call through fallback - should revert with Pausable error
+        vm.expectRevert();
+        address(proxyAsProxy).call(abi.encodeWithSignature("testFunction()"));
     }
     
     // ============================================
@@ -195,8 +309,8 @@ contract UZKVProxyTest is Test {
         // Deploy new implementation
         UZKVProxy newImpl = new UZKVProxy();
         
-        // Upgrade
-        vm.prank(admin);
+        // Upgrade using the upgrader role
+        vm.prank(upgrader);
         proxyAsProxy.upgradeToAndCall(address(newImpl), "");
         
         // Verify upgrade (state should be preserved)
@@ -213,7 +327,7 @@ contract UZKVProxyTest is Test {
     }
     
     function test_RevertWhen_UpgradeToZeroAddress() public {
-        vm.prank(admin);
+        vm.prank(upgrader);
         vm.expectRevert();
         proxyAsProxy.upgradeToAndCall(address(0), "");
     }
@@ -245,6 +359,8 @@ contract UZKVProxyTest is Test {
         bytes memory initData = abi.encodeWithSelector(
             UZKVProxy.initialize.selector,
             admin,
+            upgrader,
+            pauser,
             address(0xdead) // Valid address initially
         );
         ERC1967Proxy erc1967Proxy = new ERC1967Proxy(address(newProxy), initData);
@@ -351,7 +467,7 @@ contract UZKVProxyTest is Test {
         assertEq(proxyAsProxy.getImplementation(), stylusImpl);
         assertTrue(proxyAsProxy.hasRole(ADMIN_ROLE, admin));
         
-        // 2. Grant role to new user
+        // 2. Grant upgrader role to new user
         vm.prank(admin);
         proxyAsProxy.grantRole(UPGRADER_ROLE, user);
         
@@ -360,9 +476,9 @@ contract UZKVProxyTest is Test {
         proxyAsProxy.setImplementation(newStylusImpl);
         assertEq(proxyAsProxy.getImplementation(), newStylusImpl);
         
-        // 4. Upgrade proxy implementation
+        // 4. Upgrade proxy implementation using the upgrader
         UZKVProxy newImpl = new UZKVProxy();
-        vm.prank(admin);
+        vm.prank(upgrader);
         proxyAsProxy.upgradeToAndCall(address(newImpl), "");
         
         // 5. Verify state preserved after upgrade

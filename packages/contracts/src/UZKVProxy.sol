@@ -3,24 +3,26 @@ pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title UZKVProxy
  * @notice UUPS Proxy contract serving as the entry point for all UZKV operations
- * @dev Implements UUPS upgradeable pattern with role-based access control
+ * @dev Implements UUPS upgradeable pattern with role-based access control and pausability
  *      Delegates calls to Stylus implementation for zero-knowledge proof verification
  * 
  * Security Features:
  * - UUPS upgradeable pattern for immutable proxy with upgradeable logic
  * - Role-based access control for upgrade authorization
+ * - Pausable functionality for emergency controls
  * - Fallback delegation to Stylus implementation
  * 
  * Architecture:
- * - Proxy Layer (this contract): Entry point, access control, upgradeability
+ * - Proxy Layer (this contract): Entry point, access control, upgradeability, emergency controls
  * - Implementation Layer (Stylus): ZK proof verification, state management
  */
-contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
+contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     
     // ============================================
     // STATE VARIABLES
@@ -31,6 +33,9 @@ contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
     
     /// @notice Role identifier for contract administrators
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    
+    /// @notice Role identifier for accounts authorized to pause/unpause the contract
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     
     /// @notice Address of the Stylus implementation contract
     /// @dev Stored in a custom storage slot to avoid collisions with proxy storage
@@ -49,6 +54,14 @@ contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
     /// @param admin Address of the initial admin
     /// @param implementation Address of the initial Stylus implementation
     event ProxyInitialized(address indexed admin, address indexed implementation);
+    
+    /// @notice Emitted when the contract is paused
+    /// @param account Address that triggered the pause
+    event ContractPaused(address indexed account);
+    
+    /// @notice Emitted when the contract is unpaused
+    /// @param account Address that triggered the unpause
+    event ContractUnpaused(address indexed account);
     
     // ============================================
     // ERRORS
@@ -73,28 +86,64 @@ contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
     }
     
     /**
-     * @notice Initializes the proxy contract
+     * @notice Initializes the proxy contract with separate role assignments
      * @dev Sets up roles and initial implementation address
      *      Can only be called once due to initializer modifier
-     * @param admin Address to be granted admin and upgrader roles
+     *      Constructor disables initializers to prevent logic contract takeover
+     * @param admin Address to be granted DEFAULT_ADMIN_ROLE and ADMIN_ROLE
+     * @param upgrader Address to be granted UPGRADER_ROLE
+     * @param pauser Address to be granted PAUSER_ROLE
      * @param stylusImplementation Address of the Stylus implementation contract
      */
-    function initialize(address admin, address stylusImplementation) external initializer {
+    function initialize(
+        address admin, 
+        address upgrader, 
+        address pauser,
+        address stylusImplementation
+    ) external initializer {
         if (admin == address(0)) revert ZeroAddress();
+        if (upgrader == address(0)) revert ZeroAddress();
+        if (pauser == address(0)) revert ZeroAddress();
         if (stylusImplementation == address(0)) revert ZeroAddress();
         
-        // Initialize access control (UUPS doesn't need explicit init in v5)
+        // Initialize parent contracts
         __AccessControl_init();
+        __Pausable_init();
         
-        // Grant roles to admin
+        // Grant roles to respective addresses
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ADMIN_ROLE, admin);
-        _grantRole(UPGRADER_ROLE, admin);
+        _grantRole(UPGRADER_ROLE, upgrader);
+        _grantRole(PAUSER_ROLE, pauser);
         
         // Set initial Stylus implementation
         _setImplementation(stylusImplementation);
         
         emit ProxyInitialized(admin, stylusImplementation);
+    }
+    
+    // ============================================
+    // EMERGENCY CONTROLS
+    // ============================================
+    
+    /**
+     * @notice Pauses all proxy operations
+     * @dev Only callable by accounts with PAUSER_ROLE
+     *      When paused, fallback function will revert
+     */
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+        emit ContractPaused(msg.sender);
+    }
+    
+    /**
+     * @notice Resumes proxy operations
+     * @dev Only callable by accounts with PAUSER_ROLE
+     *      Allows fallback function to execute again
+     */
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+        emit ContractUnpaused(msg.sender);
     }
     
     // ============================================
@@ -173,6 +222,7 @@ contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
      * @dev Uses delegatecall to execute implementation logic in proxy context
      *      Preserves msg.sender, msg.value, and all calldata
      *      Returns implementation's return data or reverts with implementation's revert data
+     *      Paused when contract is in emergency mode
      * 
      * Assembly Breakdown:
      * 1. calldatacopy(0, 0, calldatasize()) - Copy calldata to memory starting at position 0
@@ -185,8 +235,9 @@ contract UZKVProxy is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
      * - Implementation cannot access proxy's storage directly
      * - All state changes affect proxy's storage
      * - msg.sender and msg.value are preserved
+     * - Reverts when contract is paused for emergency protection
      */
-    fallback() external payable {
+    fallback() external payable whenNotPaused {
         address impl = _getImplementation();
         
         // Ensure implementation is set
