@@ -404,6 +404,102 @@ fn verify_proof_internal(
     Ok(pairing_check.is_zero())
 }
 
+/// Batch verify multiple Groth16 proofs with the same verification key
+///
+/// More efficient than calling verify() multiple times as it can reuse
+/// the precomputed pairing if available.
+///
+/// # Arguments
+/// * `proofs` - Vector of serialized Groth16 proofs
+/// * `public_inputs` - Vector of serialized public inputs (must match proofs length)
+/// * `vk_bytes` - Serialized verification key (shared across all proofs)
+/// * `precomputed_pairing_bytes` - Optional precomputed e(α, β) pairing
+///
+/// # Returns
+/// * `Ok(Vec<bool>)` - Vector of verification results (true = valid, false = invalid)
+/// * `Err(_)` - Input validation failed or proof count mismatch
+///
+/// # Gas Optimization
+/// - Reuses deserialized VK across all verifications
+/// - Reuses precomputed pairing if available (~80k gas per proof)
+/// - Early exit on invalid inputs
+pub fn batch_verify(
+    proofs: &[Vec<u8>],
+    public_inputs: &[Vec<u8>],
+    vk_bytes: &[u8],
+    precomputed_pairing_bytes: &[u8],
+) -> Result<Vec<bool>> {
+    // Validate input lengths match
+    if proofs.len() != public_inputs.len() {
+        return Err(Error::InvalidInputSize);
+    }
+
+    // Return empty for empty batch
+    if proofs.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // Deserialize VK once (shared across all proofs)
+    let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)
+        .map_err(|_| Error::InvalidVerificationKey)?;
+    validate_vk(&vk)?;
+
+    // Deserialize precomputed pairing if available
+    let precomputed = if !precomputed_pairing_bytes.is_empty() {
+        Some(
+            <Bn254 as Pairing>::TargetField::deserialize_compressed(precomputed_pairing_bytes)
+                .map_err(|_| Error::InvalidVerificationKey)?,
+        )
+    } else {
+        None
+    };
+
+    // Verify each proof
+    let mut results = Vec::with_capacity(proofs.len());
+    for i in 0..proofs.len() {
+        // Deserialize proof
+        let proof = match Proof::<Bn254>::deserialize_compressed(&proofs[i][..]) {
+            Ok(p) => p,
+            Err(_) => {
+                results.push(false);
+                continue;
+            }
+        };
+
+        // Validate proof structure
+        if validate_proof(&proof).is_err() {
+            results.push(false);
+            continue;
+        }
+
+        // Deserialize public inputs
+        let inputs = match deserialize_public_inputs(&public_inputs[i][..]) {
+            Ok(inp) => inp,
+            Err(_) => {
+                results.push(false);
+                continue;
+            }
+        };
+
+        // Verify proof (with or without precomputed pairing)
+        let is_valid = if let Some(ref alpha_beta) = precomputed {
+            match verify_proof_with_precomputed(&vk, &proof, &inputs, alpha_beta) {
+                Ok(v) => v,
+                Err(_) => false,
+            }
+        } else {
+            match verify_proof_internal(&vk, &proof, &inputs) {
+                Ok(v) => v,
+                Err(_) => false,
+            }
+        };
+
+        results.push(is_valid);
+    }
+
+    Ok(results)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

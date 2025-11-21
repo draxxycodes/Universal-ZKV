@@ -40,6 +40,30 @@ pub mod groth16;
 // pub mod plonk;
 // pub mod stark;
 
+/// Proof type enumeration for universal verification
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum ProofType {
+    /// Groth16 zkSNARK (trusted setup, ~60k gas)
+    Groth16 = 0,
+    /// PLONK universal SNARK (universal setup, ~120k gas)
+    PLONK = 1,
+    /// STARK (transparent, no setup, ~280k gas)
+    STARK = 2,
+}
+
+impl ProofType {
+    /// Convert u8 to ProofType
+    pub fn from_u8(value: u8) -> Result<Self> {
+        match value {
+            0 => Ok(ProofType::Groth16),
+            1 => Ok(ProofType::PLONK),
+            2 => Ok(ProofType::STARK),
+            _ => Err(Error::InvalidProofType),
+        }
+    }
+}
+
 /// Error types for UZKV operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
@@ -61,6 +85,10 @@ pub enum Error {
     VKNotRegistered,
     /// Unauthorized access
     Unauthorized,
+    /// Invalid proof type
+    InvalidProofType,
+    /// Proof type not supported yet
+    ProofTypeNotSupported,
 }
 
 impl core::fmt::Display for Error {
@@ -75,6 +103,8 @@ impl core::fmt::Display for Error {
             Error::ContractPaused => write!(f, "Contract is paused"),
             Error::VKNotRegistered => write!(f, "Verification key not registered"),
             Error::Unauthorized => write!(f, "Unauthorized access"),
+            Error::InvalidProofType => write!(f, "Invalid proof type"),
+            Error::ProofTypeNotSupported => write!(f, "Proof type not supported yet"),
         }
     }
 }
@@ -196,6 +226,184 @@ impl UZKVContract {
     /// @return count - Total verifications performed
     pub fn get_verification_count(&self) -> U256 {
         self.verification_count.get()
+    }
+
+    /// Universal verify - routes to appropriate verifier based on proof type
+    ///
+    /// Supports multiple proof systems:
+    /// - Groth16 (type 0): Trusted setup, ~60k gas
+    /// - PLONK (type 1): Universal setup, ~120k gas (TODO: not yet enabled)
+    /// - STARK (type 2): Transparent, ~280k gas (TODO: not yet enabled)
+    ///
+    /// @param proof_type - Proof system type (0=Groth16, 1=PLONK, 2=STARK)
+    /// @param proof - Serialized proof
+    /// @param public_inputs - Serialized public inputs
+    /// @param vk_hash - Verification key hash (not used for STARK)
+    /// @return true if proof is valid
+    pub fn verify(
+        &mut self,
+        proof_type: u8,
+        proof: Vec<u8>,
+        public_inputs: Vec<u8>,
+        vk_hash: [u8; 32],
+    ) -> Result<bool> {
+        // Check if contract is paused
+        if self.paused.get() {
+            return Err(Error::ContractPaused);
+        }
+
+        // Convert to ProofType enum
+        let ptype = ProofType::from_u8(proof_type)?;
+
+        // Route to appropriate verifier
+        let is_valid = match ptype {
+            ProofType::Groth16 => {
+                // Retrieve verification key from storage
+                let vk_data = self.verification_keys.get(vk_hash);
+                if vk_data.is_empty() {
+                    return Err(Error::VKNotRegistered);
+                }
+
+                // Check if precomputed pairing is available
+                let precomputed_pairing = self.precomputed_pairings.get(vk_hash);
+                
+                if !precomputed_pairing.is_empty() {
+                    groth16::verify_with_precomputed(&proof, &public_inputs, &vk_data, &precomputed_pairing)?
+                } else {
+                    groth16::verify(&proof, &public_inputs, &vk_data)?
+                }
+            }
+            ProofType::PLONK => {
+                // TODO: Enable when plonk module is ready
+                // let vk_data = self.verification_keys.get(vk_hash);
+                // if vk_data.is_empty() {
+                //     return Err(Error::VKNotRegistered);
+                // }
+                // plonk::verify(&proof, &public_inputs, &vk_data)?
+                return Err(Error::ProofTypeNotSupported);
+            }
+            ProofType::STARK => {
+                // TODO: Enable when stark module is ready
+                // STARK doesn't use VKs (transparent setup)
+                // stark::verify(&proof, &public_inputs)?
+                return Err(Error::ProofTypeNotSupported);
+            }
+        };
+
+        // Increment verification counter for valid proofs
+        if is_valid {
+            let count = self.verification_count.get();
+            self.verification_count.set(count + U256::from(1));
+        }
+
+        Ok(is_valid)
+    }
+
+    /// Register a verification key for a specific proof type
+    ///
+    /// @param proof_type - Proof system type (0=Groth16, 1=PLONK, 2=STARK)
+    /// @param vk - Serialized verification key
+    /// @return vkHash - Keccak256 hash of the VK
+    pub fn register_vk_typed(&mut self, proof_type: u8, vk: Vec<u8>) -> Result<[u8; 32]> {
+        let ptype = ProofType::from_u8(proof_type)?;
+
+        // Compute VK hash
+        let vk_hash = keccak256(&vk);
+
+        // Check if already registered
+        if !self.vk_registered.get(vk_hash) {
+            // Store VK data
+            self.verification_keys.insert(vk_hash, vk.clone());
+            self.vk_registered.insert(vk_hash, true);
+
+            // Precompute optimizations based on proof type
+            match ptype {
+                ProofType::Groth16 => {
+                    // Precompute e(α, β) pairing for gas savings
+                    if let Ok(precomputed) = groth16::compute_precomputed_pairing(&vk) {
+                        self.precomputed_pairings.insert(vk_hash, precomputed);
+                    }
+                }
+                ProofType::PLONK => {
+                    // TODO: PLONK-specific precomputations when module is ready
+                }
+                ProofType::STARK => {
+                    // STARK doesn't use VKs (transparent setup)
+                    // No precomputation needed
+                }
+            }
+        }
+
+        Ok(vk_hash)
+    }
+
+    /// Batch verify multiple proofs of the same type with the same verification key
+    ///
+    /// More gas-efficient than calling verify() multiple times.
+    ///
+    /// @param proof_type - Proof system type (0=Groth16, 1=PLONK, 2=STARK)
+    /// @param proofs - Vector of serialized proofs
+    /// @param public_inputs - Vector of serialized public inputs (must match proofs length)
+    /// @param vk_hash - Verification key hash (shared across all proofs)
+    /// @return Vector of verification results (true = valid, false = invalid)
+    pub fn batch_verify(
+        &mut self,
+        proof_type: u8,
+        proofs: Vec<Vec<u8>>,
+        public_inputs: Vec<Vec<u8>>,
+        vk_hash: [u8; 32],
+    ) -> Result<Vec<bool>> {
+        // Check if contract is paused
+        if self.paused.get() {
+            return Err(Error::ContractPaused);
+        }
+
+        // Validate input lengths match
+        if proofs.len() != public_inputs.len() {
+            return Err(Error::InvalidInputSize);
+        }
+
+        // Convert to ProofType enum
+        let ptype = ProofType::from_u8(proof_type)?;
+
+        // Route to appropriate batch verifier
+        let results = match ptype {
+            ProofType::Groth16 => {
+                // Retrieve VK and precomputed pairing
+                let vk_data = self.verification_keys.get(vk_hash);
+                if vk_data.is_empty() {
+                    return Err(Error::VKNotRegistered);
+                }
+
+                let precomputed_pairing = self.precomputed_pairings.get(vk_hash);
+
+                // Batch verify all proofs
+                groth16::batch_verify(&proofs, &public_inputs, &vk_data, &precomputed_pairing)?
+            }
+            ProofType::PLONK => {
+                // TODO: Enable when plonk module is ready
+                // let vk_data = self.verification_keys.get(vk_hash);
+                // if vk_data.is_empty() {
+                //     return Err(Error::VKNotRegistered);
+                // }
+                // plonk::batch_verify(&proofs, &public_inputs, &vk_data)?
+                return Err(Error::ProofTypeNotSupported);
+            }
+            ProofType::STARK => {
+                // TODO: Enable when stark module is ready
+                // stark::batch_verify(&proofs, &public_inputs)?
+                return Err(Error::ProofTypeNotSupported);
+            }
+        };
+
+        // Increment counter by number of valid proofs
+        let valid_count = results.iter().filter(|&&r| r).count();
+        if valid_count > 0 {
+            let count = self.verification_count.get();
+            self.verification_count.set(count + U256::from(valid_count));
+        }
+
+        Ok(results)
     }
 
     /// Check if contract is paused
