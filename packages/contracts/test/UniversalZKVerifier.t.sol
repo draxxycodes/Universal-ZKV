@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 import {UniversalZKVerifier} from "../src/UniversalZKVerifier.sol";
+import {MockStylusVerifier} from "../src/mocks/MockStylusVerifier.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
@@ -14,6 +15,7 @@ contract UniversalZKVerifierTest is Test {
     
     UniversalZKVerifier public implementation;
     UniversalZKVerifier public verifier;
+    MockStylusVerifier public stylusVerifier;
     
     address public admin = address(0x1);
     address public upgrader = address(0x11);
@@ -44,6 +46,11 @@ contract UniversalZKVerifierTest is Test {
     
     event UniversalVerifierInitialized(address indexed admin);
     
+    event StylusVerifierUpdated(
+        address indexed previousStylus,
+        address indexed newStylus
+    );
+    
     function setUp() public {
         // Deploy implementation
         implementation = new UniversalZKVerifier();
@@ -62,6 +69,9 @@ contract UniversalZKVerifierTest is Test {
         );
         
         verifier = UniversalZKVerifier(address(proxy));
+        
+        // Deploy mock Stylus verifier
+        stylusVerifier = new MockStylusVerifier(admin);
     }
     
     // ============================================
@@ -147,6 +157,48 @@ contract UniversalZKVerifierTest is Test {
     // ============================================
     // MODULE MANAGEMENT TESTS
     // ============================================
+    
+    function test_SetStylusVerifier() public {
+        vm.prank(admin);
+        vm.expectEmit(true, true, false, false);
+        emit StylusVerifierUpdated(address(0), address(stylusVerifier));
+        
+        verifier.setStylusVerifier(address(stylusVerifier));
+        
+        assertEq(verifier.stylusVerifier(), address(stylusVerifier));
+    }
+    
+    function test_RemoveStylusVerifier() public {
+        vm.startPrank(admin);
+        
+        verifier.setStylusVerifier(address(stylusVerifier));
+        
+        vm.expectEmit(true, true, false, false);
+        emit StylusVerifierUpdated(address(stylusVerifier), address(0));
+        
+        verifier.removeStylusVerifier();
+        vm.stopPrank();
+        
+        assertEq(verifier.stylusVerifier(), address(0));
+    }
+    
+    function test_RevertWhen_SetStylusVerifierAsNonManager() public {
+        vm.prank(user);
+        vm.expectRevert();
+        verifier.setStylusVerifier(address(stylusVerifier));
+    }
+    
+    function test_RevertWhen_SetStylusVerifierZeroAddress() public {
+        vm.prank(admin);
+        vm.expectRevert(UniversalZKVerifier.ZeroAddress.selector);
+        verifier.setStylusVerifier(address(0));
+    }
+    
+    function test_RevertWhen_RemoveNonexistentStylusVerifier() public {
+        vm.prank(admin);
+        vm.expectRevert(UniversalZKVerifier.ZeroAddress.selector);
+        verifier.removeStylusVerifier();
+    }
     
     function test_SetVerifierModule_Groth16() public {
         vm.prank(admin);
@@ -312,6 +364,122 @@ contract UniversalZKVerifierTest is Test {
     // ============================================
     // VERIFICATION ROUTING TESTS
     // ============================================
+    
+    function test_Verify_WithStylusVerifier() public {
+        // Configure Stylus verifier
+        vm.prank(admin);
+        verifier.setStylusVerifier(address(stylusVerifier));
+        
+        // Prepare test data
+        bytes memory proof = hex"1234";
+        bytes memory publicInputs = hex"5678";
+        bytes memory vk = hex"90ab";
+        
+        // Register VK with Stylus
+        bytes32 vkHash = stylusVerifier.registerVkTyped(0, vk);
+        
+        // Verify proof
+        bool result = verifier.verify(
+            UniversalZKVerifier.ProofType.GROTH16,
+            proof,
+            publicInputs,
+            vk
+        );
+        
+        assertTrue(result);
+    }
+    
+    function test_Verify_StylusFallbackToSolidityModule() public {
+        // Don't set Stylus verifier - should fallback to Solidity module
+        MockVerifier mockVerifier = new MockVerifier(true);
+        
+        vm.prank(admin);
+        verifier.setVerifierModule(
+            UniversalZKVerifier.ProofType.GROTH16,
+            address(mockVerifier)
+        );
+        
+        bytes memory proof = hex"1234";
+        bytes memory publicInputs = hex"5678";
+        bytes memory vk = hex"90ab";
+        
+        bool result = verifier.verify(
+            UniversalZKVerifier.ProofType.GROTH16,
+            proof,
+            publicInputs,
+            vk
+        );
+        
+        assertTrue(result);
+    }
+    
+    function test_BatchVerify_WithStylus() public {
+        vm.prank(admin);
+        verifier.setStylusVerifier(address(stylusVerifier));
+        
+        bytes memory vk = hex"90ab";
+        bytes32 vkHash = stylusVerifier.registerVkTyped(0, vk);
+        
+        // Create batch of proofs
+        bytes[] memory proofs = new bytes[](3);
+        bytes[] memory publicInputs = new bytes[](3);
+        
+        for (uint i = 0; i < 3; i++) {
+            proofs[i] = abi.encodePacked("proof", i);
+            publicInputs[i] = abi.encodePacked("input", i);
+        }
+        
+        bool[] memory results = verifier.batchVerify(
+            UniversalZKVerifier.ProofType.GROTH16,
+            proofs,
+            publicInputs,
+            vk
+        );
+        
+        assertEq(results.length, 3);
+        for (uint i = 0; i < 3; i++) {
+            assertTrue(results[i]);
+        }
+    }
+    
+    function test_RegisterVerificationKey() public {
+        vm.prank(admin);
+        verifier.setStylusVerifier(address(stylusVerifier));
+        
+        bytes memory vk = hex"90abcdef";
+        
+        bytes32 vkHash = verifier.registerVerificationKey(
+            UniversalZKVerifier.ProofType.GROTH16,
+            vk
+        );
+        
+        assertTrue(stylusVerifier.isVkRegistered(vkHash));
+        assertEq(vkHash, keccak256(vk));
+    }
+    
+    function test_RevertWhen_BatchVerifyWithoutStylus() public {
+        // Don't set Stylus - batch verify should fail
+        bytes memory vk = hex"90ab";
+        bytes[] memory proofs = new bytes[](1);
+        bytes[] memory publicInputs = new bytes[](1);
+        
+        proofs[0] = hex"1234";
+        publicInputs[0] = hex"5678";
+        
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                UniversalZKVerifier.StylusVerificationFailed.selector,
+                "Batch verify requires Stylus"
+            )
+        );
+        
+        verifier.batchVerify(
+            UniversalZKVerifier.ProofType.GROTH16,
+            proofs,
+            publicInputs,
+            vk
+        );
+    }
     
     function test_Verify_Groth16Success() public {
         // Deploy mock verifier that returns true
@@ -545,7 +713,7 @@ contract UniversalZKVerifierTest is Test {
     // ============================================
     
     function test_Version() public view {
-        assertEq(verifier.version(), "1.0.0");
+        assertEq(verifier.version(), "2.0.0-stylus");
     }
     
     function test_SupportsInterface() public view {
