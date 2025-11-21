@@ -1,5 +1,5 @@
 [toolchain]
-channel = "nightly" # Latest nightly with edition2024 support
+channel = "nightly-2024-11-07" # Specific nightly for reproducibility (matches rustc 1.91.1)
 targets = ["wasm32-unknown-unknown"]
 components = ["rust-src", "rustfmt", "clippy"]
 profile = "minimal"
