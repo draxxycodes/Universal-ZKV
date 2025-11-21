@@ -15,18 +15,7 @@
 //! - Transcript domain separation to prevent replay attacks
 //! - Panic-free implementation for WASM safety
 
-#![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(not(test), no_main)]
-
-extern crate alloc;
-
 use alloc::vec::Vec;
-use stylus_sdk::prelude::*;
-use wee_alloc::WeeAlloc;
-
-// Custom allocator for WASM environment
-#[global_allocator]
-static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
 pub mod kzg;
 pub mod transcript;

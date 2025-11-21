@@ -22,6 +22,14 @@ ark-ec = { path = "vendor/ark-algebra/ec", version = "0.4.0", default-features =
 ark-ff = { path = "vendor/ark-algebra/ff", version = "0.4.0", default-features = false, features = ["std"] }
 ark-serialize = { path = "vendor/ark-algebra/serialize", version = "0.4.0", default-features = false, features = ["std"] }
 
+# PLONK verifier dependencies (halo2-based) - Optional for now due to std requirements
+# halo2_proofs = { version = "0.3", default-features = false, features = ["batch"], optional = true }
+# halo2curves = { version = "0.6", default-features = false, optional = true }
+# sha3 = { version = "0.10", default-features = false, optional = true }
+
+# STARK verifier dependencies (transparent setup) - Optional for now due to std requirements
+# blake3 = { version = "1.5", default-features = false, features = ["no_avx2", "no_avx512", "no_neon"], optional = true }
+
 [profile.release]
 codegen-units = 1
 panic = "abort"

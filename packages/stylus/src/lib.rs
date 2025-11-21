@@ -36,6 +36,9 @@ use wee_alloc::WeeAlloc;
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
 pub mod groth16;
+// TODO: Enable once PLONK/STARK dependencies are made no_std compatible
+// pub mod plonk;
+// pub mod stark;
 
 /// Error types for UZKV operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
