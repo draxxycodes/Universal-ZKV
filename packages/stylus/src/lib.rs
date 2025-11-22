@@ -23,7 +23,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use stylus_sdk::{
-    alloy_primitives::{FixedBytes, U256},
+    alloy_primitives::{FixedBytes, U256, U8, U32},
     prelude::*,
     msg,
 };
@@ -78,6 +78,8 @@ pub enum Error {
     InvalidProofType,
     /// Proof type not supported yet
     ProofTypeNotSupported,
+    /// Invalid UniversalProof format (decode failed)
+    InvalidProofFormat,
 }
 
 impl core::fmt::Display for Error {
@@ -94,6 +96,7 @@ impl core::fmt::Display for Error {
             Error::Unauthorized => write!(f, "Unauthorized access"),
             Error::InvalidProofType => write!(f, "Invalid proof type"),
             Error::ProofTypeNotSupported => write!(f, "Proof type not supported yet"),
+            Error::InvalidProofFormat => write!(f, "Invalid UniversalProof format"),
         }
     }
 }
@@ -127,6 +130,7 @@ impl Into<Vec<u8>> for Error {
             Error::Unauthorized => b"Unauthorized access".to_vec(),
             Error::InvalidProofType => b"Invalid proof type".to_vec(),
             Error::ProofTypeNotSupported => b"Proof type not supported yet".to_vec(),
+            Error::InvalidProofFormat => b"Invalid UniversalProof format".to_vec(),
         }
     }
 }
@@ -141,13 +145,26 @@ sol_storage! {
         // Total number of successful verifications
         uint256 verification_count;
         
-        // Registered verification keys (vkHash => vkData)
+        // === NEW: Universal VK Registry with (proofType, programId, vkHash) binding ===
+        // VK Registry: proofType => programId => vkHash => vkData
+        // This ensures each (proofType, programId) pair has its own set of registered VKs
+        mapping(uint8 => mapping(uint32 => mapping(bytes32 => bytes))) vk_registry;
+        
+        // VK Registration Status: proofType => programId => vkHash => isRegistered
+        mapping(uint8 => mapping(uint32 => mapping(bytes32 => bool))) vk_registry_status;
+        
+        // Precomputed data for gas optimization (only for Groth16)
+        // proofType => programId => vkHash => precomputedData
+        mapping(uint8 => mapping(uint32 => mapping(bytes32 => bytes))) precomputed_data;
+        
+        // === Legacy storage (kept for backward compatibility, deprecated) ===
+        // Registered verification keys (vkHash => vkData) - OLD, use vk_registry instead
         mapping(bytes32 => bytes) verification_keys;
         
-        // Precomputed e(α, β) pairings for gas optimization (vkHash => pairingData)
+        // Precomputed e(α, β) pairings for gas optimization (vkHash => pairingData) - OLD
         mapping(bytes32 => bytes) precomputed_pairings;
         
-        // VK registration status (vkHash => isRegistered)
+        // VK registration status (vkHash => isRegistered) - OLD
         mapping(bytes32 => bool) vk_registered;
         
         // Circuit breaker (emergency pause)
@@ -213,7 +230,67 @@ impl UZKVContract {
         Ok(is_valid)
     }
 
+    /// Register a verification key with (proofType, programId, vkHash) binding
+    ///
+    /// SECURITY: This triple binding prevents VK substitution attacks:
+    /// - User cannot submit Groth16 proof with PLONK VK hash
+    /// - Each program_id has isolated VK namespace
+    /// - Multiple circuits can coexist per proof type
+    ///
+    /// @param proof_type - Proof system type (0=Groth16, 1=PLONK, 2=STARK)
+    /// @param program_id - Circuit identifier (isolates VK namespaces)
+    /// @param vk - Serialized verification key
+    /// @return vkHash - Keccak256 hash of the VK
+    pub fn register_vk_universal(
+        &mut self,
+        proof_type: u8,
+        program_id: u32,
+        vk: Vec<u8>,
+    ) -> Result<[u8; 32]> {
+        // Validate proof type
+        let ptype = ProofType::from_u8(proof_type).ok_or(Error::InvalidProofType)?;
+
+        // Compute VK hash (Keccak256)
+        let vk_hash = keccak256(&vk);
+        let vk_hash_fixed = FixedBytes::from(vk_hash);
+
+        // Get nested storage references (need to convert u8/u32 to Uint)
+        let proof_type_uint = U8::from(proof_type);
+        let program_id_uint = U32::from(program_id);
+        
+        let mut proof_type_storage = self.vk_registry.setter(proof_type_uint);
+        let mut program_storage = proof_type_storage.setter(program_id_uint);
+        let mut status_proof_type = self.vk_registry_status.setter(proof_type_uint);
+        let mut status_program = status_proof_type.setter(program_id_uint);
+
+        // Check if already registered (idempotent operation)
+        if !status_program.get(vk_hash_fixed) {
+            // Store VK data with triple binding
+            program_storage.setter(vk_hash_fixed).set_bytes(&vk);
+            status_program.insert(vk_hash_fixed, true);
+
+            // Precompute e(α, β) pairing for Groth16 gas optimization
+            // This is a one-time cost (~100k gas) that saves ~80k gas per verification
+            if matches!(ptype, ProofType::Groth16) {
+                match groth16::compute_precomputed_pairing(&vk) {
+                    Ok(precomputed_pairing) => {
+                        let mut precomp_proof_type = self.precomputed_data.setter(proof_type_uint);
+                        let mut precomp_program = precomp_proof_type.setter(program_id_uint);
+                        precomp_program.setter(vk_hash_fixed).set_bytes(&precomputed_pairing);
+                    }
+                    Err(_) => {
+                        // If precomputation fails, continue without optimization
+                        // Contract will fall back to standard verification
+                    }
+                }
+            }
+        }
+
+        Ok(vk_hash)
+    }
+
     /// Register a verification key with gas optimization precomputation
+    /// DEPRECATED: Use register_vk_universal() instead for proper security binding
     ///
     /// Computes and stores e(α, β) pairing for ~80k gas savings per verification.
     /// Break-even point: 2 verifications.
@@ -254,12 +331,116 @@ impl UZKVContract {
         self.verification_count.get()
     }
 
+    /// Verify a UniversalProof with (proofType, programId, vkHash) binding validation
+    ///
+    /// SECURITY: This function validates the triple binding to prevent VK substitution:
+    /// 1. Decodes UniversalProof from bytes
+    /// 2. Checks that VK is registered for (proof_type, program_id, vk_hash)
+    /// 3. Prevents user from submitting Groth16 proof with PLONK VK hash
+    /// 4. Enforces circuit isolation via program_id
+    ///
+    /// @param universal_proof_bytes - Encoded UniversalProof (46+ byte header + proof + inputs)
+    /// @return true if proof is valid
+    pub fn verify_universal(&mut self, universal_proof_bytes: Vec<u8>) -> Result<bool> {
+        // Check if contract is paused
+        if self.paused.get() {
+            return Err(Error::ContractPaused);
+        }
+
+        // Decode UniversalProof from bytes
+        let universal_proof = UniversalProof::decode(&universal_proof_bytes)
+            .ok_or(Error::InvalidProofFormat)?;
+
+        // Validate version (only v1 supported)
+        if universal_proof.version != 1 {
+            return Err(Error::InvalidProofFormat);
+        }
+
+        // Get proof type enum and convert to u8 for storage lookups
+        let ptype = universal_proof.proof_type;
+        let proof_type_u8 = ptype.to_u8();
+
+        // Compute VK hash from universal_proof
+        let vk_hash_fixed = FixedBytes::from(universal_proof.vk_hash);
+
+        // === SECURITY: Validate (proofType, programId, vkHash) triple binding ===
+        let proof_type_uint = U8::from(proof_type_u8);
+        let program_id_uint = U32::from(universal_proof.program_id);
+        
+        let proof_type_storage = self.vk_registry.getter(proof_type_uint);
+        let program_storage = proof_type_storage.getter(program_id_uint);
+        let vk_storage = program_storage.get(vk_hash_fixed);
+        
+        if vk_storage.is_empty() {
+            return Err(Error::VKNotRegistered);
+        }
+        let vk_data = vk_storage.get_bytes();
+
+        // Route to appropriate verifier based on proof type
+        let is_valid = match ptype {
+            ProofType::Groth16 => {
+                // Check if precomputed pairing is available for gas optimization
+                let precomp_proof_type = self.precomputed_data.getter(proof_type_uint);
+                let precomp_program = precomp_proof_type.getter(program_id_uint);
+                let precomputed_storage = precomp_program.get(vk_hash_fixed);
+                let precomputed_pairing = precomputed_storage.get_bytes();
+
+                if !precomputed_pairing.is_empty() {
+                    // Use optimized verification with precomputed e(α, β) (~80k gas savings)
+                    groth16::verify_with_precomputed(
+                        &universal_proof.proof_bytes,
+                        &universal_proof.public_inputs_bytes,
+                        &vk_data,
+                        &precomputed_pairing,
+                    )?
+                } else {
+                    // Fall back to standard verification
+                    groth16::verify(
+                        &universal_proof.proof_bytes,
+                        &universal_proof.public_inputs_bytes,
+                        &vk_data,
+                    )?
+                }
+            }
+            ProofType::PLONK => {
+                // PLONK verification (universal setup)
+                plonk::verify(
+                    &universal_proof.proof_bytes,
+                    &universal_proof.public_inputs_bytes,
+                    &vk_data,
+                )
+                .map_err(|_| Error::VerificationFailed)?
+            }
+            ProofType::STARK => {
+                // STARK doesn't use VKs (transparent setup)
+                // But we still validate registration for consistency
+                stark::verify_proof(
+                    &universal_proof.proof_bytes,
+                    &universal_proof.public_inputs_bytes,
+                )
+                .map_err(|_| Error::VerificationFailed)?
+            }
+        };
+
+        // Increment verification counter for valid proofs
+        if is_valid {
+            let count = self.verification_count.get();
+            self.verification_count.set(count + U256::from(1));
+        }
+
+        Ok(is_valid)
+    }
+
     /// Universal verify - routes to appropriate verifier based on proof type
+    /// DEPRECATED: Use verify_universal() with UniversalProof for proper security binding
     ///
     /// Supports multiple proof systems:
     /// - Groth16 (type 0): Trusted setup, ~60k gas
     /// - PLONK (type 1): Universal setup, ~120k gas (TODO: not yet enabled)
     /// - STARK (type 2): Transparent, ~280k gas (TODO: not yet enabled)
+    ///
+    /// WARNING: This function uses legacy storage without (proofType, programId) binding.
+    /// It is vulnerable to VK substitution attacks. Use verify_universal() instead.
     ///
     /// @param proof_type - Proof system type (0=Groth16, 1=PLONK, 2=STARK)
     /// @param proof - Serialized proof
@@ -284,7 +465,7 @@ impl UZKVContract {
         // Route to appropriate verifier
         let is_valid = match ptype {
             ProofType::Groth16 => {
-                // Retrieve verification key from storage
+                // Retrieve verification key from legacy storage
                 let vk_hash_fixed = FixedBytes::from(vk_hash);
                 let vk_storage = self.verification_keys.get(vk_hash_fixed);
                 if vk_storage.is_empty() {
