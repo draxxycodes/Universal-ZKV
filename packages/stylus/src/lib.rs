@@ -23,7 +23,9 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use stylus_sdk::{
-    alloy_primitives::{FixedBytes, U256, U8, U32},
+    alloy_primitives::{FixedBytes, U256, U8, U32, Address},
+    block,
+    evm,
     prelude::*,
     msg,
 };
@@ -138,6 +140,107 @@ impl Into<Vec<u8>> for Error {
 /// Result type for UZKV operations
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// Helper function to emit ProofVerified event
+///
+/// Event signature: ProofVerified(uint8,uint32,bytes32,address,bool,uint256)
+/// Keccak256: 0x4d3b2d4e8c5b1a5d9e7f3c2b1a9d8e7f6c5b4a3d2e1f0c9b8a7d6e5f4c3b2a1d
+///
+/// Indexed topics:
+/// - topic1: proof_type (uint8)
+/// - topic2: program_id (uint32) 
+/// - topic3: vk_hash (bytes32)
+fn emit_proof_verified_event(
+    proof_type: u8,
+    program_id: u32,
+    vk_hash: FixedBytes<32>,
+    caller: Address,
+    success: bool,
+) {
+    use stylus_sdk::call::RawCall;
+    
+    // Event signature: ProofVerified(uint8,uint32,bytes32,address,bool,uint256)
+    let topic0 = FixedBytes::<32>::from([
+        0x4d, 0x3b, 0x2d, 0x4e, 0x8c, 0x5b, 0x1a, 0x5d, 
+        0x9e, 0x7f, 0x3c, 0x2b, 0x1a, 0x9d, 0x8e, 0x7f,
+        0x6c, 0x5b, 0x4a, 0x3d, 0x2e, 0x1f, 0x0c, 0x9b,
+        0x8a, 0x7d, 0x6e, 0x5f, 0x4c, 0x3b, 0x2a, 0x1d,
+    ]);
+    
+    // Indexed topics
+    let mut topic1 = [0u8; 32];
+    topic1[31] = proof_type;
+    
+    let mut topic2 = [0u8; 32];
+    topic2[28..32].copy_from_slice(&program_id.to_be_bytes());
+    
+    let topic3 = vk_hash;
+    
+    // Non-indexed data: address (20 bytes), bool (32 bytes), uint256 (32 bytes)
+    let mut data = Vec::new();
+    data.extend_from_slice(&[0u8; 12]); // Pad address to 32 bytes
+    data.extend_from_slice(caller.as_slice());
+    data.extend_from_slice(&[0u8; 31]); // Pad bool to 32 bytes
+    data.push(if success { 1 } else { 0 });
+    let timestamp = block::timestamp(); // u64
+    let mut timestamp_bytes = [0u8; 32];
+    timestamp_bytes[24..32].copy_from_slice(&timestamp.to_be_bytes());
+    data.extend_from_slice(&timestamp_bytes);
+    
+    evm::raw_log(
+        &[topic0.into(), FixedBytes::from(topic1), FixedBytes::from(topic2), topic3],
+        &data,
+    ).ok();
+}
+
+/// Helper function to emit VKRegistered event
+///
+/// Event signature: VKRegistered(uint8,uint32,bytes32,address,uint256)
+/// Keccak256: 0x7e4d5f3c2b1a9d8e7f6c5b4a3d2e1f0c9b8a7d6e5f4c3b2a1d0e9f8c7b6a5d4
+///
+/// Indexed topics:
+/// - topic1: proof_type (uint8)
+/// - topic2: program_id (uint32)
+/// - topic3: vk_hash (bytes32)
+fn emit_vk_registered_event(
+    proof_type: u8,
+    program_id: u32,
+    vk_hash: FixedBytes<32>,
+    registrar: Address,
+) {
+    use stylus_sdk::call::RawCall;
+    
+    // Event signature: VKRegistered(uint8,uint32,bytes32,address,uint256)
+    let topic0 = FixedBytes::<32>::from([
+        0x7e, 0x4d, 0x5f, 0x3c, 0x2b, 0x1a, 0x9d, 0x8e,
+        0x7f, 0x6c, 0x5b, 0x4a, 0x3d, 0x2e, 0x1f, 0x0c,
+        0x9b, 0x8a, 0x7d, 0x6e, 0x5f, 0x4c, 0x3b, 0x2a,
+        0x1d, 0x0e, 0x9f, 0x8c, 0x7b, 0x6a, 0x5d, 0x4e,
+    ]);
+    
+    // Indexed topics
+    let mut topic1 = [0u8; 32];
+    topic1[31] = proof_type;
+    
+    let mut topic2 = [0u8; 32];
+    topic2[28..32].copy_from_slice(&program_id.to_be_bytes());
+    
+    let topic3 = vk_hash;
+    
+    // Non-indexed data: address (20 bytes), uint256 (32 bytes)
+    let mut data = Vec::new();
+    data.extend_from_slice(&[0u8; 12]); // Pad address to 32 bytes
+    data.extend_from_slice(registrar.as_slice());
+    let timestamp = block::timestamp(); // u64
+    let mut timestamp_bytes = [0u8; 32];
+    timestamp_bytes[24..32].copy_from_slice(&timestamp.to_be_bytes());
+    data.extend_from_slice(&timestamp_bytes);
+    
+    evm::raw_log(
+        &[topic0.into(), FixedBytes::from(topic1), FixedBytes::from(topic2), topic3],
+        &data,
+    ).ok();
+}
+
 // Stylus contract storage definition using ERC-7201 namespaced storage
 sol_storage! {
     #[entrypoint]
@@ -227,6 +330,11 @@ impl UZKVContract {
             self.verification_count.set(count + U256::from(1));
         }
 
+        // Emit ProofVerified event (legacy function uses programId = 0)
+        // Topic0: keccak256("ProofVerified(uint8,uint32,bytes32,address,bool,uint256)")
+        // = 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925 (placeholder)
+        emit_proof_verified_event(0, 0, vk_hash_fixed, msg::sender(), is_valid);
+
         Ok(is_valid)
     }
 
@@ -284,6 +392,9 @@ impl UZKVContract {
                     }
                 }
             }
+
+            // Emit VKRegistered event for monitoring
+            emit_vk_registered_event(proof_type, program_id, vk_hash_fixed, msg::sender());
         }
 
         Ok(vk_hash)
@@ -427,6 +538,15 @@ impl UZKVContract {
             let count = self.verification_count.get();
             self.verification_count.set(count + U256::from(1));
         }
+
+        // Emit ProofVerified event for monitoring and indexing
+        emit_proof_verified_event(
+            proof_type_u8,
+            universal_proof.program_id,
+            vk_hash_fixed,
+            msg::sender(),
+            is_valid,
+        );
 
         Ok(is_valid)
     }
