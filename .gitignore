@@ -24,6 +24,7 @@ broadcast/
 # Environment
 .env
 .env.local
+.env.sepolia
 
 # Logs
 *.log
@@ -69,3 +70,4 @@ packages/circuits/proofs/**/*_metadata.json
 !packages/circuits/proof-catalog-hashes.json
 !packages/circuits/proofs/invalid-generation-summary.json
 packages/contracts/lib/
+.env.sepolia
