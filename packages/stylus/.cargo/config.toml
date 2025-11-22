@@ -1,7 +1,8 @@
 [build]
 target = "wasm32-unknown-unknown"
-rustflags = ["-C", "link-arg=-s", "-Zunstable-options"] # Strip symbols for smaller WASM
+
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=-s"]
 
 [unstable]
 build-std = ["std", "panic_abort"]
-edition2024 = true

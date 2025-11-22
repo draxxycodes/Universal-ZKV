@@ -15,12 +15,11 @@
 
 use alloc::vec::Vec;
 use ark_bn254::{Bn254, Fr, G1Affine, G2Affine};
-use ark_ec::pairing::Pairing;
-use ark_ec::AffineRepr;
-use ark_ff::Field;
-use ark_serialize::CanonicalDeserialize;
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup, Group};
+use ark_ff::{Field, PrimeField, Zero};
+use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
 
-use crate::{Error, Result};
+use super::{Error, Result};
 
 /// Maximum commitment size in bytes (G1 point compressed)
 const MAX_COMMITMENT_SIZE: usize = 64;
@@ -92,12 +91,12 @@ pub fn verify_kzg_opening(
     // Compute C - yG₁ (commitment minus claimed evaluation times generator)
     let g1_generator = G1Affine::generator();
     let y_g1 = g1_generator.mul_bigint(claimed_eval.into_bigint());
-    let c_minus_y = (commitment - y_g1).into();
+    let c_minus_y = (commitment.into_group() - y_g1).into_affine();
 
     // Compute τG₂ - zG₂ (SRS point minus evaluation point times generator)
     let g2_generator = G2Affine::generator();
     let z_g2 = g2_generator.mul_bigint(eval_point.into_bigint());
-    let tau_minus_z = (*srs_g2 - z_g2).into();
+    let tau_minus_z = (srs_g2.into_group() - z_g2).into_affine();
 
     // Pairing check: e(C - yG₁, G₂) == e(π, τG₂ - zG₂)
     // Rearranged as: e(C - yG₁, G₂) * e(-π, τG₂ - zG₂) == 1
@@ -179,11 +178,11 @@ pub fn verify_kzg_batch_opening(
     // Verify aggregated opening using standard KZG check
     let g1_generator = G1Affine::generator();
     let y_g1 = g1_generator.mul_bigint(agg_eval.into_bigint());
-    let c_minus_y = (agg_commitment - y_g1).into();
+    let c_minus_y = (agg_commitment.into_group() - y_g1).into_affine();
 
     let g2_generator = G2Affine::generator();
     let z_g2 = g2_generator.mul_bigint(eval_point.into_bigint());
-    let tau_minus_z = (*srs_g2 - z_g2).into();
+    let tau_minus_z = (srs_g2.into_group() - z_g2).into_affine();
 
     let pairing_check = Bn254::multi_pairing(
         [c_minus_y, (-*proof).into()],
@@ -197,7 +196,7 @@ pub fn verify_kzg_batch_opening(
 ///
 /// Ensures point is on the BN254 curve and in the correct prime-order subgroup.
 /// Prevents small subgroup attacks and invalid curve attacks.
-fn validate_g1_point(point: &G1Affine) -> Result<()> {
+pub(super) fn validate_g1_point(point: &G1Affine) -> Result<()> {
     // Check point is on curve
     if !point.is_on_curve() {
         return Err(Error::MalformedProof);

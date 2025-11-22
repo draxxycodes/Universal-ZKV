@@ -14,13 +14,25 @@
 //! - BN254 Curve: Ethereum Yellow Paper Appendix E
 
 use alloc::vec::Vec;
-use ark_bn254::{Bn254, Fr, G1Affine, G2Affine};
+use ark_bn254::{Bn254, Fr, G1Affine};
 use ark_ec::pairing::Pairing;
 use ark_ec::AffineRepr;
+use ark_ff::{One, PrimeField};
 use ark_groth16::{Proof, VerifyingKey};
-use ark_serialize::CanonicalDeserialize;
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
-use crate::{Error, Result};
+// Simple error type for groth16 module
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Error {
+    DeserializationError,
+    MalformedProof,
+    InvalidVerificationKey,
+    InvalidPublicInputs,
+    VerificationFailed,
+    InvalidInputSize,
+}
+
+pub type Result<T> = core::result::Result<T, Error>;
 
 /// Maximum number of public inputs allowed (gas safety limit)
 const MAX_PUBLIC_INPUTS: usize = 256;
@@ -68,10 +80,10 @@ pub fn verify(
 ) -> Result<bool> {
     // Input size validation (prevent DoS via oversized inputs)
     if proof_bytes.len() > MAX_PROOF_SIZE {
-        return Err(Error::InvalidInputSize);
+        return Err(Error::InvalidInputSize.into());
     }
     if vk_bytes.len() > MAX_VK_SIZE {
-        return Err(Error::InvalidInputSize);
+        return Err(Error::InvalidInputSize.into());
     }
 
     // Deserialize verification key
@@ -93,7 +105,7 @@ pub fn verify(
 
     // Verify public input count matches VK
     if public_inputs.len() != vk.gamma_abc_g1.len() - 1 {
-        return Err(Error::InvalidPublicInputs);
+        return Err(Error::InvalidPublicInputs.into());
     }
 
     // Execute Groth16 verification equation
@@ -108,43 +120,44 @@ pub fn verify(
 fn validate_vk(vk: &VerifyingKey<Bn254>) -> Result<()> {
     // Validate alpha_g1 (G1 point)
     if !vk.alpha_g1.is_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
     if !vk.alpha_g1.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
 
     // Validate beta_g2 (G2 point)
     if !vk.beta_g2.is_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
     if !vk.beta_g2.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
 
     // Validate gamma_g2 (G2 point)
     if !vk.gamma_g2.is_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
     if !vk.gamma_g2.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
 
     // Validate delta_g2 (G2 point)
     if !vk.delta_g2.is_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
     if !vk.delta_g2.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::InvalidVerificationKey);
+        return Err(Error::InvalidVerificationKey.into());
     }
 
     // Validate gamma_abc_g1 points (G1 points for public input encoding)
     for point in &vk.gamma_abc_g1 {
+        let point: &G1Affine = point;
         if !point.is_on_curve() {
-            return Err(Error::InvalidVerificationKey);
+            return Err(Error::InvalidVerificationKey.into());
         }
         if !point.is_in_correct_subgroup_assuming_on_curve() {
-            return Err(Error::InvalidVerificationKey);
+            return Err(Error::InvalidVerificationKey.into());
         }
     }
 
@@ -159,26 +172,26 @@ fn validate_vk(vk: &VerifyingKey<Bn254>) -> Result<()> {
 fn validate_proof(proof: &Proof<Bn254>) -> Result<()> {
     // Validate A (G1 point)
     if !proof.a.is_on_curve() {
-        return Err(Error::MalformedProof);
+        return Err(Error::MalformedProof.into());
     }
     if !proof.a.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::MalformedProof);
+        return Err(Error::MalformedProof.into());
     }
 
     // Validate B (G2 point)
     if !proof.b.is_on_curve() {
-        return Err(Error::MalformedProof);
+        return Err(Error::MalformedProof.into());
     }
     if !proof.b.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::MalformedProof);
+        return Err(Error::MalformedProof.into());
     }
 
     // Validate C (G1 point)
     if !proof.c.is_on_curve() {
-        return Err(Error::MalformedProof);
+        return Err(Error::MalformedProof.into());
     }
     if !proof.c.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(Error::MalformedProof);
+        return Err(Error::MalformedProof.into());
     }
 
     Ok(())
@@ -191,12 +204,12 @@ fn validate_proof(proof: &Proof<Bn254>) -> Result<()> {
 fn deserialize_public_inputs(bytes: &[u8]) -> Result<Vec<Fr>> {
     // Check if bytes length is multiple of field element size
     if bytes.len() % 32 != 0 {
-        return Err(Error::InvalidPublicInputs);
+        return Err(Error::InvalidPublicInputs.into());
     }
 
     let num_inputs = bytes.len() / 32;
     if num_inputs > MAX_PUBLIC_INPUTS {
-        return Err(Error::InvalidInputSize);
+        return Err(Error::InvalidInputSize.into());
     }
 
     let mut inputs = Vec::with_capacity(num_inputs);
@@ -234,10 +247,10 @@ pub fn verify_with_precomputed(
 ) -> Result<bool> {
     // Input size validation
     if proof_bytes.len() > MAX_PROOF_SIZE {
-        return Err(Error::InvalidInputSize);
+        return Err(Error::InvalidInputSize.into());
     }
     if vk_bytes.len() > MAX_VK_SIZE {
-        return Err(Error::InvalidInputSize);
+        return Err(Error::InvalidInputSize.into());
     }
 
     // Deserialize verification key
@@ -259,11 +272,12 @@ pub fn verify_with_precomputed(
 
     // Verify public input count matches VK
     if public_inputs.len() != vk.gamma_abc_g1.len() - 1 {
-        return Err(Error::InvalidPublicInputs);
+        return Err(Error::InvalidPublicInputs.into());
     }
 
     // Deserialize precomputed e(α, β)
     use ark_ec::pairing::PairingOutput;
+    use ark_serialize::CanonicalDeserialize;
     let precomputed_alpha_beta = PairingOutput::<Bn254>::deserialize_compressed(precomputed_alpha_beta_bytes)
         .map_err(|_| Error::InvalidVerificationKey)?;
 
@@ -295,12 +309,14 @@ pub fn compute_precomputed_pairing(vk_bytes: &[u8]) -> Result<Vec<u8>> {
     // Validate VK
     validate_vk(&vk)?;
 
-    // Compute e(α, β)
-    let alpha_beta_pairing = Bn254::pairing(vk.alpha_g1, vk.beta_g2);
+    // Compute e(α, β) pairing and wrap in PairingOutput
+    use ark_ec::pairing::PairingOutput;
+    let alpha_beta_pairing: PairingOutput<Bn254> = Bn254::pairing(vk.alpha_g1, vk.beta_g2).into();
 
     // Serialize the pairing result
     let mut bytes = Vec::new();
-    alpha_beta_pairing.serialize_compressed(&mut bytes)
+    alpha_beta_pairing
+        .serialize_with_mode(&mut bytes, ark_serialize::Compress::Yes)
         .map_err(|_| Error::InvalidVerificationKey)?;
 
     Ok(bytes)
@@ -324,11 +340,10 @@ fn verify_proof_with_precomputed(
     public_inputs: &[Fr],
     precomputed_alpha_beta: &ark_ec::pairing::PairingOutput<Bn254>,
 ) -> Result<bool> {
-    use ark_ec::pairing::PairingOutput;
-
     // Compute L = gamma_abc_g1[0] + sum(public_inputs[i] * gamma_abc_g1[i+1])
     let mut l = vk.gamma_abc_g1[0];
     for (i, input) in public_inputs.iter().enumerate() {
+        let input: &Fr = input;
         let term = vk.gamma_abc_g1[i + 1].mul_bigint(input.into_bigint());
         l = (l + term).into();
     }
@@ -372,6 +387,7 @@ fn verify_proof_internal(
     let mut l = vk.gamma_abc_g1[0];
 
     for (i, input) in public_inputs.iter().enumerate() {
+        let input: &Fr = input;
         // Scalar multiplication: input * gamma_abc_g1[i+1]
         let term = vk.gamma_abc_g1[i + 1].mul_bigint(input.into_bigint());
         // Add to accumulator
@@ -401,7 +417,9 @@ fn verify_proof_internal(
     );
 
     // Verification succeeds if pairing product equals 1 (identity element)
-    Ok(pairing_check.is_zero())
+    // In ark 0.4, we check equality with the target group's identity wrapped in PairingOutput
+    use ark_ec::pairing::PairingOutput;
+    Ok(pairing_check == PairingOutput(<<Bn254 as Pairing>::TargetField>::one()))
 }
 
 /// Batch verify multiple Groth16 proofs with the same verification key
@@ -431,7 +449,7 @@ pub fn batch_verify(
 ) -> Result<Vec<bool>> {
     // Validate input lengths match
     if proofs.len() != public_inputs.len() {
-        return Err(Error::InvalidInputSize);
+        return Err(Error::InvalidInputSize.into());
     }
 
     // Return empty for empty batch
@@ -445,9 +463,10 @@ pub fn batch_verify(
     validate_vk(&vk)?;
 
     // Deserialize precomputed pairing if available
+    use ark_ec::pairing::PairingOutput;
     let precomputed = if !precomputed_pairing_bytes.is_empty() {
         Some(
-            <Bn254 as Pairing>::TargetField::deserialize_compressed(precomputed_pairing_bytes)
+            PairingOutput::<Bn254>::deserialize_compressed(precomputed_pairing_bytes)
                 .map_err(|_| Error::InvalidVerificationKey)?,
         )
     } else {
@@ -503,7 +522,8 @@ pub fn batch_verify(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ark_bn254::{Fq, Fq2, G1Projective, G2Projective};
+    use alloc::vec;
+    use ark_bn254::{G1Projective, G2Projective};
     use ark_ec::CurveGroup;
     use ark_serialize::CanonicalSerialize;
     use ark_std::UniformRand;
@@ -566,7 +586,7 @@ mod tests {
         let bytes = vec![0u8; (MAX_PUBLIC_INPUTS + 1) * 32];
         assert_eq!(
             deserialize_public_inputs(&bytes),
-            Err(Error::InvalidInputSize)
+            Err(Error::InvalidInputSize.into())
         );
     }
 
@@ -576,14 +596,14 @@ mod tests {
         let oversized_proof = vec![0u8; MAX_PROOF_SIZE + 1];
         assert_eq!(
             verify(&oversized_proof, &[], &[]),
-            Err(Error::InvalidInputSize)
+            Err(Error::InvalidInputSize.into())
         );
 
         // Test VK size limit
         let oversized_vk = vec![0u8; MAX_VK_SIZE + 1];
         assert_eq!(
             verify(&[], &[], &oversized_vk),
-            Err(Error::InvalidInputSize)
+            Err(Error::InvalidInputSize.into())
         );
     }
 }

@@ -1,7 +1,8 @@
 //! STARK verifier implementation
 
 use alloc::vec::Vec;
-use crate::{Error, Result, SecurityLevel, GasEstimate, FibonacciProof};
+use super::types::{Error, Result, SecurityLevel, GasEstimate};
+use super::fibonacci::FibonacciProof;
 
 /// STARK verifier for Fibonacci proofs
 pub struct StarkVerifier {

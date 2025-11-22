@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2025-11-22T19:23:02.457Z",
+  "version": "1.0.0",
+  "summary": {
+    "totalInputs": 750,
+    "totalProofs": 500,
+    "validInputs": 600,
+    "invalidInputs": 150
+  },
+  "circuits": {
+    "poseidon_test": {
+      "constraints": 601,
+      "validInputs": 200,
+      "invalidInputs": 50,
+      "proofsGenerated": 250,
+      "inputsDir": "test-inputs/poseidon_test",
+      "proofsDir": "proofs/plonk/poseidon_test",
+      "zkeyFile": "build/poseidon_test_plonk.zkey",
+      "vkFile": "build/poseidon_test_plonk_vk.json"
+    },
+    "eddsa_verify": {
+      "constraints": 23793,
+      "validInputs": 200,
+      "invalidInputs": 50,
+      "proofsGenerated": 250,
+      "inputsDir": "test-inputs/eddsa_verify",
+      "proofsDir": "proofs/plonk/eddsa_verify",
+      "zkeyFile": "build/eddsa_verify_plonk.zkey",
+      "vkFile": "build/eddsa_verify_plonk_vk.json"
+    },
+    "merkle_proof": {
+      "constraints": 12886,
+      "validInputs": 200,
+      "invalidInputs": 50,
+      "proofsGenerated": 0,
+      "inputsDir": "test-inputs/merkle_proof",
+      "proofsDir": "proofs/plonk/merkle_proof",
+      "zkeyFile": "build/merkle_proof_plonk.zkey",
+      "vkFile": "build/merkle_proof_plonk_vk.json"
+    }
+  },
+  "usage": {
+    "verifyProof": "node scripts/plonk-cli.cjs verify <circuit> <proof>",
+    "batchVerify": "find proofs/plonk/<circuit> -name proof.json -exec node scripts/plonk-cli.cjs verify <circuit> {} \\;",
+    "integrationTests": "pnpm test --filter @uzkv/circuits"
+  }
+}

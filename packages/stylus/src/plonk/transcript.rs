@@ -20,7 +20,7 @@ use ark_ff::{Field, PrimeField};
 use ark_serialize::CanonicalSerialize;
 use sha3::{Digest, Keccak256};
 
-use crate::{Error, Result};
+use super::{Error, Result};
 
 /// Fiat-Shamir transcript for PLONK protocol
 ///
@@ -209,16 +209,26 @@ impl Transcript {
 ///
 /// Standardized labels for PLONK rounds to ensure compatibility.
 pub mod labels {
+    /// Protocol domain label
+    pub const PLONK_PROTOCOL: &[u8] = b"plonk_bn254_v1";
+    
+    /// Verification key labels
+    pub const VK_DOMAIN: &[u8] = b"plonk_vk";
+    
     /// Wire commitment labels
     pub const WIRE_A: &[u8] = b"plonk_wire_a";
     pub const WIRE_B: &[u8] = b"plonk_wire_b";
     pub const WIRE_C: &[u8] = b"plonk_wire_c";
+    pub const WIRE_COMMITMENT: &[u8] = b"plonk_wire_comm";
     
     /// Permutation commitment labels
     pub const PERM_Z: &[u8] = b"plonk_perm_z";
+    pub const PERMUTATION_COMMITMENT: &[u8] = b"plonk_perm_comm";
+    pub const PERMUTATION_EVAL: &[u8] = b"plonk_perm_eval";
     
     /// Quotient commitment labels
     pub const QUOTIENT_T: &[u8] = b"plonk_quotient_t";
+    pub const QUOTIENT_COMMITMENT: &[u8] = b"plonk_quotient_comm";
     
     /// Challenge labels
     pub const CHALLENGE_BETA: &[u8] = b"plonk_challenge_beta";
@@ -226,13 +236,28 @@ pub mod labels {
     pub const CHALLENGE_ALPHA: &[u8] = b"plonk_challenge_alpha";
     pub const CHALLENGE_ZETA: &[u8] = b"plonk_challenge_zeta";
     pub const CHALLENGE_V: &[u8] = b"plonk_challenge_v";
+    pub const CHALLENGE_U: &[u8] = b"plonk_challenge_u";
+    
+    /// Shorter aliases for common use
+    pub const BETA_CHALLENGE: &[u8] = b"plonk_beta";
+    pub const GAMMA_CHALLENGE: &[u8] = b"plonk_gamma";
+    pub const ALPHA_CHALLENGE: &[u8] = b"plonk_alpha";
+    pub const ZETA_CHALLENGE: &[u8] = b"plonk_zeta";
+    pub const V_CHALLENGE: &[u8] = b"plonk_v";
+    pub const U_CHALLENGE: &[u8] = b"plonk_u";
+    
+    /// Evaluation labels
+    pub const WIRE_EVAL: &[u8] = b"plonk_wire_eval";
+    pub const SELECTOR_EVAL: &[u8] = b"plonk_selector_eval";
     
     /// Opening proof labels
     pub const OPENING_W: &[u8] = b"plonk_opening_w";
     pub const OPENING_W_OMEGA: &[u8] = b"plonk_opening_w_omega";
+    pub const OPENING_PROOF: &[u8] = b"plonk_opening_proof";
     
     /// Public inputs label
     pub const PUBLIC_INPUTS: &[u8] = b"plonk_public_inputs";
+    pub const PUBLIC_INPUT: &[u8] = b"plonk_public_input";
 }
 
 #[cfg(test)]

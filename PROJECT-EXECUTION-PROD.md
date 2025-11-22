@@ -738,25 +738,53 @@ git branch -M main
 
 ---
 
-## 🦀 Phase 2: Core Cryptography - Groth16 (Weeks 2-5) - 3/5 COMPLETE (60%)
+## 🦀 Phase 2: Core Cryptography - Groth16 (Weeks 2-5) - ✅ COMPLETE (100%)
 **Goal:** Build the high-performance, `no_std` Groth16 verification engine.
 
 **Completion Status:**
 - ✅ Task 2.1: Supply Chain Security - COMPLETE
 - ✅ Task 2.2: Groth16 Verifier Module - COMPLETE  
 - ✅ Task 2.3: Gas Optimization - COMPLETE
-- ⏳ Task 2.4: Verification Key Registry - PENDING
-- ⏳ Task 2.5: Integration Tests - PENDING
+- ✅ Task 2.4: Verification Key Registry - COMPLETE (integrated in lib.rs)
+- ✅ Task 2.5: Integration Tests - COMPLETE (in Phase 6.5)
 
 ---
 
-## 🌟 Phase 3: PLONK Verifier (Week 6) - COMPLETE (100%) ✅
+## 🌟 Phase 3: PLONK Verifier (Week 6) - ⚠️ BUILT BUT NOT INTEGRATED (80%)
 **Goal:** Implement universal trusted setup proof system with KZG commitments.
+
+**⚠️ CRITICAL GAP IDENTIFIED:** PLONK is fully implemented as a standalone module but NOT integrated into the main contract.
 
 **Completion Status:**
 - ✅ Task 3.1: PLONK Verifier Implementation - COMPLETE (2,300+ lines, 31 tests)
+  - ✅ Location: `packages/stylus/plonk/` (separate module)
+  - ✅ Core files: plonk.rs, kzg.rs, transcript.rs, srs.rs
+  - ✅ All 31 tests passing
+  - ❌ **NOT exposed in main lib.rs contract**
+  - ❌ **NOT callable via ABI**
+  
 - ✅ Task 3.2: Fiat-Shamir Transcript - COMPLETE (integrated in 3.1)
+  - ✅ Implementation: `packages/stylus/plonk/src/transcript.rs` (350+ lines)
+  - ✅ Keccak256-based challenge generation
+  - ✅ Domain separation with protocol labels
+  - ✅ 8 comprehensive tests
+
 - ✅ Task 3.3: SRS (Structured Reference String) Management - COMPLETE (integrated in 3.1)
+  - ✅ Implementation: `packages/stylus/plonk/src/srs.rs`
+  - ✅ Powers of Tau management
+  - ✅ KZG commitment support
+
+**Gas Benchmarking Results:**
+- ✅ PLONK verification: ~950k gas (from tests)
+- ⚠️ Not yet benchmarked in main contract (not integrated)
+
+**NEXT REQUIRED STEPS:**
+1. ❌ **Add PLONK module to main lib.rs** - HIGH PRIORITY
+2. ❌ **Create `verify_plonk()` public function** - HIGH PRIORITY
+3. ❌ **Update Cargo.toml to include PLONK as workspace dependency**
+4. ❌ **Generate unified ABI with PLONK support**
+5. ❌ **Create IPlonkVerifier.sol Solidity interface**
+6. ❌ **Integration tests with main contract**
 
 **Bonus Task (Phase 3C):**
 - ✅ **STARK Verifier** - COMPLETE (700+ lines, 18 tests, production-ready)
@@ -951,20 +979,26 @@ git branch -M main
 
 ---
 
-## ⚡ Phase 3C: STARK Verifier (Week 6.5) - ✅ COMPLETE (+2 POINTS EARNED)
+## ⚡ Phase 3C: STARK Verifier (Week 6.5) - ⚠️ BUILT BUT NOT INTEGRATED (70%)
 
 **Goal:** Transparent zero-knowledge (no trusted setup).
 
+**⚠️ CRITICAL GAP IDENTIFIED:** STARK is fully implemented as a standalone module but NOT integrated into the main contract.
+
 **Implementation:**
 - ✅ **Simplified STARK Verifier** (packages/stylus/stark-simple/)
-- ✅ **700+ lines of production Rust code** (lib, types, fibonacci, verifier modules)
-- ✅ **Transparent setup** (no trusted ceremony required)
-- ✅ **Post-quantum secure** (Blake3 hash-based proofs)
-- ✅ **Gas efficient:** 239k-352k gas (47% cheaper than Groth16, 75% cheaper than PLONK)
-- ✅ **18 comprehensive tests** (9 unit + 9 integration, 100% API coverage)
-- ✅ **Gas benchmarking complete** with breakdown analysis
-- ✅ **Compiles successfully** (cargo check passes)
-- ✅ **Production-ready** for Arbitrum Stylus deployment
+  - ✅ 700+ lines of production Rust code (lib, types, fibonacci, verifier modules)
+  - ✅ Transparent setup (no trusted ceremony required)
+  - ✅ Post-quantum secure (Blake3 hash-based proofs)
+  - ✅ 18 comprehensive tests (9 unit + 9 integration, 100% API coverage)
+  - ✅ Compiles successfully (cargo check passes)
+  - ❌ **NOT exposed in main lib.rs contract**
+  - ❌ **NOT callable via ABI**
+
+- ✅ **Winterfell-based STARK** (packages/stylus/stark/)
+  - ✅ 1500+ lines advanced implementation
+  - ✅ FRI protocol complete
+  - ❌ **NOT integrated into main contract**
 
 **Gas Benchmarking Results:**
 
@@ -978,7 +1012,349 @@ git branch -M main
 - `execution_steps_details/task-3c-stark-verifier.md` (Implementation guide)
 - `execution_steps_details/task-3c-gas-benchmarking.md` (Gas analysis)
 
-**DoD:** ✅ STARK WASM module | ✅ Comprehensive tests | ✅ Transparent setup | ✅ Gas benchmarked | ✅ PRODUCTION-READY
+**NEXT REQUIRED STEPS:**
+1. ❌ **Choose between stark-simple (recommended) or stark (advanced)** - HIGH PRIORITY
+2. ❌ **Add STARK module to main lib.rs** - HIGH PRIORITY
+3. ❌ **Create `verify_stark()` public function** - HIGH PRIORITY
+4. ❌ **Update Cargo.toml to include STARK as workspace dependency**
+5. ❌ **Generate unified ABI with STARK support**
+6. ❌ **Create IStarkVerifier.sol Solidity interface**
+7. ❌ **Integration tests with main contract**
+
+**DoD:** ✅ STARK WASM module | ✅ Comprehensive tests | ✅ Transparent setup | ✅ Gas benchmarked | ⚠️ NOT INTEGRATED
+
+---
+
+## 🚨 **PHASE 3D: UNIVERSAL VERIFIER INTEGRATION (Week 7) - ⚠️ CRITICAL - NOT STARTED**
+
+**Goal:** Integrate PLONK and STARK verifiers into main contract to create the TRUE Universal ZKV.
+
+**⚠️ CRITICAL BLOCKER:** This phase is ESSENTIAL for achieving the project's core mission. Currently, we have a "Groth16-only verifier" masquerading as a "Universal ZKV."
+
+### 🔧 Task 3D.1: Multi-Proof Architecture Refactoring
+**Context:** The current `lib.rs` only exposes Groth16. We need to add PLONK and STARK.
+
+**Detailed Instructions:**
+
+1. **Create ProofType Enum in lib.rs:**
+   ```rust
+   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+   pub enum ProofType {
+       Groth16 = 1,
+       PLONK = 2,
+       STARK = 3,
+   }
+   ```
+
+2. **Add Module Imports:**
+   ```rust
+   pub mod groth16;
+   pub mod plonk;     // ADD THIS
+   pub mod stark;     // ADD THIS
+   ```
+
+3. **Update Storage for Multi-Proof:**
+   ```rust
+   #[storage]
+   #[entrypoint]
+   pub struct UZKVContract {
+       verification_count: StorageU256,
+       // Separate VK storage per proof type
+       groth16_vks: StorageMap<FixedBytes<32>, StorageBytes>,
+       plonk_vks: StorageMap<FixedBytes<32>, StorageBytes>,
+       stark_vks: StorageMap<FixedBytes<32>, StorageBytes>,
+       vk_registered: StorageMap<FixedBytes<32>, StorageBool>,
+       // Statistics per proof type
+       groth16_count: StorageU256,
+       plonk_count: StorageU256,
+       stark_count: StorageU256,
+   }
+   ```
+
+4. **Implement Unified Verify Function:**
+   ```rust
+   pub fn verify(
+       &mut self,
+       proof_type: u8,
+       proof: Vec<u8>,
+       public_inputs: Vec<u8>,
+       vk_hash: FixedBytes<32>,
+   ) -> Result<bool, Vec<u8>> {
+       match proof_type {
+           1 => self.verify_groth16(proof, public_inputs, vk_hash),
+           2 => self.verify_plonk(proof, public_inputs, vk_hash),
+           3 => self.verify_stark(proof, public_inputs, vk_hash),
+           _ => Err(b"Unsupported proof type".to_vec()),
+       }
+   }
+   ```
+
+5. **Add PLONK Verification Function:**
+   ```rust
+   pub fn verify_plonk(
+       &mut self,
+       proof: Vec<u8>,
+       public_inputs: Vec<u8>,
+       vk_hash: FixedBytes<32>,
+   ) -> Result<bool, Vec<u8>> {
+       // Load VK from storage
+       let vk_data = self.plonk_vks.get(vk_hash).get_bytes();
+       if vk_data.is_empty() {
+           return Err(b"PLONK VK not registered".to_vec());
+       }
+       
+       // Delegate to PLONK module
+       let is_valid = plonk::verify(&proof, &public_inputs, &vk_data)
+           .map_err(|_| b"PLONK verification failed".to_vec())?;
+       
+       if is_valid {
+           let count = self.plonk_count.get();
+           self.plonk_count.set(count + U256::from(1));
+       }
+       
+       Ok(is_valid)
+   }
+   ```
+
+6. **Add STARK Verification Function:**
+   ```rust
+   pub fn verify_stark(
+       &mut self,
+       proof: Vec<u8>,
+       public_inputs: Vec<u8>,
+       vk_hash: FixedBytes<32>,
+   ) -> Result<bool, Vec<u8>> {
+       // Load VK from storage
+       let vk_data = self.stark_vks.get(vk_hash).get_bytes();
+       if vk_data.is_empty() {
+           return Err(b"STARK VK not registered".to_vec());
+       }
+       
+       // Delegate to STARK module
+       let is_valid = stark::verify(&proof, &public_inputs, &vk_data)
+           .map_err(|_| b"STARK verification failed".to_vec())?;
+       
+       if is_valid {
+           let count = self.stark_count.get();
+           self.stark_count.set(count + U256::from(1));
+       }
+       
+       Ok(is_valid)
+   }
+   ```
+
+7. **Update VK Registration:**
+   ```rust
+   pub fn register_vk(
+       &mut self,
+       proof_type: u8,
+       vk: Vec<u8>
+   ) -> Result<FixedBytes<32>, Vec<u8>> {
+       let vk_hash = keccak(&vk);
+       
+       if !self.vk_registered.get(vk_hash) {
+           match proof_type {
+               1 => self.groth16_vks.setter(vk_hash).set_bytes(&vk),
+               2 => self.plonk_vks.setter(vk_hash).set_bytes(&vk),
+               3 => self.stark_vks.setter(vk_hash).set_bytes(&vk),
+               _ => return Err(b"Unsupported proof type".to_vec()),
+           }
+           self.vk_registered.setter(vk_hash).set(true);
+       }
+       
+       Ok(vk_hash)
+   }
+   ```
+
+### 📦 Task 3D.2: Workspace Configuration
+
+1. **Update packages/stylus/Cargo.toml:**
+   ```toml
+   [workspace]
+   members = [
+       ".",
+       "plonk",
+       "stark-simple",
+   ]
+   
+   [dependencies]
+   stylus-sdk = "0.10.0-rc.1"
+   ark-bn254 = { version = "0.5", default-features = false }
+   ark-ec = { version = "0.5", default-features = false }
+   ark-ff = { version = "0.5", default-features = false }
+   ark-serialize = { version = "0.5", default-features = false }
+   ark-groth16 = { version = "0.5", default-features = false }
+   
+   # Add PLONK and STARK as local dependencies
+   plonk = { path = "./plonk" }
+   stark-simple = { path = "./stark-simple" }
+   ```
+
+2. **Create plonk/Cargo.toml:**
+   ```toml
+   [package]
+   name = "plonk"
+   version = "0.1.0"
+   edition = "2021"
+   
+   [lib]
+   crate-type = ["rlib"]
+   
+   [dependencies]
+   stylus-sdk = "0.10.0-rc.1"
+   # ... existing PLONK dependencies
+   ```
+
+3. **Create stark-simple/Cargo.toml:**
+   ```toml
+   [package]
+   name = "stark-simple"
+   version = "0.1.0"
+   edition = "2021"
+   
+   [lib]
+   crate-type = ["rlib"]
+   
+   [dependencies]
+   stylus-sdk = "0.10.0-rc.1"
+   # ... existing STARK dependencies
+   ```
+
+### 🧪 Task 3D.3: Integration Tests
+
+**Create packages/stylus/tests/universal_verifier.rs:**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_verify_all_proof_types() {
+        let mut contract = UZKVContract::default();
+        
+        // Test Groth16
+        let groth16_vk_hash = contract.register_vk(1, groth16_vk_data).unwrap();
+        let groth16_result = contract.verify(1, groth16_proof, groth16_inputs, groth16_vk_hash).unwrap();
+        assert!(groth16_result);
+        
+        // Test PLONK
+        let plonk_vk_hash = contract.register_vk(2, plonk_vk_data).unwrap();
+        let plonk_result = contract.verify(2, plonk_proof, plonk_inputs, plonk_vk_hash).unwrap();
+        assert!(plonk_result);
+        
+        // Test STARK
+        let stark_vk_hash = contract.register_vk(3, stark_vk_data).unwrap();
+        let stark_result = contract.verify(3, stark_proof, stark_inputs, stark_vk_hash).unwrap();
+        assert!(stark_result);
+    }
+    
+    #[test]
+    fn test_reject_unsupported_proof_type() {
+        let mut contract = UZKVContract::default();
+        
+        let result = contract.verify(99, vec![], vec![], FixedBytes::default());
+        assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_statistics_per_proof_type() {
+        let mut contract = UZKVContract::default();
+        
+        // Verify 3 Groth16 proofs
+        for _ in 0..3 {
+            contract.verify_groth16(proof.clone(), inputs.clone(), vk_hash).unwrap();
+        }
+        
+        // Verify 2 PLONK proofs
+        for _ in 0..2 {
+            contract.verify_plonk(proof.clone(), inputs.clone(), vk_hash).unwrap();
+        }
+        
+        assert_eq!(contract.groth16_count.get(), U256::from(3));
+        assert_eq!(contract.plonk_count.get(), U256::from(2));
+        assert_eq!(contract.stark_count.get(), U256::from(0));
+    }
+}
+```
+
+### 📋 Task 3D.4: Solidity Interface Update
+
+**Update packages/contracts/src/interfaces/IGroth16Verifier.sol → IUniversalVerifier.sol:**
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+interface IUniversalVerifier {
+    enum ProofType {
+        GROTH16,
+        PLONK,
+        STARK
+    }
+    
+    /// Unified verification function
+    function verify(
+        uint8 proofType,
+        bytes calldata proof,
+        bytes calldata publicInputs,
+        bytes32 vkHash
+    ) external returns (bool);
+    
+    /// Type-specific verification functions
+    function verifyGroth16(
+        bytes calldata proof,
+        bytes calldata publicInputs,
+        bytes32 vkHash
+    ) external returns (bool);
+    
+    function verifyPlonk(
+        bytes calldata proof,
+        bytes calldata publicInputs,
+        bytes32 vkHash
+    ) external returns (bool);
+    
+    function verifyStark(
+        bytes calldata proof,
+        bytes calldata publicInputs,
+        bytes32 vkHash
+    ) external returns (bool);
+    
+    /// Register verification key for specific proof type
+    function registerVK(uint8 proofType, bytes calldata vkData) external returns (bytes32);
+    
+    /// Get verification count by proof type
+    function getVerificationCount() external view returns (uint256 total);
+    function getGroth16Count() external view returns (uint256);
+    function getPlonkCount() external view returns (uint256);
+    function getStarkCount() external view returns (uint256);
+    
+    /// Check if VK is registered
+    function isVKRegistered(bytes32 vkHash) external view returns (bool);
+}
+```
+
+### 📋 Phase 3D Definition of Done
+
+**Before proceeding, verify:**
+
+1. ✅ **ProofType enum defined** in lib.rs
+2. ✅ **plonk and stark modules imported** in lib.rs
+3. ✅ **Storage updated** for multi-proof support
+4. ✅ **`verify()` function** routes to correct verifier based on type
+5. ✅ **`verify_plonk()` function** implemented and tested
+6. ✅ **`verify_stark()` function** implemented and tested
+7. ✅ **VK registry** supports all three proof types
+8. ✅ **Workspace members** configured in Cargo.toml
+9. ✅ **Integration tests** pass for all proof types
+10. ✅ **Solidity ABI** updated to IUniversalVerifier.sol
+11. ✅ **Build succeeds** (`cargo stylus build --release`)
+12. ✅ **Gas benchmarks** for all three proof types
+13. ✅ **Statistics tracking** per proof type working
+
+**🚨 CRITICAL:** This is the MOST IMPORTANT phase. Without this, the project is NOT a Universal ZKV. All three verifiers are built—they just need to be wired together.
+
+**Estimated Time:** 3-5 days (was missing from original 23-week plan)
+
+**Priority:** **IMMEDIATE** - This should be the NEXT task after Phase 3C.
 
 ---
 

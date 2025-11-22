@@ -71,3 +71,15 @@ packages/circuits/proofs/**/*_metadata.json
 !packages/circuits/proofs/invalid-generation-summary.json
 packages/contracts/lib/
 .env.sepolia
+
+# Exclude generated proofs (1000+ files)
+packages/circuits/proofs/
+packages/plonk-service/proofs/
+
+# Exclude proof metadata and catalogs
+packages/circuits/proof-catalog.json
+packages/circuits/test-corpus-catalog.json
+packages/circuits/proofs/generation-summary.json
+
+# Exclude test inputs (generated)
+packages/circuits/test-inputs/

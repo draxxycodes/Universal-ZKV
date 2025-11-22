@@ -4,7 +4,7 @@
 
 use alloc::vec::Vec;
 use alloc::vec;
-use crate::{Error, Result};
+use super::types::{Error, Result};
 
 /// Fibonacci execution trace
 #[derive(Debug, Clone)]
@@ -70,7 +70,7 @@ pub struct FibonacciProof {
     
     /// Sampled trace values (for random queries)
     pub query_values: Vec<(usize, u64)>,
-    
+     
     /// Merkle proofs for queries
     pub merkle_proofs: Vec<Vec<[u8; 32]>>,
     

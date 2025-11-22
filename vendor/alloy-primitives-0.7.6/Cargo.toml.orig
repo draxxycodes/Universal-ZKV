@@ -1,0 +1,114 @@
+[package]
+name = "alloy-primitives"
+description = "Ethereum primitive types"
+keywords = ["ethers", "primitives", "ethereum", "revm", "reth"]
+categories = ["no-std", "data-structures", "cryptography::cryptocurrencies"]
+homepage = "https://github.com/alloy-rs/core/tree/main/crates/primitives"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+exclude.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+bytes.workspace = true
+hex-literal.workspace = true
+hex.workspace = true
+itoa.workspace = true
+ruint.workspace = true
+tiny-keccak = { workspace = true, features = ["keccak"] }
+keccak-asm = { workspace = true, optional = true }
+
+# macros
+derive_more.workspace = true
+cfg-if.workspace = true
+
+# rlp
+alloy-rlp = { workspace = true, optional = true }
+
+# serde
+serde = { workspace = true, optional = true, features = ["derive"] }
+
+# ssz
+ethereum_ssz = { workspace = true, optional = true }
+
+# getrandom
+getrandom = { workspace = true, optional = true }
+
+# rand
+rand = { workspace = true, optional = true, features = ["getrandom"] }
+
+# k256
+k256 = { workspace = true, optional = true, features = ["ecdsa"] }
+
+# arbitrary
+arbitrary = { workspace = true, optional = true }
+derive_arbitrary = { workspace = true, optional = true }
+proptest = { workspace = true, optional = true }
+proptest-derive = { workspace = true, optional = true }
+
+# allocative
+allocative = { workspace = true, optional = true }
+
+# postgres
+postgres-types = { workspace = true, optional = true }
+
+[dev-dependencies]
+bcs.workspace = true
+bincode.workspace = true
+criterion.workspace = true
+serde_json.workspace = true
+
+[features]
+default = ["std"]
+std = [
+    "bytes/std",
+    "hex/std",
+    "ruint/std",
+    "alloy-rlp?/std",
+    "keccak-asm?/std",
+    "proptest?/std",
+    "rand?/std",
+    "serde?/std",
+    "k256?/std",
+]
+
+tiny-keccak = []
+native-keccak = []
+asm-keccak = ["dep:keccak-asm"]
+
+postgres = ["std", "dep:postgres-types", "ruint/postgres"]
+getrandom = ["dep:getrandom"]
+rand = ["dep:rand", "getrandom", "ruint/rand"]
+rlp = ["dep:alloy-rlp", "ruint/alloy-rlp"]
+serde = ["dep:serde", "bytes/serde", "hex/serde", "ruint/serde"]
+ssz = ["std", "dep:ethereum_ssz", "ruint/ssz"]
+arbitrary = [
+    "std",
+    "dep:arbitrary",
+    "dep:derive_arbitrary",
+    "dep:proptest",
+    "dep:proptest-derive",
+    "ruint/arbitrary",
+    "ruint/proptest",
+    "ethereum_ssz?/arbitrary",
+]
+k256 = ["dep:k256"]
+allocative = ["dep:allocative"]
+
+# `const-hex` compatibility feature for `hex`.
+# Should not be needed most of the time.
+hex-compat = ["hex/hex"]
+
+[[bench]]
+name = "primitives"
+path = "benches/primitives.rs"
+harness = false
+required-features = ["rand"]

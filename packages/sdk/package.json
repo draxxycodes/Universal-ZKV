@@ -1,0 +1,38 @@
+{
+  "name": "@uzkv/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Universal ZK Verifier",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "zero-knowledge",
+    "zk-snark",
+    "groth16",
+    "plonk",
+    "stark",
+    "verification",
+    "arbitrum",
+    "stylus"
+  ],
+  "dependencies": {
+    "viem": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

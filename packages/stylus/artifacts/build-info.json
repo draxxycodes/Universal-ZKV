@@ -1,0 +1,12 @@
+{
+  "buildDate": "2025-11-22T05:23:59Z",
+  "gitCommit": "deb59d1ba",
+  "gitBranch": "master",
+  "rustVersion": "rustc 1.93.0-nightly (53732d5e0 2025-11-20)",
+  "cargoStylusVersion": "stylus 0.6.3",
+  "wasmOptVersion": "wasm-opt version 108",
+  "unoptimizedSize": 151662,
+  "optimizedSize": 114996,
+  "sizeReduction": "25%",
+  "withinSizeLimit": true
+}

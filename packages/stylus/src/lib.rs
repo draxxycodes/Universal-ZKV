@@ -23,10 +23,9 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use stylus_sdk::{
-    alloy_primitives::{Address, U256},
+    alloy_primitives::{FixedBytes, U256},
     prelude::*,
-    storage::{StorageAddress, StorageU256, StorageMap, StorageBool},
-    msg, block,
+    msg,
 };
 use wee_alloc::WeeAlloc;
 
@@ -35,10 +34,18 @@ use wee_alloc::WeeAlloc;
 #[global_allocator]
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
+// Panic handler for no_std environment (not used in tests)
+#[cfg(all(not(feature = "std"), not(test)))]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
+}
+
 pub mod groth16;
-// TODO: Enable once PLONK/STARK dependencies are made no_std compatible
-// pub mod plonk;
-// pub mod stark;
+pub mod plonk;
+
+// STARK implementation - transparent setup, post-quantum security
+pub mod stark;
 
 /// Proof type enumeration for universal verification
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -109,6 +116,39 @@ impl core::fmt::Display for Error {
     }
 }
 
+// Implement From<groth16::Error> for Error conversion with ? operator
+impl From<groth16::Error> for Error {
+    fn from(err: groth16::Error) -> Self {
+        match err {
+            groth16::Error::DeserializationError => Error::DeserializationError,
+            groth16::Error::MalformedProof => Error::MalformedProof,
+            groth16::Error::InvalidVerificationKey => Error::InvalidVerificationKey,
+            groth16::Error::InvalidPublicInputs => Error::InvalidPublicInputs,
+            groth16::Error::VerificationFailed => Error::VerificationFailed,
+            groth16::Error::InvalidInputSize => Error::InvalidInputSize,
+        }
+    }
+}
+
+// Implement Into<Vec<u8>> for Error to satisfy stylus-sdk EncodableReturnType constraint
+impl Into<Vec<u8>> for Error {
+    fn into(self) -> Vec<u8> {
+        match self {
+            Error::DeserializationError => b"Failed to deserialize proof".to_vec(),
+            Error::MalformedProof => b"Proof contains invalid curve points".to_vec(),
+            Error::InvalidVerificationKey => b"Invalid verification key".to_vec(),
+            Error::InvalidPublicInputs => b"Invalid public inputs".to_vec(),
+            Error::VerificationFailed => b"Proof verification failed".to_vec(),
+            Error::InvalidInputSize => b"Input size exceeds limits".to_vec(),
+            Error::ContractPaused => b"Contract is paused".to_vec(),
+            Error::VKNotRegistered => b"Verification key not registered".to_vec(),
+            Error::Unauthorized => b"Unauthorized access".to_vec(),
+            Error::InvalidProofType => b"Invalid proof type".to_vec(),
+            Error::ProofTypeNotSupported => b"Proof type not supported yet".to_vec(),
+        }
+    }
+}
+
 /// Result type for UZKV operations
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -163,13 +203,16 @@ impl UZKVContract {
         }
 
         // Retrieve verification key from storage
-        let vk_data = self.verification_keys.get(vk_hash);
-        if vk_data.is_empty() {
+        let vk_hash_fixed = FixedBytes::from(vk_hash);
+        let vk_storage = self.verification_keys.get(vk_hash_fixed);
+        if vk_storage.is_empty() {
             return Err(Error::VKNotRegistered);
         }
+        let vk_data = vk_storage.get_bytes();
 
         // Check if precomputed pairing is available (gas optimization)
-        let precomputed_pairing = self.precomputed_pairings.get(vk_hash);
+        let precomputed_storage = self.precomputed_pairings.get(vk_hash_fixed);
+        let precomputed_pairing = precomputed_storage.get_bytes();
         
         let is_valid = if !precomputed_pairing.is_empty() {
             // Use optimized verification with precomputed e(α, β) (~80k gas savings)
@@ -198,18 +241,19 @@ impl UZKVContract {
     pub fn register_vk(&mut self, vk: Vec<u8>) -> Result<[u8; 32]> {
         // Compute VK hash (Keccak256)
         let vk_hash = keccak256(&vk);
+        let vk_hash_fixed = FixedBytes::from(vk_hash);
 
         // Check if already registered (idempotent operation)
-        if !self.vk_registered.get(vk_hash) {
+        if !self.vk_registered.get(vk_hash_fixed) {
             // Store VK data
-            self.verification_keys.insert(vk_hash, vk.clone());
-            self.vk_registered.insert(vk_hash, true);
+            self.verification_keys.setter(vk_hash_fixed).set_bytes(&vk);
+            self.vk_registered.insert(vk_hash_fixed, true);
 
             // Precompute e(α, β) pairing for gas optimization
             // This is a one-time cost (~100k gas) that saves ~80k gas per verification
             match groth16::compute_precomputed_pairing(&vk) {
                 Ok(precomputed_pairing) => {
-                    self.precomputed_pairings.insert(vk_hash, precomputed_pairing);
+                    self.precomputed_pairings.setter(vk_hash_fixed).set_bytes(&precomputed_pairing);
                 }
                 Err(_) => {
                     // If precomputation fails, continue without optimization
@@ -259,14 +303,17 @@ impl UZKVContract {
         let is_valid = match ptype {
             ProofType::Groth16 => {
                 // Retrieve verification key from storage
-                let vk_data = self.verification_keys.get(vk_hash);
-                if vk_data.is_empty() {
+                let vk_hash_fixed = FixedBytes::from(vk_hash);
+                let vk_storage = self.verification_keys.get(vk_hash_fixed);
+                if vk_storage.is_empty() {
                     return Err(Error::VKNotRegistered);
                 }
+                let vk_data = vk_storage.get_bytes();
 
                 // Check if precomputed pairing is available
-                let precomputed_pairing = self.precomputed_pairings.get(vk_hash);
-                
+                let precomputed_storage = self.precomputed_pairings.get(vk_hash_fixed);
+                let precomputed_pairing = precomputed_storage.get_bytes();
+
                 if !precomputed_pairing.is_empty() {
                     groth16::verify_with_precomputed(&proof, &public_inputs, &vk_data, &precomputed_pairing)?
                 } else {
@@ -274,19 +321,21 @@ impl UZKVContract {
                 }
             }
             ProofType::PLONK => {
-                // TODO: Enable when plonk module is ready
-                // let vk_data = self.verification_keys.get(vk_hash);
-                // if vk_data.is_empty() {
-                //     return Err(Error::VKNotRegistered);
-                // }
-                // plonk::verify(&proof, &public_inputs, &vk_data)?
-                return Err(Error::ProofTypeNotSupported);
+                // PLONK verification (universal setup)
+                let vk_hash_fixed = FixedBytes::from(vk_hash);
+                let vk_storage = self.verification_keys.get(vk_hash_fixed);
+                if vk_storage.is_empty() {
+                    return Err(Error::VKNotRegistered);
+                }
+                let vk_data = vk_storage.get_bytes();
+                
+                plonk::verify(&proof, &public_inputs, &vk_data)
+                    .map_err(|_| Error::VerificationFailed)?
             }
             ProofType::STARK => {
-                // TODO: Enable when stark module is ready
                 // STARK doesn't use VKs (transparent setup)
-                // stark::verify(&proof, &public_inputs)?
-                return Err(Error::ProofTypeNotSupported);
+                stark::verify_proof(&proof, &public_inputs)
+                    .map_err(|_| Error::VerificationFailed)?
             }
         };
 
@@ -309,19 +358,20 @@ impl UZKVContract {
 
         // Compute VK hash
         let vk_hash = keccak256(&vk);
+        let vk_hash_fixed = FixedBytes::from(vk_hash);
 
         // Check if already registered
-        if !self.vk_registered.get(vk_hash) {
+        if !self.vk_registered.get(vk_hash_fixed) {
             // Store VK data
-            self.verification_keys.insert(vk_hash, vk.clone());
-            self.vk_registered.insert(vk_hash, true);
+            self.verification_keys.setter(vk_hash_fixed).set_bytes(&vk);
+            self.vk_registered.insert(vk_hash_fixed, true);
 
             // Precompute optimizations based on proof type
             match ptype {
                 ProofType::Groth16 => {
                     // Precompute e(α, β) pairing for gas savings
                     if let Ok(precomputed) = groth16::compute_precomputed_pairing(&vk) {
-                        self.precomputed_pairings.insert(vk_hash, precomputed);
+                        self.precomputed_pairings.setter(vk_hash_fixed).set_bytes(&precomputed);
                     }
                 }
                 ProofType::PLONK => {
@@ -370,29 +420,35 @@ impl UZKVContract {
         let results = match ptype {
             ProofType::Groth16 => {
                 // Retrieve VK and precomputed pairing
-                let vk_data = self.verification_keys.get(vk_hash);
-                if vk_data.is_empty() {
+                let vk_hash_fixed = FixedBytes::from(vk_hash);
+                let vk_storage = self.verification_keys.get(vk_hash_fixed);
+                if vk_storage.is_empty() {
                     return Err(Error::VKNotRegistered);
                 }
+                let vk_data = vk_storage.get_bytes();
 
-                let precomputed_pairing = self.precomputed_pairings.get(vk_hash);
+                let precomputed_storage = self.precomputed_pairings.get(vk_hash_fixed);
+                let precomputed_pairing = precomputed_storage.get_bytes();
 
                 // Batch verify all proofs
                 groth16::batch_verify(&proofs, &public_inputs, &vk_data, &precomputed_pairing)?
             }
             ProofType::PLONK => {
-                // TODO: Enable when plonk module is ready
-                // let vk_data = self.verification_keys.get(vk_hash);
-                // if vk_data.is_empty() {
-                //     return Err(Error::VKNotRegistered);
-                // }
-                // plonk::batch_verify(&proofs, &public_inputs, &vk_data)?
-                return Err(Error::ProofTypeNotSupported);
+                // PLONK batch verification
+                let vk_hash_fixed = FixedBytes::from(vk_hash);
+                let vk_storage = self.verification_keys.get(vk_hash_fixed);
+                if vk_storage.is_empty() {
+                    return Err(Error::VKNotRegistered);
+                }
+                let vk_data = vk_storage.get_bytes();
+                
+                plonk::batch_verify(&proofs, &public_inputs, &vk_data)
+                    .map_err(|_| Error::VerificationFailed)?
             }
             ProofType::STARK => {
-                // TODO: Enable when stark module is ready
-                // stark::batch_verify(&proofs, &public_inputs)?
-                return Err(Error::ProofTypeNotSupported);
+                // STARK batch verification
+                stark::batch_verify_proofs(&proofs, &public_inputs)
+                    .map_err(|_| Error::VerificationFailed)?
             }
         };
 
@@ -440,7 +496,7 @@ impl UZKVContract {
     /// @param vk_hash - Hash of the verification key
     /// @return registered - True if VK is registered
     pub fn is_vk_registered(&self, vk_hash: [u8; 32]) -> bool {
-        self.vk_registered.get(vk_hash)
+        self.vk_registered.get(FixedBytes::from(vk_hash))
     }
 
     /// Mark a nullifier as used (prevent replay attacks)
@@ -454,12 +510,13 @@ impl UZKVContract {
         }
 
         // Check if already used
-        if self.nullifiers.get(nullifier) {
+        let nullifier_fixed = FixedBytes::from(nullifier);
+        if self.nullifiers.get(nullifier_fixed) {
             return Ok(false); // Already used
         }
 
         // Mark as used
-        self.nullifiers.insert(nullifier, true);
+        self.nullifiers.insert(nullifier_fixed, true);
         Ok(true)
     }
 
@@ -468,7 +525,7 @@ impl UZKVContract {
     /// @param nullifier - Unique proof identifier
     /// @return used - True if nullifier has been used
     pub fn is_nullifier_used(&self, nullifier: [u8; 32]) -> bool {
-        self.nullifiers.get(nullifier)
+        self.nullifiers.get(FixedBytes::from(nullifier))
     }
 }
 

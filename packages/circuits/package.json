@@ -1,0 +1,29 @@
+{
+  "name": "@uzkv/circuits",
+  "version": "0.1.0",
+  "description": "Zero-knowledge circuits for UZKV (Poseidon, EdDSA, Merkle)",
+  "private": true,
+  "scripts": {
+    "compile": "./scripts/compile-circuits.sh",
+    "plonk:setup": "./scripts/generate-plonk-proofs.sh",
+    "plonk:generate": "node scripts/plonk-cli.cjs generate",
+    "plonk:verify": "node scripts/plonk-cli.cjs verify",
+    "plonk:batch": "node scripts/plonk-cli.cjs batch",
+    "corpus:generate": "node scripts/generate-test-corpus.cjs",
+    "corpus:eddsa": "node scripts/generate-eddsa-signatures.cjs",
+    "corpus:merkle": "node scripts/generate-merkle-proofs.cjs"
+  },
+  "devDependencies": {
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "snarkjs": "^0.7.3"
+  },
+  "keywords": [
+    "circom",
+    "snarkjs",
+    "plonk",
+    "groth16",
+    "zkp",
+    "zero-knowledge"
+  ]
+}

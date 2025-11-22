@@ -12,9 +12,8 @@
 //! - Proper secret destruction during ceremony
 
 use ark_bn254::{Bn254, G1Affine, G2Affine};
-use ark_ec::{AffineRepr, pairing::Pairing};
-use ark_ff::{PrimeField, Field};
-use stylus_sdk::prelude::*;
+use ark_ec::{AffineRepr, pairing::Pairing, CurveGroup, VariableBaseMSM};
+use ark_ff::{PrimeField, Field, BigInteger};
 use sha3::{Digest, Keccak256};
 use alloc::vec::Vec;
 
@@ -42,7 +41,7 @@ impl SrsDegree {
     }
 
     /// Convert from degree exponent
-    pub fn from_exponent(exp: u8) -> Result<Self, crate::Error> {
+    pub fn from_exponent(exp: u8) -> Result<Self, super::Error> {
         match exp {
             10 => Ok(SrsDegree::D1024),
             12 => Ok(SrsDegree::D4096),
@@ -50,7 +49,7 @@ impl SrsDegree {
             16 => Ok(SrsDegree::D65536),
             18 => Ok(SrsDegree::D262144),
             20 => Ok(SrsDegree::D1048576),
-            _ => Err(crate::Error::InvalidSrsSize),
+            _ => Err(super::Error::InvalidSrsSize),
         }
     }
 }
@@ -84,27 +83,27 @@ impl Srs {
         g1_powers: Vec<G1Affine>,
         g2_powers: Vec<G2Affine>,
         degree: SrsDegree,
-    ) -> Result<Self, crate::Error> {
+    ) -> Result<Self, super::Error> {
         // Validate size matches degree
         let expected_size = degree.size();
         if g1_powers.len() != expected_size + 1 {
-            return Err(crate::Error::InvalidSrsSize);
+            return Err(super::Error::InvalidSrsSize);
         }
         if g2_powers.len() < 2 {
-            return Err(crate::Error::InvalidSrsSize);
+            return Err(super::Error::InvalidSrsSize);
         }
 
         // Validate G₁ points
         for point in &g1_powers {
             if !Self::validate_g1_point(point) {
-                return Err(crate::Error::InvalidG1Point);
+                return Err(super::Error::InvalidG1Point);
             }
         }
 
         // Validate G₂ points
         for point in &g2_powers {
             if !Self::validate_g2_point(point) {
-                return Err(crate::Error::InvalidG2Point);
+                return Err(super::Error::InvalidG2Point);
             }
         }
 
@@ -202,8 +201,8 @@ impl Srs {
     /// Get G₁ power at specific index
     /// 
     /// Returns τⁱ G₁ where i is the index
-    pub fn get_g1_power(&self, index: usize) -> Result<&G1Affine, crate::Error> {
-        self.g1_powers.get(index).ok_or(crate::Error::InvalidSrsSize)
+    pub fn get_g1_power(&self, index: usize) -> Result<&G1Affine, super::Error> {
+        self.g1_powers.get(index).ok_or(super::Error::InvalidSrsSize)
     }
 
     /// Verify SRS is correctly structured (pairing check)
@@ -213,12 +212,12 @@ impl Srs {
     /// 
     /// # Gas Cost
     /// ~260k gas (2 pairings)
-    pub fn verify_consistency(&self) -> Result<bool, crate::Error> {
+    pub fn verify_consistency(&self) -> Result<bool, super::Error> {
         if self.g1_powers.len() < 2 {
-            return Err(crate::Error::InvalidSrsSize);
+            return Err(super::Error::InvalidSrsSize);
         }
         if self.g2_powers.len() < 2 {
-            return Err(crate::Error::InvalidSrsSize);
+            return Err(super::Error::InvalidSrsSize);
         }
 
         // e(τG₁, G₂) == e(G₁, τG₂)
@@ -235,20 +234,16 @@ impl Srs {
     /// 
     /// # Gas Cost
     /// ~50k + 6k*n where n is number of scalars
-    pub fn msm_g1(&self, scalars: &[<Bn254 as Pairing>::ScalarField]) -> Result<G1Affine, crate::Error> {
+    pub fn msm_g1(&self, scalars: &[<Bn254 as Pairing>::ScalarField]) -> Result<G1Affine, super::Error> {
         if scalars.len() > self.g1_powers.len() {
-            return Err(crate::Error::InvalidSrsSize);
+            return Err(super::Error::InvalidSrsSize);
         }
 
         // Use arkworks MSM for efficiency
-        use ark_ec::VariableBaseMSM;
-        let bases: Vec<_> = self.g1_powers[..scalars.len()]
-            .iter()
-            .map(|p| p.into_group())
-            .collect();
+        let bases = &self.g1_powers[..scalars.len()];
         
-        let result = <ark_bn254::G1Projective as VariableBaseMSM>::msm(&bases, scalars)
-            .map_err(|_| crate::Error::MsmError)?;
+        let result = <ark_bn254::G1Projective as VariableBaseMSM>::msm(bases, scalars)
+            .map_err(|_| super::Error::MsmError)?;
 
         Ok(result.into_affine())
     }
@@ -275,17 +270,17 @@ impl SrsRegistry {
     /// 
     /// # Gas Cost
     /// Storage: ~500k gas for small SRS, up to 5M for large SRS
-    pub fn register(&mut self, srs: Srs) -> Result<(), crate::Error> {
+    pub fn register(&mut self, srs: Srs) -> Result<(), super::Error> {
         let degree_exp = srs.degree as u8;
         
         // Check if already registered
         if self.srs_map.contains_key(&degree_exp) {
-            return Err(crate::Error::InvalidSrsSize); // Reusing error for "already exists"
+            return Err(super::Error::InvalidSrsSize); // Reusing error for "already exists"
         }
 
         // Verify SRS consistency before registration
         if !srs.verify_consistency()? {
-            return Err(crate::Error::InvalidProof);
+            return Err(super::Error::InvalidProof);
         }
 
         self.srs_map.insert(degree_exp, srs);
@@ -293,10 +288,10 @@ impl SrsRegistry {
     }
 
     /// Get SRS for specific degree
-    pub fn get(&self, degree: SrsDegree) -> Result<&Srs, crate::Error> {
+    pub fn get(&self, degree: SrsDegree) -> Result<&Srs, super::Error> {
         self.srs_map
             .get(&(degree as u8))
-            .ok_or(crate::Error::InvalidSrsSize)
+            .ok_or(super::Error::InvalidSrsSize)
     }
 
     /// Check if SRS is registered for degree
