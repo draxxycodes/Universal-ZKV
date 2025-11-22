@@ -1,8 +1,8 @@
 /**
  * UZKV SDK - Universal ZK Verifier Client
  * 
- * TypeScript SDK for interacting with the Groth16 verification service
- * and attestor contract
+ * TypeScript SDK for interacting with the Universal ZK Verifier
+ * Supports Groth16, PLONK, and STARK proof systems
  */
 
 import {
@@ -12,6 +12,9 @@ import {
   http,
 } from 'viem';
 import { arbitrumSepolia } from 'viem/chains';
+
+// Export Universal Proof Protocol types
+export { ProofType, PublicStatement, UniversalProof } from './types';
 
 export interface Groth16Proof {
   pi_a: [string, string];
@@ -100,11 +103,11 @@ export class UZKVClient {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { message?: string };
         throw new Error(error.message || 'Verification failed');
       }
 
-      return await response.json();
+      return await response.json() as VerifyResponse;
     } catch (error) {
       throw new Error(
         `Failed to verify proof: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -136,11 +139,21 @@ export class UZKVClient {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { message?: string };
         throw new Error(error.message || 'Batch verification failed');
       }
 
-      return await response.json();
+      return await response.json() as {
+        totalProofs: number;
+        validProofs: number;
+        invalidProofs: number;
+        results: Array<{
+          index: number;
+          valid: boolean;
+          proofHash?: string;
+          error?: string;
+        }>;
+      };
     } catch (error) {
       throw new Error(
         `Failed to verify proofs: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -156,11 +169,11 @@ export class UZKVClient {
       const response = await fetch(`${this.serviceUrl}/attestation/${proofHash}`);
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { message?: string };
         throw new Error(error.message || 'Failed to get attestation status');
       }
 
-      return await response.json();
+      return await response.json() as AttestationStatus;
     } catch (error) {
       throw new Error(
         `Failed to get attestation status: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -188,11 +201,19 @@ export class UZKVClient {
       const response = await fetch(url);
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { message?: string };
         throw new Error(error.message || 'Failed to get attestation events');
       }
 
-      return await response.json();
+      return await response.json() as {
+        count: number;
+        events: Array<{
+          proofHash: string;
+          timestamp: number;
+          blockNumber: bigint;
+          transactionHash: string;
+        }>;
+      };
     } catch (error) {
       throw new Error(
         `Failed to get attestation events: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -215,7 +236,11 @@ export class UZKVClient {
         throw new Error('Service unhealthy');
       }
 
-      return await response.json();
+      return await response.json() as {
+        status: string;
+        service: string;
+        timestamp: string;
+      };
     } catch (error) {
       throw new Error(
         `Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -234,7 +259,7 @@ export class UZKVClient {
         throw new Error('Failed to get service info');
       }
 
-      return await response.json();
+      return await response.json() as any;
     } catch (error) {
       throw new Error(
         `Failed to get service info: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -249,6 +274,3 @@ export class UZKVClient {
 export function createUZKVClient(config?: UZKVConfig): UZKVClient {
   return new UZKVClient(config);
 }
-
-// Re-export types
-export type { UZKVConfig, VerifyRequest, VerifyResponse, AttestationStatus };
