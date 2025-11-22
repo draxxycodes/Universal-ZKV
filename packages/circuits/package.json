@@ -5,13 +5,15 @@
   "private": true,
   "scripts": {
     "compile": "./scripts/compile-circuits.sh",
+    "compile:statement": "./scripts/compile-statement-circuits.sh",
     "plonk:setup": "./scripts/generate-plonk-proofs.sh",
     "plonk:generate": "node scripts/plonk-cli.cjs generate",
     "plonk:verify": "node scripts/plonk-cli.cjs verify",
     "plonk:batch": "node scripts/plonk-cli.cjs batch",
     "corpus:generate": "node scripts/generate-test-corpus.cjs",
     "corpus:eddsa": "node scripts/generate-eddsa-signatures.cjs",
-    "corpus:merkle": "node scripts/generate-merkle-proofs.cjs"
+    "corpus:merkle": "node scripts/generate-merkle-proofs.cjs",
+    "statement:inputs": "node scripts/generate-statement-inputs.cjs"
   },
   "devDependencies": {
     "circomlib": "^2.0.5",
