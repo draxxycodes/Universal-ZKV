@@ -47,29 +47,11 @@ pub mod plonk;
 // STARK implementation - transparent setup, post-quantum security
 pub mod stark;
 
-/// Proof type enumeration for universal verification
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum ProofType {
-    /// Groth16 zkSNARK (trusted setup, ~60k gas)
-    Groth16 = 0,
-    /// PLONK universal SNARK (universal setup, ~120k gas)
-    PLONK = 1,
-    /// STARK (transparent, no setup, ~280k gas)
-    STARK = 2,
-}
+// Universal proof protocol types (frozen binary format)
+pub mod types;
 
-impl ProofType {
-    /// Convert u8 to ProofType
-    pub fn from_u8(value: u8) -> Result<Self> {
-        match value {
-            0 => Ok(ProofType::Groth16),
-            1 => Ok(ProofType::PLONK),
-            2 => Ok(ProofType::STARK),
-            _ => Err(Error::InvalidProofType),
-        }
-    }
-}
+// Re-export core types for convenience
+pub use types::{ProofType, PublicStatement, UniversalProof};
 
 /// Error types for UZKV operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -297,7 +279,7 @@ impl UZKVContract {
         }
 
         // Convert to ProofType enum
-        let ptype = ProofType::from_u8(proof_type)?;
+        let ptype = ProofType::from_u8(proof_type).ok_or(Error::InvalidProofType)?;
 
         // Route to appropriate verifier
         let is_valid = match ptype {
@@ -354,7 +336,7 @@ impl UZKVContract {
     /// @param vk - Serialized verification key
     /// @return vkHash - Keccak256 hash of the VK
     pub fn register_vk_typed(&mut self, proof_type: u8, vk: Vec<u8>) -> Result<[u8; 32]> {
-        let ptype = ProofType::from_u8(proof_type)?;
+        let ptype = ProofType::from_u8(proof_type).ok_or(Error::InvalidProofType)?;
 
         // Compute VK hash
         let vk_hash = keccak256(&vk);
@@ -414,7 +396,7 @@ impl UZKVContract {
         }
 
         // Convert to ProofType enum
-        let ptype = ProofType::from_u8(proof_type)?;
+        let ptype = ProofType::from_u8(proof_type).ok_or(Error::InvalidProofType)?;
 
         // Route to appropriate batch verifier
         let results = match ptype {
