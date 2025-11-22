@@ -16,6 +16,20 @@ import { arbitrumSepolia } from 'viem/chains';
 // Export Universal Proof Protocol types
 export { ProofType, PublicStatement, UniversalProof } from './types';
 
+// Export Circuit Helpers
+export {
+  circuitInputsToPublicStatement,
+  fieldElementToBytes32,
+  parseSnarkjsPublicInputs,
+  createGroth16Proof,
+  createPlonkProof,
+  createTestPublicStatement,
+  validatePublicStatement,
+  createProofPayload,
+  isNullifierUsed,
+  type CircuitPublicInputs,
+} from './circuit-helpers';
+
 export interface Groth16Proof {
   pi_a: [string, string];
   pi_b: [[string, string], [string, string]];

@@ -16,6 +16,14 @@ const path = require("path");
 
 // Convert field element to bytes32 hex string
 function fieldToBytes32(field) {
+  // Handle Uint8Array from Poseidon
+  if (field instanceof Uint8Array) {
+    const hex = Array.from(field)
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+    return "0x" + hex;
+  }
+  // Handle BigInt
   const hex = BigInt(field).toString(16).padStart(64, "0");
   return "0x" + hex;
 }
@@ -43,10 +51,12 @@ async function generatePoseidonStatementInputs(poseidon, valid = true) {
   const extra_in = BigInt(0); // No extra data
   
   // Compute hash
-  const hash = poseidon([preimage[0], preimage[1]]);
+  const hashBytes = poseidon([preimage[0], preimage[1]]);
+  const hash = poseidon.F.toObject(hashBytes);
   
   // Compute nullifier = Poseidon(hash, public_key_in)
-  const nullifier = poseidon([hash, public_key_in]);
+  const nullifierBytes = poseidon([hash, public_key_in]);
+  const nullifier = poseidon.F.toObject(nullifierBytes);
   
   // Private inputs
   const privateInputs = {

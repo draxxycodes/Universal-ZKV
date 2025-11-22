@@ -1,0 +1,11 @@
+{
+  "description": "Poseidon hash verification with PublicStatement",
+  "valid": true,
+  "publicStatement": {
+    "merkle_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "public_key": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "nullifier": "0x2143e7a26292fea804358167737a97f1403cb190900be0be5a370f21041ffbe4",
+    "value": "0x000000000000000000000000000f4240",
+    "extra": "0x"
+  }
+}
