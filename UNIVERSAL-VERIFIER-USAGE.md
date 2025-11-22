@@ -2,7 +2,15 @@
 
 ## 🎯 **One Verifier for All Proof Types**
 
-The Universal ZK Verifier (UZKV) provides a **single contract interface** that can verify **all three proof types**: Groth16, PLONK, and STARK.
+The Universal ZK Verifier (UZKV) is built with **Rust Stylus** and provides a **single contract interface** that can verify **all three proof types**: Groth16, PLONK, and STARK.
+
+### 🦀 Why Rust Stylus?
+
+- **10x cheaper computation** compared to EVM Solidity
+- **Compiles to WASM** for near-native performance
+- **EVM-compatible** - callable from any EVM contract or dApp
+- **Memory-safe** with Rust's ownership model
+- **Perfect for ZK verification** - complex cryptographic operations run efficiently
 
 ---
 
@@ -10,14 +18,22 @@ The Universal ZK Verifier (UZKV) provides a **single contract interface** that c
 
 ### Single Function for All Proof Types
 
-```solidity
-// Universal verification function signature
-function verify(
-    uint8 proofType,      // 0=Groth16, 1=PLONK, 2=STARK
-    bytes calldata proof,
-    bytes calldata publicInputs,
-    bytes32 vkHash        // Not used for STARK
-) external returns (bool);
+**Rust Stylus Implementation:**
+```rust
+#[public]
+pub fn verify(
+    &mut self,
+    proof_type: u8,       // 0=Groth16, 1=PLONK, 2=STARK
+    proof: Vec<u8>,
+    public_inputs: Vec<u8>,
+    vk_hash: [u8; 32]     // Not used for STARK
+) -> Result<bool, Error>;
+```
+
+**From TypeScript/JavaScript** (interacts via ABI):
+```typescript
+// Call via ethers.js (Stylus contracts are EVM-compatible)
+await uzkv.verify(proofType, proof, publicInputs, vkHash);
 ```
 
 ---
@@ -275,7 +291,8 @@ await contract.verify(0, proof, inputs, vkHash);
 Submit multiple proofs in a single transaction:
 
 ```solidity
-// Custom batch verification (implement in your app)
+// Custom batch verification wrapper (Solidity contract calling UZKV)
+// The core UZKV is Rust Stylus, but you can wrap it in Solidity
 function batchVerify(
     uint8[] calldata proofTypes,
     bytes[] calldata proofs,
@@ -296,7 +313,7 @@ function batchVerify(
 
 ### 1. Nullifier Prevention (Replay Attacks)
 ```solidity
-// Add nullifier tracking in your app
+// Add nullifier tracking in your app (Solidity wrapper around UZKV)
 mapping(bytes32 => bool) public usedProofs;
 
 function verifyWithNullifier(
@@ -308,6 +325,7 @@ function verifyWithNullifier(
 ) external {
     require(!usedProofs[nullifier], "Proof already used");
     
+    // Call UZKV Rust Stylus contract
     bool valid = uzkv.verify(proofType, proof, publicInputs, vkHash);
     require(valid, "Invalid proof");
     
@@ -316,10 +334,13 @@ function verifyWithNullifier(
 ```
 
 ### 2. Circuit Breaker (Emergency Pause)
-The contract has a built-in pause mechanism (admin only).
+The Rust Stylus contract has a built-in pause mechanism (admin only).
 
 ### 3. VK Registration Access Control
 Only register VKs from trusted sources to prevent malicious circuit injection.
+
+### 4. Stylus Gas Efficiency
+Rust Stylus provides **10x cheaper computation** compared to EVM Solidity, making verification significantly more cost-effective.
 
 ---
 
