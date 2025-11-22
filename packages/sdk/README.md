@@ -2,6 +2,14 @@
 
 TypeScript SDK for the Universal ZK Verifier (UZKV) platform.
 
+## Features
+
+- ✅ **Universal Proof Protocol** - Frozen binary format for Groth16, PLONK, and STARK proofs
+- ✅ **Type-Safe** - Full TypeScript support with comprehensive types
+- ✅ **Cross-Language Compatible** - Byte-for-byte encoding matches Rust implementation
+- ✅ **Fully Tested** - 22 unit tests covering all encoding/decoding scenarios
+- ✅ **Viem Integration** - Ready for on-chain interactions with Arbitrum Stylus
+
 ## Installation
 
 ```bash
@@ -13,6 +21,36 @@ yarn add @uzkv/sdk
 ```
 
 ## Quick Start
+
+### Using Universal Proof Protocol Types
+
+```typescript
+import { ProofType, PublicStatement, UniversalProof } from '@uzkv/sdk';
+
+// Create a public statement
+const statement = new PublicStatement({
+  merkleRoot: new Uint8Array(32).fill(0x11), // State tree root
+  publicKey: new Uint8Array(32).fill(0x22),  // EdDSA public key
+  nullifier: new Uint8Array(32).fill(0x33),  // Anti-replay nullifier
+  value: 12345n,                              // Amount or ID
+  extra: new Uint8Array([0xde, 0xad]),       // Optional metadata
+});
+
+// Create a universal proof
+const proof = UniversalProof.withStatement({
+  proofType: ProofType.Groth16,
+  programId: 0, // Circuit identifier
+  vkHash: new Uint8Array(32).fill(0xab), // VK hash from registry
+  proofBytes: groth16ProofBytes, // Your Groth16 proof
+  publicStatement: statement,
+});
+
+// Encode for on-chain submission
+const encodedProof = proof.encode();
+await verifierContract.verify(encodedProof);
+```
+
+### Using Legacy Groth16 Client
 
 ```typescript
 import { createUZKVClient } from '@uzkv/sdk';
@@ -37,7 +75,65 @@ console.log('Proof Hash:', result.proofHash);
 console.log('Transaction:', result.attestation?.transactionHash);
 ```
 
-## API Reference
+## Universal Proof Protocol API
+
+### ProofType Enum
+
+```typescript
+enum ProofType {
+  Groth16 = 0,  // Trusted setup, ~280k gas, ~128 byte proofs
+  PLONK   = 1,  // Universal setup, ~400k gas, ~800 byte proofs
+  STARK   = 2,  // Transparent, ~540k gas, ~40-100 KB proofs
+}
+```
+
+### PublicStatement Class
+
+```typescript
+class PublicStatement {
+  constructor(params: {
+    merkleRoot: Uint8Array;   // 32 bytes - State tree root
+    publicKey: Uint8Array;    // 32 bytes - EdDSA public key
+    nullifier: Uint8Array;    // 32 bytes - Anti-replay value
+    value: bigint;            // u128 - Application-specific value
+    extra?: Uint8Array;       // Optional extension data
+  });
+
+  encode(): Uint8Array;
+  static decode(bytes: Uint8Array): PublicStatement;
+  encodedSize(): number;
+}
+```
+
+### UniversalProof Class
+
+```typescript
+class UniversalProof {
+  constructor(params: {
+    version?: number;
+    proofType: ProofType;
+    programId: number;
+    vkHash: Uint8Array;
+    proofBytes: Uint8Array;
+    publicInputsBytes: Uint8Array;
+  });
+
+  static withStatement(params: {
+    proofType: ProofType;
+    programId: number;
+    vkHash: Uint8Array;
+    proofBytes: Uint8Array;
+    publicStatement: PublicStatement;
+  }): UniversalProof;
+
+  encode(): Uint8Array;
+  static decode(bytes: Uint8Array): UniversalProof;
+  decodePublicStatement(): PublicStatement;
+  encodedSize(): number;
+}
+```
+
+## Legacy Groth16 Client API
 
 ### `createUZKVClient(config?)`
 
