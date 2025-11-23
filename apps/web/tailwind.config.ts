@@ -10,12 +10,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        groth16: '#3b82f6',
-        plonk: '#8b5cf6',
-        stark: '#ec4899',
+        groth16: '#ffffff',
+        plonk: '#ffffff',
+        stark: '#ffffff',
         arbitrum: {
-          blue: '#28a0f0',
-          dark: '#0a2540',
+          blue: '#ffffff',
+          dark: '#000000',
         },
       },
     },

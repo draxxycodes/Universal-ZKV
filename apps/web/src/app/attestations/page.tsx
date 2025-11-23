@@ -15,7 +15,7 @@ export default function AttestationsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className="min-h-screen bg-black text-white">
       <header className="container mx-auto px-4 py-6 border-b border-slate-700">
         <nav className="flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">

@@ -6,7 +6,7 @@ import { ArrowRight, Github, FileText } from 'lucide-react';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <nav className="flex justify-between items-center">
@@ -38,31 +38,31 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">
             Universal ZK Verifier
           </h1>
-          <p className="text-xl md:text-2xl text-slate-300 mb-6">
+          <p className="text-xl md:text-2xl text-gray-300 mb-6">
             One verifier. Three proof systems. Infinite possibilities.
           </p>
-          <p className="text-lg text-slate-400 mb-12">
+          <p className="text-lg text-gray-400 mb-12">
             Production-ready zero-knowledge proof verification on Arbitrum Stylus.
             <br />
-            Supporting <span className="text-blue-400 font-semibold">Groth16</span>, {' '}
-            <span className="text-purple-400 font-semibold">PLONK</span>, and {' '}
-            <span className="text-pink-400 font-semibold">STARK</span> proof systems.
+            Supporting <span className="text-white font-semibold">Groth16</span>, {' '}
+            <span className="text-white font-semibold">PLONK</span>, and {' '}
+            <span className="text-white font-semibold">STARK</span> proof systems.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/demo"
-              className="group px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition flex items-center justify-center gap-2"
+              className="group px-8 py-4 bg-white text-black hover:bg-gray-200 rounded-lg font-semibold text-lg transition flex items-center justify-center gap-2"
             >
               Try Live Demo
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link 
               href="/benchmarks"
-              className="px-8 py-4 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold text-lg transition flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-black border-2 border-white hover:bg-gray-900 rounded-lg font-semibold text-lg transition flex items-center justify-center gap-2"
             >
               <FileText className="w-5 h-5" />
               View Benchmarks

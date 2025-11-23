@@ -73,7 +73,7 @@ export default function DemoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <header className="container mx-auto px-4 py-6 border-b border-slate-700">
         <nav className="flex justify-between items-center">
@@ -104,32 +104,32 @@ export default function DemoPage() {
                 onClick={() => setProofType('groth16')}
                 className={`p-6 rounded-lg border-2 transition ${
                   proofType === 'groth16'
-                    ? 'border-blue-500 bg-blue-500/20'
-                    : 'border-slate-600 hover:border-blue-400'
+                    ? 'border-white bg-white/20'
+                    : 'border-gray-600 hover:border-white'
                 }`}
               >
                 <h3 className="text-xl font-bold mb-2">Groth16</h3>
-                <p className="text-sm text-slate-300">~280k gas</p>
+                <p className="text-sm text-gray-300">~280k gas</p>
               </button>
 
               <button
                 onClick={() => setProofType('plonk')}
                 className={`p-6 rounded-lg border-2 transition ${
                   proofType === 'plonk'
-                    ? 'border-purple-500 bg-purple-500/20'
-                    : 'border-slate-600 hover:border-purple-400'
+                    ? 'border-white bg-white/20'
+                    : 'border-gray-600 hover:border-white'
                 }`}
               >
                 <h3 className="text-xl font-bold mb-2">PLONK</h3>
-                <p className="text-sm text-slate-300">~400k gas</p>
+                <p className="text-sm text-gray-300">~400k gas</p>
               </button>
 
               <button
                 onClick={() => setProofType('stark')}
                 className={`p-6 rounded-lg border-2 transition ${
                   proofType === 'stark'
-                    ? 'border-pink-500 bg-pink-500/20'
-                    : 'border-slate-600 hover:border-pink-400'
+                    ? 'border-white bg-white/20'
+                    : 'border-gray-600 hover:border-white'
                 }`}
               >
                 <h3 className="text-xl font-bold mb-2">STARK</h3>
@@ -143,7 +143,7 @@ export default function DemoPage() {
             <button
               onClick={runCompleteWorkflow}
               disabled={status !== 'idle' && status !== 'complete' && status !== 'error'}
-              className="group px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition flex items-center gap-3 mx-auto"
+              className="group px-8 py-4 bg-white text-black hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition flex items-center gap-3 mx-auto"
             >
               {status === 'idle' || status === 'complete' || status === 'error' ? (
                 <>
