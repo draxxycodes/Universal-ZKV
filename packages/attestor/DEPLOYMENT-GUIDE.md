@@ -74,7 +74,7 @@ cast send $ATTESTOR_CONTRACT \
     --private-key $PRIVATE_KEY
 ```
 
-## Verify Deployment
+## Verify
 
 ```bash
 # Check attestor address
