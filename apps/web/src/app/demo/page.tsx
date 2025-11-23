@@ -37,13 +37,8 @@ export default function DemoPage() {
       toast.loading("Starting workflow...", { id: "workflow" });
 
       // Step 1: Generate proofs
-      setCurrentStep("Initializing proof generation...");
-      setProgressDetails(prev => [{
-        title: "Starting Generation",
-        description: `Preparing to generate ${proofType.toUpperCase()} proof with random inputs`,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
-
+      setCurrentStep("Running generate-all-proofs.cjs...");
+      
       const generateRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,41 +48,27 @@ export default function DemoPage() {
       if (!generateRes.ok) throw new Error("Generation failed");
       const generateData = await generateRes.json();
 
-      // Add generation details
-      setProgressDetails(prev => [...prev, 
-        {
-          title: "Circuit Selection",
-          description: `Selected circuits: ${generateData.circuits?.join(", ") || "poseidon_test, eddsa_verify, merkle_proof"}`,
-          timestamp: new Date().toLocaleTimeString()
-        },
-        {
-          title: "Witness Computation",
-          description: `Computing witness with random inputs from corpus of 10,000+ valid proofs`,
-          timestamp: new Date().toLocaleTimeString()
-        },
-        {
-          title: "Proof Generation Complete",
-          description: `Generated ${generateData.proofsGenerated || 3} ${proofType.toUpperCase()} proofs successfully`,
-          timestamp: new Date().toLocaleTimeString()
-        }
-      ]);
+      // Parse the actual script output
+      if (generateData.lines) {
+        const details: StepDetail[] = [];
+        generateData.lines.forEach((line: string) => {
+          if (line.includes('===') || line.includes('────') || !line.trim()) return;
+          
+          details.push({
+            title: line.includes('📦') ? line.trim() : 
+                   line.includes('🔄') ? line.trim() : 
+                   line.includes('✅') ? 'Success' : 
+                   line.includes('📄') ? 'Output' : 'Progress',
+            description: line.trim(),
+            timestamp: new Date().toLocaleTimeString()
+          });
+        });
+        setProgressDetails(details);
+      }
 
       setStatus("verifying");
       toast.loading("Verifying proofs with UZKV...", { id: "workflow" });
-      setCurrentStep("Universal verification in progress...");
-
-      setProgressDetails(prev => [...prev,
-        {
-          title: "UZKV Verification Started",
-          description: `Universal ZK Verifier detecting ${proofType.toUpperCase()} proof type`,
-          timestamp: new Date().toLocaleTimeString()
-        },
-        {
-          title: "Delegating to Specialized Verifier",
-          description: `Routing to ${proofType.toUpperCase()} verification module`,
-          timestamp: new Date().toLocaleTimeString()
-        }
-      ]);
+      setCurrentStep("Running verify-with-uzkv.cjs...");
 
       // Step 2: Verify proofs
       const verifyRes = await fetch("/api/verify", {
@@ -99,41 +80,27 @@ export default function DemoPage() {
       if (!verifyRes.ok) throw new Error("Verification failed");
       const verifyData = await verifyRes.json();
 
-      // Add verification details
-      setProgressDetails(prev => [...prev,
-        {
-          title: "Loading Verification Keys",
-          description: verifyData.verificationKeys || `Loaded verification keys for ${verifyData.circuitsVerified || 3} circuits`,
-          timestamp: new Date().toLocaleTimeString()
-        },
-        {
-          title: "Cryptographic Verification",
-          description: verifyData.verificationMethod || `Performing ${proofType === 'groth16' ? 'pairing check' : proofType === 'plonk' ? 'polynomial commitment verification' : 'FRI verification'} on proofs`,
-          timestamp: new Date().toLocaleTimeString()
-        },
-        {
-          title: "Verification Complete ✅",
-          description: `All ${verifyData.circuitsVerified || 3} proofs verified successfully. Estimated gas: ${verifyData.gasEstimate?.toLocaleString()} gas`,
-          timestamp: new Date().toLocaleTimeString()
-        }
-      ]);
+      // Parse the actual verification output
+      if (verifyData.lines) {
+        const verifyDetails: StepDetail[] = [];
+        verifyData.lines.forEach((line: string) => {
+          if (line.includes('===') || line.includes('────') || !line.trim()) return;
+          
+          verifyDetails.push({
+            title: line.includes('📦') ? line.trim() : 
+                   line.includes('🔄') ? line.trim() : 
+                   line.includes('✅') ? 'Verified' : 
+                   line.includes('⚡') ? 'Gas Estimate' : 'Verification',
+            description: line.trim(),
+            timestamp: new Date().toLocaleTimeString()
+          });
+        });
+        setProgressDetails(prev => [...prev, ...verifyDetails]);
+      }
 
       setStatus("attesting");
       toast.loading("Attesting on Arbitrum Sepolia...", { id: "workflow" });
-      setCurrentStep("Submitting to blockchain...");
-
-      setProgressDetails(prev => [...prev,
-        {
-          title: "Preparing On-Chain Attestation",
-          description: `Generating commitment hash for ${proofType.toUpperCase()} proof`,
-          timestamp: new Date().toLocaleTimeString()
-        },
-        {
-          title: "Connecting to Arbitrum Sepolia",
-          description: `Chain ID: 421614 | Attestor: 0x36e9...8177`,
-          timestamp: new Date().toLocaleTimeString()
-        }
-      ]);
+      setCurrentStep("Running attest-proofs.cjs...");
 
       // Step 3: Attest (optional, requires wallet)
       const attestRes = await fetch("/api/attest", {
@@ -144,20 +111,24 @@ export default function DemoPage() {
 
       const attestData = await attestRes.json();
 
-      // Add attestation details
-      if (attestData.success) {
-        setProgressDetails(prev => [...prev,
-          {
-            title: "Transaction Submitted",
-            description: attestData.txHash ? `TX Hash: ${attestData.txHash.slice(0, 10)}...${attestData.txHash.slice(-8)}` : "Transaction pending",
+      // Parse the actual attestation output
+      if (attestData.success && attestData.lines) {
+        const attestDetails: StepDetail[] = [];
+        attestData.lines.forEach((line: string) => {
+          if (line.includes('===') || line.includes('────') || !line.trim()) return;
+          
+          attestDetails.push({
+            title: line.includes('📦') ? line.trim() : 
+                   line.includes('🔄') ? line.trim() : 
+                   line.includes('✅') ? 'Attested!' : 
+                   line.includes('🔑') ? 'Proof Hash' :
+                   line.includes('⏳') ? 'Waiting' :
+                   line.includes('🔗') ? 'Explorer Link' : 'Attestation',
+            description: line.trim(),
             timestamp: new Date().toLocaleTimeString()
-          },
-          {
-            title: "Attestation Complete 🎉",
-            description: `Proof commitment permanently recorded on Arbitrum Sepolia`,
-            timestamp: new Date().toLocaleTimeString()
-          }
-        ]);
+          });
+        });
+        setProgressDetails(prev => [...prev, ...attestDetails]);
       }
 
       setStatus("complete");
@@ -167,7 +138,15 @@ export default function DemoPage() {
         circuitsVerified: verifyData.circuitsVerified || 3,
         gasUsed: verifyData.gasEstimate || 0,
         txHash: attestData.txHash,
-        explorerUrl: attestData.txHash && attestData.txHash !== 'already-attested' ? `https://sepolia.arbiscan.io/tx/${attestData.txHash}` : null,
+        txHashes: attestData.txHashes || [],
+        explorerUrl: attestData.explorerUrl,
+        attestorContract: attestData.attestorContract,
+        network: attestData.network,
+        counts: {
+          generated: generateData.counts,
+          verified: verifyData.counts,
+          attested: attestData.counts
+        },
         timestamp: new Date().toISOString(),
         totalSteps: progressDetails.length + 1
       });
@@ -362,36 +341,36 @@ export default function DemoPage() {
             </button>
           </div>
 
-          {/* Real-time Progress Details */}
+          {/* Real-time Terminal Output */}
           {progressDetails.length > 0 && (
-            <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-6 mb-8 border border-blue-500/30">
+            <div className="bg-black rounded-xl p-6 mb-8 border border-green-500/30 font-mono">
               <div className="flex items-center gap-3 mb-4">
-                <Loader2 className={`w-5 h-5 ${status !== 'complete' && status !== 'error' ? 'animate-spin text-yellow-400' : 'text-green-400'}`} />
-                <h3 className="text-xl font-bold">Live Progress</h3>
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <span className="text-sm text-neutral-400">Terminal Output</span>
+                {status !== 'complete' && status !== 'error' && (
+                  <Loader2 className="w-4 h-4 animate-spin text-green-400 ml-auto" />
+                )}
               </div>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="bg-black rounded-lg p-4 max-h-96 overflow-y-auto text-sm space-y-1">
                 {progressDetails.map((detail, idx) => (
                   <div 
                     key={idx} 
-                    className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a] animate-fadeIn"
-                    style={{ animationDelay: `${idx * 0.1}s` }}
+                    className="text-green-400 animate-fadeIn leading-relaxed"
+                    style={{ animationDelay: `${idx * 0.05}s` }}
                   >
-                    <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-semibold text-yellow-400">{detail.title}</h4>
-                      <span className="text-xs text-neutral-500">{detail.timestamp}</span>
-                    </div>
-                    <p className="text-sm text-neutral-300">{detail.description}</p>
+                    {detail.description}
                   </div>
                 ))}
+                {currentStep && status !== 'complete' && (
+                  <div className="text-yellow-400 flex items-center gap-2 animate-pulse">
+                    <span>▶</span> {currentStep}
+                  </div>
+                )}
               </div>
-              {currentStep && status !== 'complete' && (
-                <div className="mt-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                  <p className="text-sm text-yellow-400 flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {currentStep}
-                  </p>
-                </div>
-              )}
             </div>
           )}
 
@@ -442,58 +421,92 @@ export default function DemoPage() {
                 <CheckCircle className="w-8 h-8 text-green-400" />
                 <h2 className="text-2xl font-bold">Workflow Complete!</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-neutral-400">Proof System</p>
-                  <p className="text-lg font-semibold capitalize">
-                    {results.proofType}
+              
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
+                  <p className="text-xs text-neutral-400 mb-1">Generated</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {results.counts?.generated?.groth16 || 0}G + {results.counts?.generated?.plonk || 0}P + {results.counts?.generated?.stark || 0}S
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-neutral-400">Circuits Verified</p>
-                  <p className="text-lg font-semibold">
-                    {results.circuitsVerified || 3}
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
+                  <p className="text-xs text-neutral-400 mb-1">Verified</p>
+                  <p className="text-2xl font-bold text-blue-400">
+                    {results.circuitsVerified || 9}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-neutral-400">Estimated Gas</p>
-                  <p className="text-lg font-semibold">
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
+                  <p className="text-xs text-neutral-400 mb-1">Attested</p>
+                  <p className="text-2xl font-bold text-yellow-400">
+                    {results.counts?.attested?.total || 9}
+                  </p>
+                </div>
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
+                  <p className="text-xs text-neutral-400 mb-1">Est. Gas</p>
+                  <p className="text-2xl font-bold text-purple-400">
                     {results.gasUsed.toLocaleString()}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-neutral-400">Total Steps</p>
-                  <p className="text-lg font-semibold">
-                    {results.totalSteps || progressDetails.length}
-                  </p>
+              </div>
+
+              {/* Network Info */}
+              {results.network && (
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a] mb-6">
+                  <p className="text-sm text-neutral-400 mb-2">Network Information</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm font-mono">
+                    <div>
+                      <span className="text-neutral-500">Network:</span>{" "}
+                      <span className="text-green-400">{results.network}</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500">Attestor:</span>{" "}
+                      <span className="text-blue-400">{results.attestorContract}</span>
+                    </div>
+                  </div>
                 </div>
-                {results.txHash && results.txHash !== 'already-attested' && (
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-neutral-400 mb-2">Transaction Hash</p>
-                    <p className="text-yellow-400 font-mono text-sm break-all mb-3">
-                      {results.txHash}
-                    </p>
-                    {results.explorerUrl && (
+              )}
+
+              {/* Transaction Hashes */}
+              {results.txHashes && results.txHashes.length > 0 && (
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
+                  <p className="text-sm text-neutral-400 mb-3">Transaction Hashes ({results.txHashes.length})</p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {results.txHashes.map((hash: string, idx: number) => (
                       <a
-                        href={results.explorerUrl}
+                        key={idx}
+                        href={`https://sepolia.arbiscan.io/tx/${hash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-semibold"
+                        className="flex items-center gap-2 text-xs font-mono text-yellow-400 hover:text-blue-300 transition"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="text-neutral-500">{idx + 1}.</span>
+                        <span className="flex-1">{hash}</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
-                        View on Arbiscan
                       </a>
-                    )}
+                    ))}
                   </div>
-                )}
-                {results.txHash === 'already-attested' && (
-                  <div className="md:col-span-2 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
-                    <p className="text-sm text-yellow-400">ℹ️ This proof was already attested on-chain</p>
-                  </div>
-                )}
-              </div>
+                  <a
+                    href={`https://sepolia.arbiscan.io/address/${results.attestorContract}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-semibold"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    View Attestor Contract
+                  </a>
+                </div>
+              )}
+              
+              {results.txHash === 'already-attested' && (
+                <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
+                  <p className="text-sm text-yellow-400">ℹ️ These proofs were already attested on-chain</p>
+                </div>
+              )}
               <button
                 onClick={() => {
                   const data = JSON.stringify(results, null, 2);

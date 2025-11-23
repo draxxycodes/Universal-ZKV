@@ -36,11 +36,11 @@ function verifyProof(proofFile, proofPath) {
 
   // Detect proof type from filename
   if (proofFile.includes("groth16_proof.json")) {
-    return verifyGroth16(circuit, proofPath);
+    return { ...verifyGroth16(circuit, proofPath), proofSystem: "Groth16" };
   } else if (proofFile.includes("plonk_proof.json")) {
-    return verifyPlonk(circuit, proofPath);
+    return { ...verifyPlonk(circuit, proofPath), proofSystem: "PLONK" };
   } else if (proofFile.endsWith("_stark_proof.ub")) {
-    return verifyStark(circuit, proofPath);
+    return { ...verifyStark(circuit, proofPath), proofSystem: "STARK" };
   }
 
   return { success: false, error: "Unknown proof type" };
@@ -206,7 +206,10 @@ for (const proofFile of proofOnlyFiles) {
   const result = verifyProof(proofFile, proofPath);
 
   if (result.success) {
-    console.log(`   ✅ Verified by UZKV`);
+    const tech = result.proofSystem === "Groth16" || result.proofSystem === "PLONK" 
+      ? `${result.proofSystem} (snarkjs)` 
+      : `${result.proofSystem} (UniversalProof Binary)`;
+    console.log(`   ✅ Verified by UZKV using ${tech}`);
     if (result.details) {
       console.log(
         `   📊 Version: ${result.details.version}, ProgramId: ${result.details.programId}`,

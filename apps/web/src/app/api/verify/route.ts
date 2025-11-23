@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import path from "path";
-
-const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,51 +14,66 @@ export async function POST(req: NextRequest) {
       "verify-with-uzkv.cjs",
     );
 
-    // Execute the verification script
-    const { stdout, stderr } = await execAsync(`node ${scriptPath}`, {
-      cwd: projectRoot,
-      timeout: 30000, // 30 second timeout
+    // Execute the verification script and collect output
+    const output = await new Promise<string>((resolve, reject) => {
+      const child = spawn("node", [scriptPath], {
+        cwd: projectRoot,
+        shell: true,
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      child.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(stderr || `Process exited with code ${code}`));
+        } else {
+          resolve(stdout);
+        }
+      });
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        child.kill();
+        reject(new Error("Verification timeout"));
+      }, 30000);
     });
 
-    console.log("Verify output:", stdout);
-    if (stderr) console.error("Verify errors:", stderr);
+    console.log("Verify output:", output);
 
     // Parse the output to determine verification status
-    const verified = stdout.includes("✅") || stdout.includes("Verified");
-    const circuitsVerified = (stdout.match(/✅/g) || []).length;
+    const verified = output.includes("✅") && output.includes("Verified");
+    const groth16Verified = (output.match(/Groth16.*?✅/gs) || []).length;
+    const plonkVerified = (output.match(/PLONK.*?✅/gs) || []).length;
+    const starkVerified = (output.match(/STARK.*?✅/gs) || []).length;
+    const totalVerified = groth16Verified + plonkVerified + starkVerified;
 
-    // Extract gas estimate from output (mock for now)
-    const gasEstimate =
-      proofType === "groth16"
-        ? 280000
-        : proofType === "plonk"
-          ? 400000
-          : 540000;
-
-    // Verification method details
-    const verificationMethod = 
-      proofType === "groth16" 
-        ? "Pairing check (e(A, B) = e(α, β) · e(L, γ) · e(C, δ))"
-        : proofType === "plonk"
-          ? "Polynomial commitment verification with KZG"
-          : "FRI (Fast Reed-Solomon Interactive Oracle Proofs)";
-
-    const verificationKeys = `Loaded verification keys for ${circuitsVerified} circuits: poseidon_test, eddsa_verify, merkle_proof`;
+    // Extract gas estimate from output
+    const gasMatch = output.match(/(\d+)k gas/);
+    const gasEstimate = gasMatch ? parseInt(gasMatch[1]) * 1000 : 
+      (proofType === "groth16" ? 280000 : proofType === "plonk" ? 400000 : 540000);
 
     return NextResponse.json({
       success: true,
       verified,
-      circuitsVerified,
+      circuitsVerified: totalVerified,
+      counts: {
+        groth16: groth16Verified,
+        plonk: plonkVerified,
+        stark: starkVerified
+      },
       gasEstimate,
       proofType,
-      verificationMethod,
-      verificationKeys,
-      details: {
-        universalVerifier: "UZKV v1.0",
-        delegatedTo: `${proofType.toUpperCase()} verifier module`,
-        cryptographicSecurity: proofType === "stark" ? "Post-quantum secure" : "Computationally secure"
-      },
-      output: stdout,
+      output: output,
+      lines: output.split('\n').filter(line => line.trim()),
     });
   } catch (error: any) {
     console.error("Verification error:", error);

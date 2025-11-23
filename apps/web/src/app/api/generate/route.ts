@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import path from "path";
-
-const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,31 +14,59 @@ export async function POST(req: NextRequest) {
       "generate-all-proofs.cjs",
     );
 
-    // Execute the proof generation script
-    const { stdout, stderr } = await execAsync(`node ${scriptPath}`, {
-      cwd: projectRoot,
-      timeout: 60000, // 60 second timeout
+    // Execute the proof generation script and collect output
+    const output = await new Promise<string>((resolve, reject) => {
+      const child = spawn("node", [scriptPath], {
+        cwd: projectRoot,
+        shell: true,
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      child.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(stderr || `Process exited with code ${code}`));
+        } else {
+          resolve(stdout);
+        }
+      });
+
+      // Timeout after 60 seconds
+      setTimeout(() => {
+        child.kill();
+        reject(new Error("Generation timeout"));
+      }, 60000);
     });
 
-    console.log("Generate output:", stdout);
-    if (stderr) console.error("Generate errors:", stderr);
+    console.log("Generate output:", output);
 
     // Parse output to extract details
     const circuits = ["poseidon_test", "eddsa_verify", "merkle_proof"];
-    const proofsGenerated = (stdout.match(/✅/g) || []).length;
+    const groth16Count = (output.match(/Groth16 proof copied/g) || []).length;
+    const plonkCount = (output.match(/PLONK proof generated/g) || []).length;
+    const starkCount = (output.match(/STARK UniversalProof \(binary\) created/g) || []).length;
     
     return NextResponse.json({
       success: true,
       message: "Proofs generated successfully",
       proofType,
       circuits,
-      proofsGenerated,
-      details: {
-        witnessComputed: true,
-        randomInputs: true,
-        corpusSize: "10,000+ valid proofs per circuit"
+      counts: {
+        groth16: groth16Count,
+        plonk: plonkCount,
+        stark: starkCount
       },
-      output: stdout,
+      output: output,
+      lines: output.split('\n').filter(line => line.trim()),
     });
   } catch (error: any) {
     console.error("Generation error:", error);
