@@ -52,6 +52,9 @@ pub mod stark;
 // Universal proof protocol types (frozen binary format)
 pub mod types;
 
+// Universal ZK Verifier - routes to appropriate verifier based on proof type
+pub mod uzkv;
+
 // Re-export core types for convenience
 pub use types::{ProofType, PublicStatement, UniversalProof};
 

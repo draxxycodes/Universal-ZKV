@@ -24,7 +24,7 @@ All three systems are **production-ready** and can verify proofs on-chain today.
                     │   UniversalVKV   │
                     │   (lib.rs)       │
                     └────────┬─────────┘
-                             │
+                             │  
            ┌─────────────────┼─────────────────┐
            │                 │                 │
      ┌─────▼─────┐    ┌─────▼─────┐    ┌─────▼─────┐
