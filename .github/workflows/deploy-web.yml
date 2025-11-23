@@ -29,9 +29,9 @@ jobs:
       - name: Build website
         run: pnpm --filter @uzkv/web build
         env:
-          NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC: ${{ secrets.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC }}
-          NEXT_PUBLIC_ATTESTOR_ADDRESS: ${{ secrets.NEXT_PUBLIC_ATTESTOR_ADDRESS }}
-          NEXT_PUBLIC_CHAIN_ID: ${{ secrets.NEXT_PUBLIC_CHAIN_ID }}
+          NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC: ${{ vars.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC || 'https://sepolia-rollup.arbitrum.io/rpc' }}
+          NEXT_PUBLIC_ATTESTOR_ADDRESS: ${{ vars.NEXT_PUBLIC_ATTESTOR_ADDRESS || '0x36e937ebcf56c5dec6ecb0695001becc87738177' }}
+          NEXT_PUBLIC_CHAIN_ID: ${{ vars.NEXT_PUBLIC_CHAIN_ID || '421614' }}
       
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25

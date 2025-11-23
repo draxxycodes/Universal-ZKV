@@ -1,7 +1,7 @@
 'use client';
 
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { arbitrumSepolia } from 'wagmi/chains';
+import { arbitrumSepolia } from 'viem/chains';
 import { formatAddress } from '@/lib/utils';
 import { Wallet, LogOut, AlertCircle } from 'lucide-react';
 
