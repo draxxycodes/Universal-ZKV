@@ -11,6 +11,7 @@ The Universal ZK-Proof Verifier is now a **true multi-proof system** supporting 
 ### 1. Updated `packages/stylus/src/lib.rs`
 
 **Added Module Declarations:**
+
 ```rust
 pub mod groth16;
 pub mod plonk;        // NEW
@@ -20,6 +21,7 @@ pub mod stark_wrapper; // NEW - bytes interface
 ```
 
 **Created ProofType Enum:**
+
 ```rust
 pub enum ProofType {
     Groth16 = 1,
@@ -29,17 +31,18 @@ pub enum ProofType {
 ```
 
 **Updated Storage for Multi-Proof:**
+
 ```rust
 pub struct UZKVContract {
     verification_count: StorageU256,        // Global counter
-    
+
     // Separate VK storage per proof type
     groth16_vks: StorageMap<FixedBytes<32>, StorageBytes>,
     plonk_vks: StorageMap<FixedBytes<32>, StorageBytes>,
     stark_vks: StorageMap<FixedBytes<32>, StorageBytes>,
-    
+
     vk_registered: StorageMap<FixedBytes<32>, StorageBool>,
-    
+
     // Per-proof-type statistics
     groth16_count: StorageU256,
     plonk_count: StorageU256,
@@ -50,6 +53,7 @@ pub struct UZKVContract {
 ### 2. Added New Public Functions
 
 **Universal Verify (Router):**
+
 ```rust
 pub fn verify(
     &mut self,
@@ -61,6 +65,7 @@ pub fn verify(
 ```
 
 **PLONK Verification:**
+
 ```rust
 pub fn verify_plonk(
     &mut self,
@@ -71,6 +76,7 @@ pub fn verify_plonk(
 ```
 
 **STARK Verification:**
+
 ```rust
 pub fn verify_stark(
     &mut self,
@@ -81,6 +87,7 @@ pub fn verify_stark(
 ```
 
 **Enhanced VK Registration:**
+
 ```rust
 pub fn register_vk(
     &mut self,
@@ -90,6 +97,7 @@ pub fn register_vk(
 ```
 
 **New Statistics Functions:**
+
 ```rust
 pub fn get_groth16_count(&self) -> U256
 pub fn get_plonk_count(&self) -> U256
@@ -126,6 +134,7 @@ These wrappers handle the interface between the contract's bytes-based API and t
 ## API Comparison
 
 ### Before (Groth16-Only)
+
 ```solidity
 function verifyGroth16(bytes proof, bytes inputs, bytes32 vkHash) returns (bool)
 function registerVK(bytes vk) returns (bytes32)
@@ -133,6 +142,7 @@ function getVerificationCount() returns (uint256)
 ```
 
 ### After (Universal)
+
 ```solidity
 // Universal interface
 function verify(uint8 proofType, bytes proof, bytes inputs, bytes32 vkHash) returns (bool)
@@ -175,11 +185,13 @@ function isVKRegistered(bytes32 vkHash) returns (bool)
    - Command: `rustup update nightly`
 
 2. **Build WASM:**
+
    ```bash
    cargo stylus build --release
    ```
 
 3. **Generate ABI:**
+
    ```bash
    cargo stylus export-abi > ../contracts/src/interfaces/IUniversalVerifier.sol
    ```
@@ -236,6 +248,7 @@ function isVKRegistered(bytes32 vkHash) returns (bool)
 **Storage Fields Added:** 6 new fields
 
 **Code Structure:**
+
 - ✅ Clean separation of concerns
 - ✅ Type-safe proof routing
 - ✅ Backward compatible (Groth16 still works)

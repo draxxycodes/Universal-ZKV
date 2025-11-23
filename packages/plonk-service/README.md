@@ -59,6 +59,7 @@ cp .env.example .env
 ### WASM Module
 
 The service loads the PLONK verification WASM module from:
+
 ```
 ../../stylus/target/wasm32-unknown-unknown/release/uzkv_stylus.wasm
 ```
@@ -110,6 +111,7 @@ pnpm test:watch
 Verify a single PLONK proof.
 
 **Request**:
+
 ```json
 {
   "proof": "0x...",
@@ -119,6 +121,7 @@ Verify a single PLONK proof.
 ```
 
 **Response**:
+
 ```json
 {
   "isValid": true,
@@ -135,6 +138,7 @@ Verify a single PLONK proof.
 Verify multiple PLONK proofs.
 
 **Request**:
+
 ```json
 {
   "proofs": [
@@ -149,6 +153,7 @@ Verify multiple PLONK proofs.
 ```
 
 **Response**:
+
 ```json
 {
   "results": [
@@ -175,6 +180,7 @@ Verify multiple PLONK proofs.
 Get attestation status for a proof.
 
 **Response**:
+
 ```json
 {
   "proofHash": "0x...",
@@ -189,6 +195,7 @@ Get attestation status for a proof.
 Get recent attestation events from the blockchain.
 
 **Response**:
+
 ```json
 {
   "count": 5,
@@ -211,6 +218,7 @@ Get recent attestation events from the blockchain.
 Health check endpoint.
 
 **Response**:
+
 ```json
 {
   "status": "healthy",
@@ -228,6 +236,7 @@ Health check endpoint.
 Service metrics endpoint.
 
 **Response**:
+
 ```json
 {
   "service": "plonk-verification",
@@ -273,6 +282,7 @@ To enable attestation, set `ATTESTOR_PRIVATE_KEY` in `.env`.
 ### WASM Module Not Found
 
 Ensure the WASM module is built:
+
 ```bash
 cd ../stylus
 cargo build --release --target wasm32-unknown-unknown
@@ -281,6 +291,7 @@ cargo build --release --target wasm32-unknown-unknown
 ### Attestation Fails
 
 Check:
+
 - `ATTESTOR_PRIVATE_KEY` is set and valid
 - Wallet has sufficient Arbitrum Sepolia ETH for gas
 - RPC endpoint is accessible
@@ -289,6 +300,7 @@ Check:
 ### Verification Always Fails
 
 Verify:
+
 - Proof format matches PLONK specification
 - Public inputs are correctly serialized
 - VK hash corresponds to the circuit
@@ -320,19 +332,17 @@ plonk-service/
 Tests use Vitest and Supertest:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import request from 'supertest';
-import app from '../src/server';
+import { describe, it, expect } from "vitest";
+import request from "supertest";
+import app from "../src/server";
 
-describe('POST /verify', () => {
-  it('should verify valid proof', async () => {
-    const response = await request(app)
-      .post('/verify')
-      .send({
-        proof: '0x...',
-        publicInputs: '0x...',
-        vkHash: '0x...',
-      });
+describe("POST /verify", () => {
+  it("should verify valid proof", async () => {
+    const response = await request(app).post("/verify").send({
+      proof: "0x...",
+      publicInputs: "0x...",
+      vkHash: "0x...",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.isValid).toBe(true);

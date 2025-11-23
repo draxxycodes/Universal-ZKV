@@ -41,6 +41,7 @@ vercel --prod
 ## 🔧 Environment Variables
 
 ### Required (Public)
+
 ```env
 NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
 NEXT_PUBLIC_ATTESTOR_ADDRESS=0x36e937ebcf56c5dec6ecb0695001becc87738177
@@ -48,6 +49,7 @@ NEXT_PUBLIC_CHAIN_ID=421614
 ```
 
 ### Optional (Server-side)
+
 ```env
 PRIVATE_KEY=your_private_key_for_attestation
 ```
@@ -203,6 +205,7 @@ Already configured via Next.js built-in Image component.
 ### Caching
 
 Vercel automatically handles:
+
 - Static assets (CDN cached)
 - API routes (edge caching)
 - ISR (Incremental Static Regeneration)
@@ -224,20 +227,20 @@ module.exports = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            key: "X-DNS-Prefetch-Control",
+            value: "on",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
-          }
-        ]
-      }
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
     ];
-  }
+  },
 };
 ```
 

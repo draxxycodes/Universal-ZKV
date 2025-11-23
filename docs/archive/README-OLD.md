@@ -26,6 +26,7 @@ This repository contains the **production-ready implementation** of a Universal 
 ## ✅ What's Implemented
 
 ### Core Verification (100% Stylus)
+
 - ✅ **Groth16 Verifier** - 600+ lines Rust (packages/stylus/src/groth16.rs)
 - ✅ **BN254 Pairing Operations** - arkworks library integration
 - ✅ **Verification Key Registry** - On-chain VK storage with keccak hashing
@@ -33,6 +34,7 @@ This repository contains the **production-ready implementation** of a Universal 
 - ✅ **Gas Optimizations** - 78% cheaper than Solidity (61k vs 280k gas)
 
 ### Deployment Models
+
 1. **Attestor Pattern** (✅ DEPLOYED) - 7.2KB attestor + off-chain 122KB verifier
    - Contract: `0x36e937ebcf56c5dec6ecb0695001becc87738177` (Arbitrum Sepolia)
    - Size: 7.2 KiB (well under 24KB limit)
@@ -40,6 +42,7 @@ This repository contains the **production-ready implementation** of a Universal 
 2. **Full On-Chain** (Not viable) - 122KB verifier exceeds 24KB contract limit
 
 ### Infrastructure
+
 - ✅ **Monorepo** - pnpm workspaces, Turborepo
 - ✅ **Rust Toolchain** - Pinned nightly, vendored dependencies
 - ✅ **ERC-7201 Storage** - Collision-resistant storage layout
@@ -47,12 +50,12 @@ This repository contains the **production-ready implementation** of a Universal 
 
 ## 📊 Performance Metrics
 
-| Metric | Solidity | Stylus | Improvement |
-|--------|----------|--------|-------------|
-| Gas (Groth16 verify) | ~280k | ~61k | **78% reduction** |
-| Code size | ~2000 lines | ~680 lines | **66% reduction** |
-| Audit surface | High | Low | **Safer** |
-| WASM size | N/A | 122KB | **Deployable** |
+| Metric               | Solidity    | Stylus     | Improvement       |
+| -------------------- | ----------- | ---------- | ----------------- |
+| Gas (Groth16 verify) | ~280k       | ~61k       | **78% reduction** |
+| Code size            | ~2000 lines | ~680 lines | **66% reduction** |
+| Audit surface        | High        | Low        | **Safer**         |
+| WASM size            | N/A         | 122KB      | **Deployable**    |
 
 ---
 
@@ -94,6 +97,7 @@ docs/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Rust nightly (2024-05-20)
 - Node.js 20+
 - Foundry (forge, cast, anvil)
@@ -133,17 +137,20 @@ cargo test --features integration
 ## 🔥 Why Stylus?
 
 ### Gas Savings
+
 - **Groth16 Verify:** 280k (Solidity) → 61k (Stylus) = **78% cheaper**
 - **Batch 10 Proofs:** 2.8M → 850k = **70% cheaper**
 - **Field Operations:** 5k → 500 = **90% cheaper**
 
 ### Security
+
 - **Memory Safety:** Rust prevents buffer overflows, use-after-free
 - **Type Safety:** Strong typing prevents cryptographic errors
 - **Panic Safety:** WASM panics = clean revert (no undefined behavior)
 - **Formal Verification:** Rust's borrow checker provides compile-time guarantees
 
 ### Developer Experience
+
 - **Library Support:** Use battle-tested arkworks crypto library
 - **Smaller Codebase:** 680 lines Rust vs 2000+ lines Solidity
 - **Easier Audits:** 288 lines Solidity interface vs full implementation

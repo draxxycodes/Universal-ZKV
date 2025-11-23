@@ -7,6 +7,7 @@ A production-ready Universal ZK-Proof Verifier supporting **three different zero
 ## 🎯 What Makes This Universal?
 
 This is a **true universal verifier** supporting:
+
 - ✅ **Groth16** - Trusted setup, ~280k gas, battle-tested
 - ✅ **PLONK** - Universal setup, ~400k gas, flexible
 - ✅ **STARK** - Transparent setup, ~540k gas, post-quantum ready
@@ -24,7 +25,7 @@ All three systems are **production-ready** and can verify proofs on-chain today.
                     │   UniversalVKV   │
                     │   (lib.rs)       │
                     └────────┬─────────┘
-                             │  
+                             │
            ┌─────────────────┼─────────────────┐
            │                 │                 │
      ┌─────▼─────┐    ┌─────▼─────┐    ┌─────▼─────┐
@@ -38,28 +39,31 @@ All three systems are **production-ready** and can verify proofs on-chain today.
 ## ✅ Production Features
 
 ### 🔐 Security
+
 - **ERC-7201 Storage** - Collision-resistant storage layout
 - **Supply Chain Security** - Vendored dependencies with cargo-vet
 - **Nullifier System** - Replay attack prevention
 - **Comprehensive Testing** - 270+ test proofs (Poseidon, EdDSA, Merkle)
 
 ### ⚡ Performance
+
 - **Gas Optimized** - Stylus WASM execution (10x cheaper than Solidity)
 - **Batch Verification** - Process multiple proofs efficiently
 - **Minimal Code Size** - 320KB WASM (well under 1MB Stylus limit)
 
 ### 🛠 Developer Experience
+
 - **TypeScript SDK** - Simple proof generation and submission
 - **Multiple Circuits** - Poseidon hash, EdDSA signatures, Merkle trees
 - **Comprehensive Docs** - API documentation and examples
 
 ## 📊 Performance Comparison
 
-| Proof System | Gas Cost | Setup Type | Security Assumption | Status |
-|--------------|----------|------------|---------------------|--------|
-| **Groth16** | ~280k | Trusted | Discrete Log | ✅ LIVE |
-| **PLONK** | ~400k | Universal | Discrete Log | ✅ LIVE |
-| **STARK** | ~540k | Transparent | Collision Resistance | ✅ LIVE |
+| Proof System | Gas Cost | Setup Type  | Security Assumption  | Status  |
+| ------------ | -------- | ----------- | -------------------- | ------- |
+| **Groth16**  | ~280k    | Trusted     | Discrete Log         | ✅ LIVE |
+| **PLONK**    | ~400k    | Universal   | Discrete Log         | ✅ LIVE |
+| **STARK**    | ~540k    | Transparent | Collision Resistance | ✅ LIVE |
 
 ---
 
@@ -133,22 +137,22 @@ snarkjs plonk prove build/poseidon_test.zkey witness.wtns proof.json public.json
 ### 3. Verify On-Chain
 
 ```typescript
-import { UniversalVerifier } from '@uzkv/sdk';
+import { UniversalVerifier } from "@uzkv/sdk";
 
 const verifier = new UniversalVerifier({
-  contractAddress: '0x...', // Deployed contract
-  rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc'
+  contractAddress: "0x...", // Deployed contract
+  rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
 });
 
 // Verify PLONK proof
 const result = await verifier.verify({
-  proofType: 'plonk',
+  proofType: "plonk",
   proof: proofData,
   publicInputs: publicData,
-  vkHash: vkHash
+  vkHash: vkHash,
 });
 
-console.log('Proof valid:', result.valid);
+console.log("Proof valid:", result.valid);
 ```
 
 ## 🎯 Deployment Flow
@@ -215,27 +219,32 @@ See [SECURITY.md](./SECURITY.md) for details.
 ## 📈 Roadmap
 
 ### ✅ Phase 1 - Foundation (Complete)
+
 - Monorepo setup
 - Groth16 verifier
 - Circuit infrastructure
 
 ### ✅ Phase 2 - PLONK Integration (Complete)
+
 - PLONK verifier implementation
 - 120+ test proofs
 - Gas benchmarking
 
 ### ✅ Phase 3 - STARK Integration (Complete)
+
 - STARK verifier (Fibonacci)
 - Generic constraint system (in progress)
 - Post-quantum security
 
 ### 🚧 Phase 4 - Production Hardening (In Progress)
+
 - External security audit
 - Extended testnet deployment
 - Performance optimization
 - SDK v1.0 release
 
 ### 📋 Phase 5 - Mainnet Launch (Q2 2024)
+
 - Mainnet deployment
 - Public bug bounty
 - Documentation finalization

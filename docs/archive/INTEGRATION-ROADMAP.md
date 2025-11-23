@@ -9,6 +9,7 @@
 ## Current State vs Goal
 
 ### Current Architecture (Groth16-Only)
+
 ```
 ┌────────────────────────────────┐
 │   UZKVContract (lib.rs)       │
@@ -28,6 +29,7 @@ Separate modules (NOT integrated):
 ```
 
 ### Target Architecture (Universal ZKV)
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │         Universal ZKV Contract (lib.rs)              │
@@ -49,6 +51,7 @@ Separate modules (NOT integrated):
 ## What We Have
 
 ### ✅ Groth16 Verifier - INTEGRATED
+
 - **Location:** `packages/stylus/src/groth16.rs`
 - **Status:** Fully integrated into `lib.rs`
 - **Functions:** `verify_groth16()`, exposed via ABI
@@ -57,6 +60,7 @@ Separate modules (NOT integrated):
 - **Ready:** ✅ Production ready
 
 ### ✅ PLONK Verifier - BUILT, NOT INTEGRATED
+
 - **Location:** `packages/stylus/plonk/` (separate module)
 - **Lines:** 2,300+ Rust code
 - **Tests:** 31 tests passing
@@ -70,6 +74,7 @@ Separate modules (NOT integrated):
 - **Missing:** Integration into `lib.rs`
 
 ### ✅ STARK Verifier - BUILT, NOT INTEGRATED
+
 - **Location:** `packages/stylus/stark-simple/` (simplified, recommended)
 - **Lines:** 700+ Rust code
 - **Tests:** 18 tests passing
@@ -87,6 +92,7 @@ Separate modules (NOT integrated):
 ## Integration Checklist
 
 ### Phase 1: Core Integration (Week 1)
+
 - [ ] **Task 1.1:** Add `pub mod plonk;` and `pub mod stark;` to `lib.rs`
 - [ ] **Task 1.2:** Create ProofType enum (1=Groth16, 2=PLONK, 3=STARK)
 - [ ] **Task 1.3:** Update storage for multi-proof support
@@ -101,6 +107,7 @@ Separate modules (NOT integrated):
 - [ ] **Task 1.7:** Update `register_vk()` to accept proof_type parameter
 
 ### Phase 2: Workspace Organization (Week 1)
+
 - [ ] **Task 2.1:** Create workspace in `packages/stylus/Cargo.toml`
   ```toml
   [workspace]
@@ -116,6 +123,7 @@ Separate modules (NOT integrated):
 - [ ] **Task 2.5:** Verify `cargo check` passes
 
 ### Phase 3: Interface Updates (Week 2)
+
 - [ ] **Task 3.1:** Rename `IGroth16Verifier.sol` → `IUniversalVerifier.sol`
 - [ ] **Task 3.2:** Add ProofType enum to Solidity
 - [ ] **Task 3.3:** Add `verify(uint8 proofType, ...)` function
@@ -126,6 +134,7 @@ Separate modules (NOT integrated):
 - [ ] **Task 3.8:** Update proxy contract references
 
 ### Phase 4: Testing (Week 2)
+
 - [ ] **Task 4.1:** Create `tests/universal_verifier.rs`
 - [ ] **Task 4.2:** Test Groth16 verification via unified API
 - [ ] **Task 4.3:** Test PLONK verification via unified API
@@ -136,6 +145,7 @@ Separate modules (NOT integrated):
 - [ ] **Task 4.8:** Integration tests with Solidity proxy
 
 ### Phase 5: Gas Benchmarking (Week 3)
+
 - [ ] **Task 5.1:** Benchmark Groth16 verification
 - [ ] **Task 5.2:** Benchmark PLONK verification
 - [ ] **Task 5.3:** Benchmark STARK verification
@@ -144,6 +154,7 @@ Separate modules (NOT integrated):
 - [ ] **Task 5.6:** Document results in `benchmarks/gas_comparison.md`
 
 ### Phase 6: Documentation (Week 3)
+
 - [ ] **Task 6.1:** Update README with all proof types
 - [ ] **Task 6.2:** Create proof type selection guide
 - [ ] **Task 6.3:** Document when to use each verifier
@@ -154,6 +165,7 @@ Separate modules (NOT integrated):
 ## Quick Start (Next Steps)
 
 ### Step 1: Update lib.rs (30 minutes)
+
 ```rust
 // packages/stylus/src/lib.rs
 
@@ -171,7 +183,7 @@ pub enum ProofType {
 #[public]
 impl UZKVContract {
     // Keep existing verify_groth16()...
-    
+
     // ADD THESE FUNCTIONS:
     pub fn verify_plonk(
         &mut self,
@@ -181,7 +193,7 @@ impl UZKVContract {
     ) -> Result<bool, Vec<u8>> {
         // TODO: Implement
     }
-    
+
     pub fn verify_stark(
         &mut self,
         proof: Vec<u8>,
@@ -190,7 +202,7 @@ impl UZKVContract {
     ) -> Result<bool, Vec<u8>> {
         // TODO: Implement
     }
-    
+
     pub fn verify(
         &mut self,
         proof_type: u8,
@@ -209,6 +221,7 @@ impl UZKVContract {
 ```
 
 ### Step 2: Update Cargo.toml (5 minutes)
+
 ```toml
 # packages/stylus/Cargo.toml
 
@@ -222,6 +235,7 @@ stark-simple = { path = "./stark-simple" }
 ```
 
 ### Step 3: Test Build (5 minutes)
+
 ```bash
 cd packages/stylus
 cargo check           # Should compile
@@ -229,6 +243,7 @@ cargo test            # All tests should pass
 ```
 
 ### Step 4: Verify Integration (10 minutes)
+
 ```bash
 # Generate ABI
 cargo stylus export-abi > ../contracts/src/interfaces/IUniversalVerifier.sol
@@ -241,12 +256,14 @@ grep "verify" ../contracts/src/interfaces/IUniversalVerifier.sol
 ## Success Criteria
 
 ### Minimum Viable Integration (Week 1)
+
 - ✅ All three verify functions callable from Solidity
 - ✅ `cargo build --release` succeeds
 - ✅ Basic integration test passes for all proof types
 - ✅ ABI includes all three verifiers
 
 ### Production Ready (Week 3)
+
 - ✅ All tests passing (Rust + Solidity)
 - ✅ Gas benchmarks documented
 - ✅ Statistics tracking per proof type
@@ -256,37 +273,41 @@ grep "verify" ../contracts/src/interfaces/IUniversalVerifier.sol
 
 ## Gas Cost Targets
 
-| Proof Type | Current (Standalone) | Target (Integrated) | Routing Overhead |
-|------------|---------------------|---------------------|------------------|
-| **Groth16** | ~61,000 | ~62,000 | < 1,000 |
-| **PLONK** | ~950,000 | ~951,000 | < 1,000 |
-| **STARK** | ~280,000 | ~281,000 | < 1,000 |
+| Proof Type  | Current (Standalone) | Target (Integrated) | Routing Overhead |
+| ----------- | -------------------- | ------------------- | ---------------- |
+| **Groth16** | ~61,000              | ~62,000             | < 1,000          |
+| **PLONK**   | ~950,000             | ~951,000            | < 1,000          |
+| **STARK**   | ~280,000             | ~281,000            | < 1,000          |
 
 **Target:** < 1% overhead from routing logic
 
 ## Timeline
 
-| Week | Focus | Deliverables |
-|------|-------|-------------|
-| **Week 1** | Core Integration | PLONK + STARK callable from main contract |
-| **Week 2** | Interface + Testing | Solidity ABI updated, tests passing |
-| **Week 3** | Benchmarking + Docs | Gas analysis complete, docs updated |
+| Week       | Focus               | Deliverables                              |
+| ---------- | ------------------- | ----------------------------------------- |
+| **Week 1** | Core Integration    | PLONK + STARK callable from main contract |
+| **Week 2** | Interface + Testing | Solidity ABI updated, tests passing       |
+| **Week 3** | Benchmarking + Docs | Gas analysis complete, docs updated       |
 
 ## Risk Mitigation
 
 ### Risk 1: Module Import Issues
+
 - **Mitigation:** Use workspace members, test incremental imports
 - **Fallback:** Copy code directly into main crate (not ideal)
 
 ### Risk 2: ABI Compatibility
+
 - **Mitigation:** Test ABI generation early, verify all functions present
 - **Fallback:** Manual Solidity interface creation
 
 ### Risk 3: Gas Overhead
+
 - **Mitigation:** Keep routing logic minimal (simple match statement)
 - **Fallback:** Type-specific functions bypass routing
 
 ### Risk 4: WASM Size Limit
+
 - **Mitigation:** Monitor WASM size with each change (< 128KB)
 - **Fallback:** Use feature flags to enable/disable proof types
 

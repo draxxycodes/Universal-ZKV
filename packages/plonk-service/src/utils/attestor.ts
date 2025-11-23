@@ -1,50 +1,56 @@
 /**
  * Attestor Contract Integration
- * 
+ *
  * Interacts with the on-chain attestor contract to submit verification results
  */
 
-import { createPublicClient, createWalletClient, http, type Address, type Hash } from 'viem';
-import { arbitrumSepolia } from 'viem/chains';
-import { privateKeyToAccount } from 'viem/accounts';
-import pino from 'pino';
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  type Address,
+  type Hash,
+} from "viem";
+import { arbitrumSepolia } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+import pino from "pino";
 
-const logger = pino({ name: 'attestor' });
+const logger = pino({ name: "attestor" });
 
 // Attestor contract ABI (simplified)
 const ATTESTOR_ABI = [
   {
     inputs: [
-      { name: 'proofHash', type: 'bytes32' },
-      { name: 'isValid', type: 'bool' },
-      { name: 'proofType', type: 'uint8' },
+      { name: "proofHash", type: "bytes32" },
+      { name: "isValid", type: "bool" },
+      { name: "proofType", type: "uint8" },
     ],
-    name: 'attest',
+    name: "attest",
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
-    inputs: [{ name: 'proofHash', type: 'bytes32' }],
-    name: 'getAttestation',
+    inputs: [{ name: "proofHash", type: "bytes32" }],
+    name: "getAttestation",
     outputs: [
-      { name: 'isValid', type: 'bool' },
-      { name: 'timestamp', type: 'uint256' },
-      { name: 'proofType', type: 'uint8' },
+      { name: "isValid", type: "bool" },
+      { name: "timestamp", type: "uint256" },
+      { name: "proofType", type: "uint8" },
     ],
-    stateMutability: 'view',
-    type: 'function',
+    stateMutability: "view",
+    type: "function",
   },
   {
     anonymous: false,
     inputs: [
-      { indexed: true, name: 'proofHash', type: 'bytes32' },
-      { indexed: false, name: 'isValid', type: 'bool' },
-      { indexed: false, name: 'proofType', type: 'uint8' },
-      { indexed: false, name: 'timestamp', type: 'uint256' },
+      { indexed: true, name: "proofHash", type: "bytes32" },
+      { indexed: false, name: "isValid", type: "bool" },
+      { indexed: false, name: "proofType", type: "uint8" },
+      { indexed: false, name: "timestamp", type: "uint256" },
     ],
-    name: 'ProofAttested',
-    type: 'event',
+    name: "ProofAttested",
+    type: "event",
   },
 ] as const;
 
@@ -57,12 +63,13 @@ export class AttestorClient {
   private account;
 
   constructor() {
-    const rpcUrl = process.env.RPC_URL || 'https://sepolia-rollup.arbitrum.io/rpc';
+    const rpcUrl =
+      process.env.RPC_URL || "https://sepolia-rollup.arbitrum.io/rpc";
     const attestorAddress = process.env.ATTESTOR_ADDRESS as Address;
     const privateKey = process.env.ATTESTOR_PRIVATE_KEY;
 
     if (!attestorAddress) {
-      throw new Error('ATTESTOR_ADDRESS not configured');
+      throw new Error("ATTESTOR_ADDRESS not configured");
     }
 
     this.attestorAddress = attestorAddress;
@@ -81,9 +88,12 @@ export class AttestorClient {
         chain: arbitrumSepolia,
         transport: http(rpcUrl),
       });
-      logger.info({ address: this.account.address }, 'Attestor wallet configured');
+      logger.info(
+        { address: this.account.address },
+        "Attestor wallet configured",
+      );
     } else {
-      logger.warn('ATTESTOR_PRIVATE_KEY not set - attestation disabled');
+      logger.warn("ATTESTOR_PRIVATE_KEY not set - attestation disabled");
     }
   }
 
@@ -92,24 +102,24 @@ export class AttestorClient {
    */
   async attest(proofHash: Hash, isValid: boolean): Promise<Hash | null> {
     if (!this.walletClient || !this.account) {
-      logger.warn('Attestation skipped - wallet not configured');
+      logger.warn("Attestation skipped - wallet not configured");
       return null;
     }
 
     try {
-      logger.info({ proofHash, isValid }, 'Submitting attestation');
+      logger.info({ proofHash, isValid }, "Submitting attestation");
 
       const hash = await this.walletClient.writeContract({
         address: this.attestorAddress,
         abi: ATTESTOR_ABI,
-        functionName: 'attest',
+        functionName: "attest",
         args: [proofHash, isValid, PROOF_TYPE_PLONK],
       });
 
-      logger.info({ proofHash, txHash: hash }, 'Attestation submitted');
+      logger.info({ proofHash, txHash: hash }, "Attestation submitted");
       return hash;
     } catch (error) {
-      logger.error({ error, proofHash }, 'Failed to submit attestation');
+      logger.error({ error, proofHash }, "Failed to submit attestation");
       throw error;
     }
   }
@@ -126,7 +136,7 @@ export class AttestorClient {
       const result = await this.publicClient.readContract({
         address: this.attestorAddress,
         abi: ATTESTOR_ABI,
-        functionName: 'getAttestation',
+        functionName: "getAttestation",
         args: [proofHash],
       });
 
@@ -136,7 +146,7 @@ export class AttestorClient {
         proofType: result[2],
       };
     } catch (error) {
-      logger.error({ error, proofHash }, 'Failed to get attestation');
+      logger.error({ error, proofHash }, "Failed to get attestation");
       return null;
     }
   }
@@ -149,13 +159,13 @@ export class AttestorClient {
       const logs = await this.publicClient.getLogs({
         address: this.attestorAddress,
         event: ATTESTOR_ABI[2], // ProofAttested event
-        fromBlock: fromBlock || 'earliest',
-        toBlock: 'latest',
+        fromBlock: fromBlock || "earliest",
+        toBlock: "latest",
       });
 
       return logs;
     } catch (error) {
-      logger.error({ error }, 'Failed to get attestation events');
+      logger.error({ error }, "Failed to get attestation events");
       return [];
     }
   }

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
+import { NextRequest, NextResponse } from "next/server";
+import { exec } from "child_process";
+import { promisify } from "util";
+import path from "path";
 
 const execAsync = promisify(exec);
 
@@ -10,8 +10,12 @@ export async function POST(req: NextRequest) {
     const { proofType } = await req.json();
 
     // Path to the root project directory
-    const projectRoot = path.join(process.cwd(), '..', '..');
-    const scriptPath = path.join(projectRoot, 'scripts', 'verify-with-uzkv.cjs');
+    const projectRoot = path.join(process.cwd(), "..", "..");
+    const scriptPath = path.join(
+      projectRoot,
+      "scripts",
+      "verify-with-uzkv.cjs",
+    );
 
     // Execute the verification script
     const { stdout, stderr } = await execAsync(`node ${scriptPath}`, {
@@ -19,15 +23,19 @@ export async function POST(req: NextRequest) {
       timeout: 30000, // 30 second timeout
     });
 
-    console.log('Verify output:', stdout);
-    if (stderr) console.error('Verify errors:', stderr);
+    console.log("Verify output:", stdout);
+    if (stderr) console.error("Verify errors:", stderr);
 
     // Parse the output to determine verification status
-    const verified = stdout.includes('✅') || stdout.includes('Verified');
-    
+    const verified = stdout.includes("✅") || stdout.includes("Verified");
+
     // Extract gas estimate from output (mock for now)
-    const gasEstimate = proofType === 'groth16' ? 280000 : 
-                       proofType === 'plonk' ? 400000 : 540000;
+    const gasEstimate =
+      proofType === "groth16"
+        ? 280000
+        : proofType === "plonk"
+          ? 400000
+          : 540000;
 
     return NextResponse.json({
       success: true,
@@ -37,14 +45,14 @@ export async function POST(req: NextRequest) {
       output: stdout,
     });
   } catch (error: any) {
-    console.error('Verification error:', error);
+    console.error("Verification error:", error);
     return NextResponse.json(
       {
         success: false,
         verified: false,
-        error: error.message || 'Failed to verify proofs',
+        error: error.message || "Failed to verify proofs",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

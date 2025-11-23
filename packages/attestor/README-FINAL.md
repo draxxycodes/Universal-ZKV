@@ -5,18 +5,20 @@
 **YES - the tiny attestor contract can and should be built in Stylus (not Solidity).**
 
 This gives you a **pure Stylus stack**:
+
 - ✅ Off-chain: 122KB Stylus WASM verifies proofs locally
 - ✅ On-chain: ~8KB Stylus WASM attestor records verifications
 - ✅ **NO SOLIDITY CONTRACTS** - everything is Rust/Stylus
 
 ## Size Comparison
 
-| Component | Size | Limit | Status |
-|-----------|------|-------|--------|
-| **Verifier WASM** (off-chain) | 122 KB | No limit | ✅ Runs locally |
-| **Attestor WASM** (on-chain) | **~8 KB** | 24 KB | ✅ **Fits!** |
+| Component                     | Size      | Limit    | Status          |
+| ----------------------------- | --------- | -------- | --------------- |
+| **Verifier WASM** (off-chain) | 122 KB    | No limit | ✅ Runs locally |
+| **Attestor WASM** (on-chain)  | **~8 KB** | 24 KB    | ✅ **Fits!**    |
 
 The attestor is **66% under the size limit** because it only does:
+
 1. ECDSA signature verification (ecrecover precompile)
 2. Storage mapping updates (proof_hash → attested)
 3. Event emission
@@ -62,12 +64,14 @@ The attestor is **66% under the size limit** because it only does:
 ## Why This Works
 
 ### Off-Chain Verifier (122KB)
+
 - Runs on your local machine or server
 - **Zero gas costs** (not deployed on-chain)
 - Full cryptographic verification
 - Fast: ~50ms per proof
 
 ### On-Chain Attestor (8KB)
+
 - **Tiny** - only signature verification logic
 - Fits under 24KB limit
 - Uses Ethereum's ecrecover precompile (address 0x01)
@@ -76,6 +80,7 @@ The attestor is **66% under the size limit** because it only does:
 ## Build Status
 
 ### Current Blocker
+
 The attestor code is complete and ready in `packages/attestor/src/lib.rs`, but there's a temporary Rust toolchain issue:
 
 ```
@@ -83,6 +88,7 @@ error: feature `edition2024` is required
 ```
 
 **This is NOT a fundamental problem.** It's just that:
+
 1. crates.io updated alloy-sol-types metadata to require edition2024
 2. Our nightly-2024-05-20 doesn't support edition2024 yet
 3. Newer nightlies (Nov 2024+) will support it
@@ -90,11 +96,13 @@ error: feature `edition2024` is required
 ### Solution Options
 
 **Option A: Wait for Stylus SDK Update** (Recommended)
+
 - stylus-sdk will update to newer Rust nightly
 - Then attestor builds without changes
 - Timeline: Likely within 1-2 weeks
 
 **Option B: Use Newer Nightly** (May have breaking changes)
+
 ```bash
 cd packages/attestor
 # Try latest nightly
@@ -103,6 +111,7 @@ cargo build --target wasm32-unknown-unknown --release
 ```
 
 **Option C: Vendor Dependencies** (Advanced)
+
 ```bash
 # Download and vendor alloy crates locally
 # Modify Cargo.toml to use local paths
@@ -114,6 +123,7 @@ cargo build --target wasm32-unknown-unknown --release
 The attestor contract (`packages/attestor/src/lib.rs`) implements:
 
 ### Storage
+
 ```rust
 #[storage]
 pub struct ProofAttestor {
@@ -125,6 +135,7 @@ pub struct ProofAttestor {
 ```
 
 ### Key Functions
+
 ```rust
 // Initialize with attestor public address
 pub fn initialize(&mut self, attestor: Address)
@@ -140,6 +151,7 @@ pub fn get_attestation_count(&self) -> U256
 ```
 
 ### Security
+
 - ✅ ECDSA signature verification via ecrecover precompile
 - ✅ Only authorized attestor can sign proofs
 - ✅ Duplicate attestations prevented
@@ -148,17 +160,19 @@ pub fn get_attestation_count(&self) -> U256
 
 ## Gas Costs (Estimated)
 
-| Operation | Gas | Cost @ $3000 ETH |
-|-----------|-----|------------------|
-| Deploy attestor | ~150k | ~$0.45 |
-| Attest proof | ~35k | ~$0.01 |
-| Query attestation | ~3k | ~$0.001 |
+| Operation         | Gas   | Cost @ $3000 ETH |
+| ----------------- | ----- | ---------------- |
+| Deploy attestor   | ~150k | ~$0.45           |
+| Attest proof      | ~35k  | ~$0.01           |
+| Query attestation | ~3k   | ~$0.001          |
 
 **Compare to full on-chain Stylus verifier:**
+
 - Would cost ~500k-1M gas per proof
 - But can't deploy (too large)
 
 **Compare to Solidity verifier:**
+
 - Similar gas costs
 - But NO Stylus benefits
 
@@ -166,34 +180,35 @@ pub fn get_attestation_count(&self) -> U256
 
 ```typescript
 // packages/sdk/src/verifier.ts
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
 
 // 1. Verify proof locally with 122KB WASM
 const isValid = await verifyGroth16Local(proof, publicInputs, vk);
 
 if (isValid) {
-    // 2. Compute proof hash
-    const proofHash = ethers.keccak256(
-        ethers.concat([proofBytes, publicInputsBytes])
-    );
-    
-    // 3. Sign with attestor private key
-    const attestorWallet = new ethers.Wallet(ATTESTOR_PRIVATE_KEY);
-    const signature = await attestorWallet.signMessage(
-        ethers.getBytes(proofHash)
-    );
-    
-    // 4. Submit to on-chain attestor
-    const tx = await attestorContract.attest_proof(proofHash, signature);
-    await tx.wait();
-    
-    console.log(`Proof attested on Arbiscan!`);
+  // 2. Compute proof hash
+  const proofHash = ethers.keccak256(
+    ethers.concat([proofBytes, publicInputsBytes]),
+  );
+
+  // 3. Sign with attestor private key
+  const attestorWallet = new ethers.Wallet(ATTESTOR_PRIVATE_KEY);
+  const signature = await attestorWallet.signMessage(
+    ethers.getBytes(proofHash),
+  );
+
+  // 4. Submit to on-chain attestor
+  const tx = await attestorContract.attest_proof(proofHash, signature);
+  await tx.wait();
+
+  console.log(`Proof attested on Arbiscan!`);
 }
 ```
 
 ## Trust Model
 
 **What you trust:**
+
 - The off-chain verifier correctly implements Groth16
   - ✅ Uses arkworks (audited library)
   - ✅ Same code as would run on-chain
@@ -205,6 +220,7 @@ if (isValid) {
   - ✅ Standard ECDSA security
 
 **What you DON'T trust:**
+
 - On-chain signature verification (cryptographically secure)
 - On-chain storage (immutable blockchain)
 - Query results (verifiable on Arbiscan)
@@ -212,18 +228,21 @@ if (isValid) {
 ## Benefits vs. Alternatives
 
 ### vs. Full On-Chain Stylus Verifier
+
 - ❌ Full verifier: 122KB (can't deploy)
 - ✅ Attestor: 8KB (deploys easily)
 - ✅ Still get verification on-chain (via signature)
 - ✅ Save ~$1.50 per proof (no 500k gas)
 
 ### vs. Solidity Attestor
+
 - ✅ **Pure Stylus stack** (your requirement!)
 - ✅ ~30% lower gas (Stylus efficiency)
 - ✅ Rust safety guarantees
 - ✅ Easier to audit (one language)
 
 ### vs. Pure Off-Chain (No Attestation)
+
 - ✅ On-chain record of verifications
 - ✅ Publicly auditable on Arbiscan
 - ✅ Immutable proof of verification
@@ -249,7 +268,7 @@ pub fn attest_proof(&mut self, proof_hash: FixedBytes<32>, signatures: Vec<Vec<u
             valid_signers.push(signer);
         }
     }
-    
+
     if valid_signers.len() >= threshold {
         // Record attestation
     }
@@ -302,6 +321,7 @@ cast send $ATTESTOR_ADDRESS \
 **Timeline:** Buildable within 1-2 weeks when dependencies update
 
 **This is the solution you wanted:**
+
 - Everything in Stylus ✅
 - Deploys to mainnet ✅
 - No mock implementations ✅
@@ -309,6 +329,7 @@ cast send $ATTESTOR_ADDRESS \
 - Most work done locally ✅
 
 **The hybrid approach works, it's just split by deployment location:**
+
 - **Heavy work (122KB Groth16):** Runs locally
 - **Light work (8KB attestation):** Runs on-chain
 - **Both pure Stylus WASM!**

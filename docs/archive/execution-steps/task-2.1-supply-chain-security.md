@@ -114,14 +114,14 @@ Conducted comprehensive audit of BN254 parameters against Ethereum's Alt_bn128 s
 
 #### Cryptographic Properties
 
-| Property             | Value                | Verification                   |
-| -------------------- | -------------------- | ------------------------------ |
-| Security Level       | ~100 bits            | Adequate for zkSNARK use       |
-| Curve Order          | 2188824...5617\*\*   | Prime-order subgroup           |
-| Subgroup Check       | Cofactor = 1         | No subgroup attacks            |
-| Pairing Efficiency   | ~60k gas (Ethereum)  | Matches target                 |
-| DDH Assumption       | Holds in GT          | Required for Groth16 soundness |
-| Quantum Resistance   | ❌ (like all EC)     | Classical security only        |
+| Property           | Value               | Verification                   |
+| ------------------ | ------------------- | ------------------------------ |
+| Security Level     | ~100 bits           | Adequate for zkSNARK use       |
+| Curve Order        | 2188824...5617\*\*  | Prime-order subgroup           |
+| Subgroup Check     | Cofactor = 1        | No subgroup attacks            |
+| Pairing Efficiency | ~60k gas (Ethereum) | Matches target                 |
+| DDH Assumption     | Holds in GT         | Required for Groth16 soundness |
+| Quantum Resistance | ❌ (like all EC)    | Classical security only        |
 
 \*\*Scalar field order: `21888242871839275222246405745257275088548364400416034343698204186575808495617`
 
@@ -235,14 +235,12 @@ const MODULUS: BigInteger = BigInteger([
 ## 📁 Files Created
 
 1. **`packages/stylus/vendor/`** - Vendored dependencies directory
-
    - `ark-groth16/` (Groth16 zkSNARK verifier)
    - `ark-curves/bn254/` (BN254 curve implementation)
    - `ark-algebra/ec/` (elliptic curve arithmetic)
    - `ark-algebra/ff/` (finite field arithmetic)
 
 2. **`packages/stylus/Cargo.toml`** (modified)
-
    - Added vendored dependency paths
    - Configured no_std with `default-features = false`
 
@@ -257,25 +255,21 @@ const MODULUS: BigInteger = BigInteger([
 ## 🔍 Audit Methodology
 
 1. **Vendor Dependencies**
-
    - Clone specific versions from arkworks-rs GitHub
    - Use `--depth 1` for minimal clone size
    - Pin to production-stable tags (v0.4.0, v0.3.0)
 
 2. **Parameter Verification**
-
    - Extract curve parameters from source code
    - Compare against Ethereum Yellow Paper (Appendix E)
    - Verify field modulus, generator points, curve coefficients
 
 3. **Security Assessment**
-
    - Check for known CVEs in arkworks ecosystem
    - Review security advisories and recent attacks
    - Assess cryptographic strength (discrete log hardness)
 
 4. **Compatibility Testing**
-
    - Verify no_std support for WASM target
    - Test compilation with `cargo check --target wasm32-unknown-unknown`
    - Validate dependency resolution
@@ -290,21 +284,18 @@ const MODULUS: BigInteger = BigInteger([
 ## 🎓 Lessons Learned
 
 1. **BN254 Security Trade-offs**
-
    - BN curves have reduced security margin (100-bit vs 128-bit) due to modern attacks
    - **Acceptable for zkSNARK verification**: Proofs are short-lived (nullifier-protected)
    - **Not acceptable for key storage**: Long-term secrets require BLS12-381 or higher
    - Ethereum's continued use validates "good enough" for bounded-lifetime proofs
 
 2. **Supply Chain Security Best Practices**
-
    - **Vendor all cryptographic code**: Eliminates crates.io supply chain attacks
    - **Pin to specific versions**: Ensures reproducible builds
    - **Audit curve parameters**: Don't trust, verify against specifications
    - **Document everything**: Audit trail is critical for institutional deployment
 
 3. **Arkworks Ecosystem Maturity**
-
    - Production-ready: 4+ years in major zkSNARK projects
    - Well-maintained: Active development and security updates
    - Industry standard: Used by Aleo, Mina, ZCash, Ethereum tooling
@@ -370,24 +361,24 @@ const MODULUS: BigInteger = BigInteger([
 
 ## 📊 Metrics
 
-| Metric                        | Value                             |
-| ----------------------------- | --------------------------------- |
-| **Vendored Packages**         | 4 (groth16, bn254, ec, ff)        |
-| **Total Source Files**        | 339 (curves) + 286 (algebra) + 39 |
-| **Audit Documentation**       | 270+ lines (audits.toml)          |
-| **Parameter Verifications**   | 12 (curve params, field mod, etc) |
-| **Security Findings**         | 1 warning (BN254 reduced margin)  |
-| **Ethereum Compatibility**    | ✅ 100% (Alt_bn128 match)         |
-| **Build Time (WASM)**         | ~15 seconds (vendored)            |
-| **Dependency Tree Depth**     | 3 levels (groth16 → ec → ff)      |
-| **License Compliance**        | ✅ MIT/Apache-2.0                 |
-| **no_std Support**            | ✅ All packages                   |
-| **Known CVEs**                | 0                                 |
-| **Production Use**            | 4+ years (Aleo, Mina, ZCash)      |
-| **Cryptographic Strength**    | ~100-bit (post-2016 attacks)      |
-| **Pairing Gas Cost**          | ~60,000 (Ethereum precompile)     |
-| **Migration Plan**            | Phase 15 (BLS12-381)              |
-| **Audit Recommendation**      | Phase 18 (professional)           |
+| Metric                      | Value                             |
+| --------------------------- | --------------------------------- |
+| **Vendored Packages**       | 4 (groth16, bn254, ec, ff)        |
+| **Total Source Files**      | 339 (curves) + 286 (algebra) + 39 |
+| **Audit Documentation**     | 270+ lines (audits.toml)          |
+| **Parameter Verifications** | 12 (curve params, field mod, etc) |
+| **Security Findings**       | 1 warning (BN254 reduced margin)  |
+| **Ethereum Compatibility**  | ✅ 100% (Alt_bn128 match)         |
+| **Build Time (WASM)**       | ~15 seconds (vendored)            |
+| **Dependency Tree Depth**   | 3 levels (groth16 → ec → ff)      |
+| **License Compliance**      | ✅ MIT/Apache-2.0                 |
+| **no_std Support**          | ✅ All packages                   |
+| **Known CVEs**              | 0                                 |
+| **Production Use**          | 4+ years (Aleo, Mina, ZCash)      |
+| **Cryptographic Strength**  | ~100-bit (post-2016 attacks)      |
+| **Pairing Gas Cost**        | ~60,000 (Ethereum precompile)     |
+| **Migration Plan**          | Phase 15 (BLS12-381)              |
+| **Audit Recommendation**    | Phase 18 (professional)           |
 
 ---
 

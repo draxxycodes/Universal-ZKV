@@ -114,10 +114,10 @@ forge create src/Groth16VerifierProxy.sol:Groth16VerifierProxy \
 
 ## Gas Savings
 
-| Operation | Pure Solidity | Stylus | Savings |
-|-----------|--------------|--------|---------|
-| Groth16 Verify | ~280,000 | ~61,000 | **78%** |
-| Register VK | ~150,000 | ~45,000 | **70%** |
+| Operation      | Pure Solidity | Stylus  | Savings |
+| -------------- | ------------- | ------- | ------- |
+| Groth16 Verify | ~280,000      | ~61,000 | **78%** |
+| Register VK    | ~150,000      | ~45,000 | **70%** |
 
 ## Directory Structure
 

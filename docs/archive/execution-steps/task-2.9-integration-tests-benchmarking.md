@@ -26,6 +26,7 @@ packages/plonk-service/test/
 Tests the `/verify` and `/verify/batch` endpoints with real PLONK proofs from the test corpus.
 
 **Test Coverage**:
+
 - ✅ Single proof verification (all 3 circuits)
 - ✅ Valid proof acceptance
 - ✅ Invalid proof rejection
@@ -38,6 +39,7 @@ Tests the `/verify` and `/verify/batch` endpoints with real PLONK proofs from th
 - ✅ Performance benchmarking (per-circuit timing)
 
 **Key Tests**:
+
 ```typescript
 // Verify valid Poseidon proof
 POST /verify
@@ -59,6 +61,7 @@ POST /verify/batch
 Tests interaction with the on-chain attestor contract on Arbitrum Sepolia.
 
 **Test Coverage**:
+
 - ✅ Attestation submission after verification
 - ✅ Attestation status queries by proof hash
 - ✅ Attestation event retrieval and filtering
@@ -68,6 +71,7 @@ Tests interaction with the on-chain attestor contract on Arbitrum Sepolia.
 - ✅ Attestor contract health check
 
 **Key Tests**:
+
 ```typescript
 // Verify and submit attestation
 POST /verify
@@ -89,6 +93,7 @@ GET /attestation/0x1234...
 Tests complete workflows from input generation through proof generation to verification.
 
 **Test Coverage**:
+
 - ✅ Poseidon workflow: generate input → PLONK proof → verify
 - ✅ EdDSA workflow: generate signature → PLONK proof → verify
 - ✅ Merkle workflow: generate proof → PLONK proof → verify
@@ -97,6 +102,7 @@ Tests complete workflows from input generation through proof generation to verif
 - ✅ Performance benchmarks: full workflow timing (10 iterations)
 
 **Workflow Example**:
+
 ```bash
 # Step 1: Generate test input
 node scripts/generate-test-inputs.cjs 1
@@ -115,6 +121,7 @@ POST /verify { circuitType, proof, publicSignals }
 Comprehensive performance testing with detailed metrics and reporting.
 
 **Test Coverage**:
+
 - ✅ Single proof verification latency (n=100 per circuit)
 - ✅ Batch verification performance (10, 50 proofs)
 - ✅ Batch efficiency analysis (1-50 batch sizes)
@@ -125,6 +132,7 @@ Comprehensive performance testing with detailed metrics and reporting.
 - ✅ Maximum throughput measurement
 
 **Performance Metrics Collected**:
+
 - Min/Max/Mean latency
 - P95/P99 percentiles
 - Standard deviation
@@ -133,6 +141,7 @@ Comprehensive performance testing with detailed metrics and reporting.
 - Batch efficiency ratios
 
 **Report Output**:
+
 ```json
 {
   "timestamp": "2025-01-27T...",
@@ -143,7 +152,7 @@ Comprehensive performance testing with detailed metrics and reporting.
       "samples": 100,
       "mean": 485.23,
       "p95": 612.45,
-      "p99": 678.90,
+      "p99": 678.9,
       "stdDev": 45.67
     }
   ],
@@ -161,6 +170,7 @@ Comprehensive performance testing with detailed metrics and reporting.
 ### Prerequisites
 
 **Task 2.8 MUST be complete** - Test corpus generation must finish before running tests:
+
 ```bash
 # Check corpus status
 cd packages/circuits
@@ -173,6 +183,7 @@ cat test-corpus-catalog.json
 ### Environment Setup
 
 Create `.env` file in `packages/plonk-service/`:
+
 ```bash
 # Required
 PORT=3002
@@ -240,16 +251,19 @@ pnpm vitest test/performance/profiling.test.ts
 ### Test Metrics
 
 **Poseidon Circuit** (601 constraints):
+
 - Single verification: < 1000ms
 - Batch 50 verification: < 20 seconds
 - Throughput: > 10 verifications/sec
 
 **EdDSA Circuit** (23,793 constraints):
+
 - Single verification: < 1500ms
 - Batch 50 verification: < 30 seconds
 - Throughput: > 5 verifications/sec
 
 **Merkle Circuit** (12,886 constraints):
+
 - Single verification: < 1200ms
 - Batch 50 verification: < 25 seconds
 - Throughput: > 8 verifications/sec
@@ -272,6 +286,7 @@ pnpm vitest test/performance/profiling.test.ts
 **Error**: `ENOENT: no such file or directory ... proofs/plonk/poseidon_test/batch/proof_1`
 
 **Solution**: Wait for Task 2.8 corpus generation to complete (~30-45 minutes)
+
 ```bash
 cd packages/circuits
 ps aux | grep generate-test-corpus  # Check if still running
@@ -282,6 +297,7 @@ ps aux | grep generate-test-corpus  # Check if still running
 **Error**: `Failed to initialize WASM verifier`
 
 **Solution**: Build WASM verifier first
+
 ```bash
 cd packages/plonk-verifier
 cargo build --release --target wasm32-unknown-unknown
@@ -292,6 +308,7 @@ cargo build --release --target wasm32-unknown-unknown
 **Error**: `Attestor contract not accessible`
 
 **Solution**: Attestor tests are optional - they skip if no RPC configured. To enable:
+
 ```bash
 # Set environment variables
 export ATTESTOR_ADDRESS=0x36e937ebcf56c5dec6ecb0695001becc87738177
@@ -304,10 +321,11 @@ export RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 **Error**: `Test timeout of 30000ms exceeded`
 
 **Solution**: Increase timeout in `vitest.config.ts`:
+
 ```typescript
 export default defineConfig({
   test: {
-    testTimeout: 60000,  // Increase to 60 seconds
+    testTimeout: 60000, // Increase to 60 seconds
   },
 });
 ```
@@ -317,6 +335,7 @@ export default defineConfig({
 **Error**: Memory growth exceeds threshold
 
 **Solution**: Run with GC enabled:
+
 ```bash
 node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 ```
@@ -324,11 +343,13 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 ## Performance Report
 
 After running performance tests, view the detailed report:
+
 ```bash
 cat packages/plonk-service/performance-report.json
 ```
 
 **Report Contents**:
+
 - Per-circuit verification timings
 - Batch efficiency analysis
 - Memory usage snapshots
@@ -338,6 +359,7 @@ cat packages/plonk-service/performance-report.json
 ## Test Coverage
 
 Generate coverage report:
+
 ```bash
 pnpm test --coverage
 
@@ -348,6 +370,7 @@ start coverage/index.html  # Windows
 ```
 
 **Coverage Targets**:
+
 - Line coverage: > 80%
 - Branch coverage: > 75%
 - Function coverage: > 85%
@@ -370,6 +393,7 @@ start coverage/index.html  # Windows
 ## Test Duration
 
 **Estimated Runtime**:
+
 - Integration tests: ~5-10 minutes
 - E2E workflow tests: ~10-15 minutes
 - Performance profiling: ~10-15 minutes

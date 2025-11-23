@@ -19,6 +19,7 @@ The Universal ZK Verifier (UZKV) is built with **Rust Stylus** and provides a **
 ### Single Function for All Proof Types
 
 **Rust Stylus Implementation:**
+
 ```rust
 #[public]
 pub fn verify(
@@ -31,6 +32,7 @@ pub fn verify(
 ```
 
 **From TypeScript/JavaScript** (interacts via ABI):
+
 ```typescript
 // Call via ethers.js (Stylus contracts are EVM-compatible)
 await uzkv.verify(proofType, proof, publicInputs, vkHash);
@@ -40,11 +42,11 @@ await uzkv.verify(proofType, proof, publicInputs, vkHash);
 
 ## 📋 **Proof Type Enumeration**
 
-| Proof Type | Value | Gas Cost | Setup Type | Security |
-|------------|-------|----------|------------|----------|
-| **Groth16** | `0` | ~280k | Trusted | Discrete Log |
-| **PLONK** | `1` | ~400k | Universal | Discrete Log |
-| **STARK** | `2` | ~540k | Transparent | Collision Resistance |
+| Proof Type  | Value | Gas Cost | Setup Type  | Security             |
+| ----------- | ----- | -------- | ----------- | -------------------- |
+| **Groth16** | `0`   | ~280k    | Trusted     | Discrete Log         |
+| **PLONK**   | `1`   | ~400k    | Universal   | Discrete Log         |
+| **STARK**   | `2`   | ~540k    | Transparent | Collision Resistance |
 
 ---
 
@@ -53,14 +55,16 @@ await uzkv.verify(proofType, proof, publicInputs, vkHash);
 ### 1. Verify Groth16 Proof (Poseidon Hash)
 
 ```typescript
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
 
 const contractAddress = "0x..."; // Your deployed UZKV contract
 const abi = [
-  "function verify(uint8 proofType, bytes proof, bytes publicInputs, bytes32 vkHash) external returns (bool)"
+  "function verify(uint8 proofType, bytes proof, bytes publicInputs, bytes32 vkHash) external returns (bool)",
 ];
 
-const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
+const provider = new ethers.JsonRpcProvider(
+  "https://sepolia-rollup.arbitrum.io/rpc",
+);
 const signer = new ethers.Wallet(privateKey, provider);
 const uzkv = new ethers.Contract(contractAddress, abi, signer);
 
@@ -71,10 +75,10 @@ const vkHash = "0x..."; // Registered VK hash
 
 // Verify using universal interface
 const isValid = await uzkv.verify(
-    0,              // Groth16 proof type
-    proof,
-    publicInputs,
-    vkHash
+  0, // Groth16 proof type
+  proof,
+  publicInputs,
+  vkHash,
 );
 
 console.log("Groth16 verification:", isValid);
@@ -90,10 +94,10 @@ const plonkVkHash = "0x..."; // Registered PLONK VK
 
 // Verify using same universal interface
 const isValid = await uzkv.verify(
-    1,              // PLONK proof type
-    plonkProof,
-    signatureValid,
-    plonkVkHash
+  1, // PLONK proof type
+  plonkProof,
+  signatureValid,
+  plonkVkHash,
 );
 
 console.log("PLONK verification:", isValid);
@@ -105,14 +109,15 @@ console.log("PLONK verification:", isValid);
 // STARK proof data
 const starkProof = "0x..."; // STARK proof bytes
 const fibonacciInputs = "0x..."; // Initial values + final result
-const zeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+const zeroHash =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // STARK doesn't use VK (transparent setup)
 const isValid = await uzkv.verify(
-    2,              // STARK proof type
-    starkProof,
-    fibonacciInputs,
-    zeroHash        // Not used, pass zero hash
+  2, // STARK proof type
+  starkProof,
+  fibonacciInputs,
+  zeroHash, // Not used, pass zero hash
 );
 
 console.log("STARK verification:", isValid);
@@ -126,78 +131,102 @@ console.log("STARK verification:", isValid);
 
 ```typescript
 class UniversalVerifierClient {
-    private contract: ethers.Contract;
+  private contract: ethers.Contract;
 
-    constructor(contractAddress: string, signer: ethers.Signer) {
-        const abi = [
-            "function verify(uint8, bytes, bytes, bytes32) external returns (bool)",
-            "function register_vk(bytes) external returns (bytes32)",
-            "function get_verification_count() external view returns (uint256)"
-        ];
-        this.contract = new ethers.Contract(contractAddress, abi, signer);
-    }
+  constructor(contractAddress: string, signer: ethers.Signer) {
+    const abi = [
+      "function verify(uint8, bytes, bytes, bytes32) external returns (bool)",
+      "function register_vk(bytes) external returns (bytes32)",
+      "function get_verification_count() external view returns (uint256)",
+    ];
+    this.contract = new ethers.Contract(contractAddress, abi, signer);
+  }
 
-    // Verify any proof type with single function
-    async verifyProof(
-        proofType: 0 | 1 | 2,  // Groth16 | PLONK | STARK
-        proof: string,
-        publicInputs: string,
-        vkHash?: string
-    ): Promise<boolean> {
-        const vk = vkHash || ethers.ZeroHash;
-        const tx = await this.contract.verify(proofType, proof, publicInputs, vk);
-        const receipt = await tx.wait();
-        return receipt.status === 1;
-    }
+  // Verify any proof type with single function
+  async verifyProof(
+    proofType: 0 | 1 | 2, // Groth16 | PLONK | STARK
+    proof: string,
+    publicInputs: string,
+    vkHash?: string,
+  ): Promise<boolean> {
+    const vk = vkHash || ethers.ZeroHash;
+    const tx = await this.contract.verify(proofType, proof, publicInputs, vk);
+    const receipt = await tx.wait();
+    return receipt.status === 1;
+  }
 
-    // Complete workflow: Identity → Whitelist → State → Computation → Finalize
-    async verifyCompleteWorkflow(
-        identityProof: { proof: string; inputs: string; vk: string },
-        whitelistProof: { proof: string; inputs: string; vk: string },
-        stateProof: { proof: string; inputs: string; vk: string },
-        computeProof: { proof: string; inputs: string },
-        finalizeProof: { proof: string; inputs: string; vk: string }
-    ): Promise<boolean> {
-        console.log("Starting universal verification workflow...\n");
+  // Complete workflow: Identity → Whitelist → State → Computation → Finalize
+  async verifyCompleteWorkflow(
+    identityProof: { proof: string; inputs: string; vk: string },
+    whitelistProof: { proof: string; inputs: string; vk: string },
+    stateProof: { proof: string; inputs: string; vk: string },
+    computeProof: { proof: string; inputs: string },
+    finalizeProof: { proof: string; inputs: string; vk: string },
+  ): Promise<boolean> {
+    console.log("Starting universal verification workflow...\n");
 
-        // Step 1: Verify identity (Groth16 + EdDSA)
-        console.log("1. Verifying identity (Groth16)...");
-        const identity = await this.verifyProof(0, identityProof.proof, identityProof.inputs, identityProof.vk);
-        if (!identity) throw new Error("Identity verification failed");
-        console.log("✅ Identity verified");
+    // Step 1: Verify identity (Groth16 + EdDSA)
+    console.log("1. Verifying identity (Groth16)...");
+    const identity = await this.verifyProof(
+      0,
+      identityProof.proof,
+      identityProof.inputs,
+      identityProof.vk,
+    );
+    if (!identity) throw new Error("Identity verification failed");
+    console.log("✅ Identity verified");
 
-        // Step 2: Verify whitelist membership (Groth16 + Merkle)
-        console.log("2. Verifying whitelist (Groth16)...");
-        const whitelist = await this.verifyProof(0, whitelistProof.proof, whitelistProof.inputs, whitelistProof.vk);
-        if (!whitelist) throw new Error("Whitelist verification failed");
-        console.log("✅ Whitelist verified");
+    // Step 2: Verify whitelist membership (Groth16 + Merkle)
+    console.log("2. Verifying whitelist (Groth16)...");
+    const whitelist = await this.verifyProof(
+      0,
+      whitelistProof.proof,
+      whitelistProof.inputs,
+      whitelistProof.vk,
+    );
+    if (!whitelist) throw new Error("Whitelist verification failed");
+    console.log("✅ Whitelist verified");
 
-        // Step 3: Verify state transition (PLONK + Poseidon)
-        console.log("3. Verifying state transition (PLONK)...");
-        const state = await this.verifyProof(1, stateProof.proof, stateProof.inputs, stateProof.vk);
-        if (!state) throw new Error("State verification failed");
-        console.log("✅ State transition verified");
+    // Step 3: Verify state transition (PLONK + Poseidon)
+    console.log("3. Verifying state transition (PLONK)...");
+    const state = await this.verifyProof(
+      1,
+      stateProof.proof,
+      stateProof.inputs,
+      stateProof.vk,
+    );
+    if (!state) throw new Error("State verification failed");
+    console.log("✅ State transition verified");
 
-        // Step 4: Verify computation (STARK + Fibonacci)
-        console.log("4. Verifying computation integrity (STARK)...");
-        const compute = await this.verifyProof(2, computeProof.proof, computeProof.inputs);
-        if (!compute) throw new Error("Computation verification failed");
-        console.log("✅ Computation verified");
+    // Step 4: Verify computation (STARK + Fibonacci)
+    console.log("4. Verifying computation integrity (STARK)...");
+    const compute = await this.verifyProof(
+      2,
+      computeProof.proof,
+      computeProof.inputs,
+    );
+    if (!compute) throw new Error("Computation verification failed");
+    console.log("✅ Computation verified");
 
-        // Step 5: Finalize transaction (PLONK + EdDSA)
-        console.log("5. Finalizing transaction (PLONK)...");
-        const finalize = await this.verifyProof(1, finalizeProof.proof, finalizeProof.inputs, finalizeProof.vk);
-        if (!finalize) throw new Error("Finalization failed");
-        console.log("✅ Transaction finalized");
+    // Step 5: Finalize transaction (PLONK + EdDSA)
+    console.log("5. Finalizing transaction (PLONK)...");
+    const finalize = await this.verifyProof(
+      1,
+      finalizeProof.proof,
+      finalizeProof.inputs,
+      finalizeProof.vk,
+    );
+    if (!finalize) throw new Error("Finalization failed");
+    console.log("✅ Transaction finalized");
 
-        console.log("\n🎉 Complete workflow verified successfully!");
-        return true;
-    }
+    console.log("\n🎉 Complete workflow verified successfully!");
+    return true;
+  }
 
-    // Get total verifications across all proof types
-    async getVerificationCount(): Promise<bigint> {
-        return await this.contract.get_verification_count();
-    }
+  // Get total verifications across all proof types
+  async getVerificationCount(): Promise<bigint> {
+    return await this.contract.get_verification_count();
+  }
 }
 
 // Usage
@@ -205,16 +234,16 @@ const verifier = new UniversalVerifierClient(contractAddress, signer);
 
 // Verify individual proofs
 await verifier.verifyProof(0, groth16Proof, inputs, vkHash); // Groth16
-await verifier.verifyProof(1, plonkProof, inputs, vkHash);   // PLONK
-await verifier.verifyProof(2, starkProof, inputs);           // STARK
+await verifier.verifyProof(1, plonkProof, inputs, vkHash); // PLONK
+await verifier.verifyProof(2, starkProof, inputs); // STARK
 
 // Or verify complete workflow
 await verifier.verifyCompleteWorkflow(
-    identityProof,
-    whitelistProof,
-    stateProof,
-    computeProof,
-    finalizeProof
+  identityProof,
+  whitelistProof,
+  stateProof,
+  computeProof,
+  finalizeProof,
 );
 
 // Check total verifications
@@ -277,6 +306,7 @@ cargo run --bin generate_stark_proof -- --steps 100 --output proof.json
 ## 📊 **Gas Optimization Tips**
 
 ### Precomputed Pairings (Groth16)
+
 The contract automatically precomputes pairings when you register a VK, saving ~80k gas per verification.
 
 ```typescript
@@ -288,6 +318,7 @@ await contract.verify(0, proof, inputs, vkHash);
 ```
 
 ### Batch Verification
+
 Submit multiple proofs in a single transaction:
 
 ```solidity
@@ -312,6 +343,7 @@ function batchVerify(
 ## 🛡️ **Security Considerations**
 
 ### 1. Nullifier Prevention (Replay Attacks)
+
 ```solidity
 // Add nullifier tracking in your app (Solidity wrapper around UZKV)
 mapping(bytes32 => bool) public usedProofs;
@@ -324,22 +356,25 @@ function verifyWithNullifier(
     bytes32 nullifier
 ) external {
     require(!usedProofs[nullifier], "Proof already used");
-    
+
     // Call UZKV Rust Stylus contract
     bool valid = uzkv.verify(proofType, proof, publicInputs, vkHash);
     require(valid, "Invalid proof");
-    
+
     usedProofs[nullifier] = true;
 }
 ```
 
 ### 2. Circuit Breaker (Emergency Pause)
+
 The Rust Stylus contract has a built-in pause mechanism (admin only).
 
 ### 3. VK Registration Access Control
+
 Only register VKs from trusted sources to prevent malicious circuit injection.
 
 ### 4. Stylus Gas Efficiency
+
 Rust Stylus provides **10x cheaper computation** compared to EVM Solidity, making verification significantly more cost-effective.
 
 ---
@@ -370,7 +405,7 @@ cargo test universal_verifier_e2e --release -- --nocapture
 // Failed verification returns false (doesn't revert)
 const isValid = await contract.verify(0, invalidProof, inputs, vkHash);
 if (!isValid) {
-    console.log("Proof verification failed");
+  console.log("Proof verification failed");
 }
 
 // Check verification count
@@ -396,15 +431,15 @@ console.log(`Successful verifications: ${count}`);
 
 ## 🎓 **When to Use Which Proof Type**
 
-| Use Case | Recommended | Reason |
-|----------|------------|--------|
-| **Fast verification** | Groth16 | Lowest gas (~280k) |
-| **Flexible circuits** | PLONK | Universal setup, one-time ceremony |
-| **No trusted setup** | STARK | Transparent, post-quantum ready |
-| **Privacy-preserving auth** | Groth16 + EdDSA | Fast + proven security |
-| **ZK-Rollups** | PLONK + Poseidon | Universal setup + efficient hashing |
-| **Long-term security** | STARK + Any | Post-quantum resistant |
-| **High-throughput** | Groth16 (batch) | Lowest per-proof cost |
+| Use Case                    | Recommended      | Reason                              |
+| --------------------------- | ---------------- | ----------------------------------- |
+| **Fast verification**       | Groth16          | Lowest gas (~280k)                  |
+| **Flexible circuits**       | PLONK            | Universal setup, one-time ceremony  |
+| **No trusted setup**        | STARK            | Transparent, post-quantum ready     |
+| **Privacy-preserving auth** | Groth16 + EdDSA  | Fast + proven security              |
+| **ZK-Rollups**              | PLONK + Poseidon | Universal setup + efficient hashing |
+| **Long-term security**      | STARK + Any      | Post-quantum resistant              |
+| **High-throughput**         | Groth16 (batch)  | Lowest per-proof cost               |
 
 ---
 

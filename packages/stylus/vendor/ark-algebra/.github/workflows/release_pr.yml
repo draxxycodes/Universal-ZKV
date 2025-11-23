@@ -7,14 +7,14 @@ on:
         required: true
         type: choice
         # Currently only alpha and patch releases are supported by this workflow, due to https://github.com/rust-lang/cargo/issues/4242
-        options: 
+        options:
           - alpha
           - patch
       base_branch:
         description: Branch to target
         required: true
         type: string
-        default: 'releases'
+        default: "releases"
 
 jobs:
   make-release-pr:
@@ -32,4 +32,4 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
           crate-release-all: true
-          base-branch: ${{ inputs.base_branch }} 
+          base-branch: ${{ inputs.base_branch }}

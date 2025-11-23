@@ -25,15 +25,15 @@ yarn add @uzkv/sdk
 ### Using Universal Proof Protocol Types
 
 ```typescript
-import { ProofType, PublicStatement, UniversalProof } from '@uzkv/sdk';
+import { ProofType, PublicStatement, UniversalProof } from "@uzkv/sdk";
 
 // Create a public statement
 const statement = new PublicStatement({
   merkleRoot: new Uint8Array(32).fill(0x11), // State tree root
-  publicKey: new Uint8Array(32).fill(0x22),  // EdDSA public key
-  nullifier: new Uint8Array(32).fill(0x33),  // Anti-replay nullifier
-  value: 12345n,                              // Amount or ID
-  extra: new Uint8Array([0xde, 0xad]),       // Optional metadata
+  publicKey: new Uint8Array(32).fill(0x22), // EdDSA public key
+  nullifier: new Uint8Array(32).fill(0x33), // Anti-replay nullifier
+  value: 12345n, // Amount or ID
+  extra: new Uint8Array([0xde, 0xad]), // Optional metadata
 });
 
 // Create a universal proof
@@ -53,26 +53,26 @@ await verifierContract.verify(encodedProof);
 ### Using Legacy Groth16 Client
 
 ```typescript
-import { createUZKVClient } from '@uzkv/sdk';
+import { createUZKVClient } from "@uzkv/sdk";
 
 // Create client
 const client = createUZKVClient({
-  serviceUrl: 'http://localhost:3001',
-  rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
-  attestorAddress: '0x36e937ebcf56c5dec6ecb0695001becc87738177',
+  serviceUrl: "http://localhost:3001",
+  rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+  attestorAddress: "0x36e937ebcf56c5dec6ecb0695001becc87738177",
 });
 
 // Verify a proof
 const result = await client.verify({
   proof: myProof,
-  publicInputs: ['1', '2', '3'],
+  publicInputs: ["1", "2", "3"],
   vk: verificationKey,
   attestOnChain: true, // Optional: attest on Arbitrum
 });
 
-console.log('Valid:', result.valid);
-console.log('Proof Hash:', result.proofHash);
-console.log('Transaction:', result.attestation?.transactionHash);
+console.log("Valid:", result.valid);
+console.log("Proof Hash:", result.proofHash);
+console.log("Transaction:", result.attestation?.transactionHash);
 ```
 
 ## Universal Proof Protocol API
@@ -81,9 +81,9 @@ console.log('Transaction:', result.attestation?.transactionHash);
 
 ```typescript
 enum ProofType {
-  Groth16 = 0,  // Trusted setup, ~280k gas, ~128 byte proofs
-  PLONK   = 1,  // Universal setup, ~400k gas, ~800 byte proofs
-  STARK   = 2,  // Transparent, ~540k gas, ~40-100 KB proofs
+  Groth16 = 0, // Trusted setup, ~280k gas, ~128 byte proofs
+  PLONK = 1, // Universal setup, ~400k gas, ~800 byte proofs
+  STARK = 2, // Transparent, ~540k gas, ~40-100 KB proofs
 }
 ```
 
@@ -92,11 +92,11 @@ enum ProofType {
 ```typescript
 class PublicStatement {
   constructor(params: {
-    merkleRoot: Uint8Array;   // 32 bytes - State tree root
-    publicKey: Uint8Array;    // 32 bytes - EdDSA public key
-    nullifier: Uint8Array;    // 32 bytes - Anti-replay value
-    value: bigint;            // u128 - Application-specific value
-    extra?: Uint8Array;       // Optional extension data
+    merkleRoot: Uint8Array; // 32 bytes - State tree root
+    publicKey: Uint8Array; // 32 bytes - EdDSA public key
+    nullifier: Uint8Array; // 32 bytes - Anti-replay value
+    value: bigint; // u128 - Application-specific value
+    extra?: Uint8Array; // Optional extension data
   });
 
   encode(): Uint8Array;
@@ -140,6 +140,7 @@ class UniversalProof {
 Create a new UZKV client instance.
 
 **Parameters:**
+
 - `config.serviceUrl` (optional): URL of the verification service (default: `http://localhost:3001`)
 - `config.rpcUrl` (optional): Arbitrum Sepolia RPC URL
 - `config.attestorAddress` (optional): Attestor contract address
@@ -151,6 +152,7 @@ Create a new UZKV client instance.
 Verify a Groth16 proof.
 
 **Parameters:**
+
 - `request.proof`: Groth16 proof object
 - `request.publicInputs`: Array of public inputs (as strings)
 - `request.vk`: Verification key
@@ -163,6 +165,7 @@ Verify a Groth16 proof.
 Verify multiple proofs in batch.
 
 **Parameters:**
+
 - `requests`: Array of verify requests
 
 **Returns:** Promise with batch results
@@ -172,6 +175,7 @@ Verify multiple proofs in batch.
 Check if a proof has been attested on-chain.
 
 **Parameters:**
+
 - `proofHash`: Proof hash (0x-prefixed hex string)
 
 **Returns:** Promise<AttestationStatus>
@@ -181,6 +185,7 @@ Check if a proof has been attested on-chain.
 Get attestation events from the contract.
 
 **Parameters:**
+
 - `proofHash` (optional): Filter by specific proof hash
 
 **Returns:** Promise with array of events
@@ -196,26 +201,29 @@ Check service health.
 ### Basic Verification
 
 ```typescript
-import { createUZKVClient } from '@uzkv/sdk';
+import { createUZKVClient } from "@uzkv/sdk";
 
 const client = createUZKVClient();
 
 const result = await client.verify({
   proof: {
-    pi_a: ['...', '...'],
-    pi_b: [['...', '...'], ['...', '...']],
-    pi_c: ['...', '...'],
-    protocol: 'groth16',
-    curve: 'bn128',
+    pi_a: ["...", "..."],
+    pi_b: [
+      ["...", "..."],
+      ["...", "..."],
+    ],
+    pi_c: ["...", "..."],
+    protocol: "groth16",
+    curve: "bn128",
   },
-  publicInputs: ['1'],
+  publicInputs: ["1"],
   vk: myVerificationKey,
 });
 
 if (result.valid) {
-  console.log('✅ Proof verified!');
+  console.log("✅ Proof verified!");
 } else {
-  console.log('❌ Invalid proof:', result.error);
+  console.log("❌ Invalid proof:", result.error);
 }
 ```
 
@@ -224,27 +232,27 @@ if (result.valid) {
 ```typescript
 const result = await client.verify({
   proof: myProof,
-  publicInputs: ['1', '2'],
+  publicInputs: ["1", "2"],
   vk: myVK,
   attestOnChain: true, // Request on-chain attestation
 });
 
 if (result.valid && result.attestation?.success) {
-  console.log('✅ Proof verified and attested!');
-  console.log('TX:', result.attestation.transactionHash);
-  console.log('Gas used:', result.attestation.gasUsed);
+  console.log("✅ Proof verified and attested!");
+  console.log("TX:", result.attestation.transactionHash);
+  console.log("Gas used:", result.attestation.gasUsed);
 }
 ```
 
 ### Check Attestation Status
 
 ```typescript
-const status = await client.getAttestationStatus('0xabc123...');
+const status = await client.getAttestationStatus("0xabc123...");
 
 if (status.isAttested) {
-  console.log('Proof was attested at:', status.timestampISO);
+  console.log("Proof was attested at:", status.timestampISO);
 } else {
-  console.log('Proof not yet attested');
+  console.log("Proof not yet attested");
 }
 ```
 
@@ -252,9 +260,9 @@ if (status.isAttested) {
 
 ```typescript
 const results = await client.verifyBatch([
-  { proof: proof1, publicInputs: ['1'], vk: vk1 },
-  { proof: proof2, publicInputs: ['2'], vk: vk2 },
-  { proof: proof3, publicInputs: ['3'], vk: vk3 },
+  { proof: proof1, publicInputs: ["1"], vk: vk1 },
+  { proof: proof2, publicInputs: ["2"], vk: vk2 },
+  { proof: proof3, publicInputs: ["3"], vk: vk3 },
 ]);
 
 console.log(`${results.validProofs}/${results.totalProofs} proofs valid`);
@@ -269,8 +277,8 @@ interface Groth16Proof {
   pi_a: [string, string];
   pi_b: [[string, string], [string, string]];
   pi_c: [string, string];
-  protocol: 'groth16';
-  curve: 'bn128';
+  protocol: "groth16";
+  curve: "bn128";
 }
 ```
 
@@ -278,14 +286,17 @@ interface Groth16Proof {
 
 ```typescript
 interface VerificationKey {
-  protocol: 'groth16';
-  curve: 'bn128';
+  protocol: "groth16";
+  curve: "bn128";
   nPublic: number;
   vk_alpha_1: [string, string];
   vk_beta_2: [[string, string], [string, string]];
   vk_gamma_2: [[string, string], [string, string]];
   vk_delta_2: [[string, string], [string, string]];
-  vk_alphabeta_12: [[[string, string], [string, string]], [[string, string], [string, string]]];
+  vk_alphabeta_12: [
+    [[string, string], [string, string]],
+    [[string, string], [string, string]],
+  ];
   IC: Array<[string, string]>;
 }
 ```

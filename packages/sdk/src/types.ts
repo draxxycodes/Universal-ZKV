@@ -96,19 +96,19 @@ export class PublicStatement {
     extra?: Uint8Array;
   }) {
     if (params.merkleRoot.length !== 32) {
-      throw new Error('merkleRoot must be 32 bytes');
+      throw new Error("merkleRoot must be 32 bytes");
     }
     if (params.publicKey.length !== 32) {
-      throw new Error('publicKey must be 32 bytes');
+      throw new Error("publicKey must be 32 bytes");
     }
     if (params.nullifier.length !== 32) {
-      throw new Error('nullifier must be 32 bytes');
+      throw new Error("nullifier must be 32 bytes");
     }
     if (params.value < 0n) {
-      throw new Error('value must be non-negative');
+      throw new Error("value must be non-negative");
     }
     if (params.value >= 2n ** 128n) {
-      throw new Error('value must fit in u128 (< 2^128)');
+      throw new Error("value must fit in u128 (< 2^128)");
     }
 
     this.merkleRoot = params.merkleRoot;
@@ -174,7 +174,9 @@ export class PublicStatement {
    */
   static decode(bytes: Uint8Array): PublicStatement {
     if (bytes.length < 116) {
-      throw new Error(`Buffer too short: expected at least 116 bytes, got ${bytes.length}`);
+      throw new Error(
+        `Buffer too short: expected at least 116 bytes, got ${bytes.length}`,
+      );
     }
 
     let offset = 0;
@@ -204,7 +206,7 @@ export class PublicStatement {
     // Parse extra data
     if (bytes.length < offset + extraLen) {
       throw new Error(
-        `Buffer too short for extra data: expected ${offset + extraLen} bytes, got ${bytes.length}`
+        `Buffer too short for extra data: expected ${offset + extraLen} bytes, got ${bytes.length}`,
       );
     }
     const extra = bytes.slice(offset, offset + extraLen);
@@ -291,13 +293,15 @@ export class UniversalProof {
     this.programId = params.programId;
 
     if (params.vkHash.length !== 32) {
-      throw new Error('vkHash must be 32 bytes');
+      throw new Error("vkHash must be 32 bytes");
     }
     if (params.programId < 0 || params.programId > 0xffffffff) {
-      throw new Error('programId must be a valid u32 (0 to 4294967295)');
+      throw new Error("programId must be a valid u32 (0 to 4294967295)");
     }
     if (this.version !== 1) {
-      throw new Error(`Unsupported protocol version: ${this.version} (only version 1 supported)`);
+      throw new Error(
+        `Unsupported protocol version: ${this.version} (only version 1 supported)`,
+      );
     }
 
     this.vkHash = params.vkHash;
@@ -347,7 +351,8 @@ export class UniversalProof {
    * @returns Encoded bytes (minimum 46 bytes)
    */
   encode(): Uint8Array {
-    const totalSize = 46 + this.proofBytes.length + this.publicInputsBytes.length;
+    const totalSize =
+      46 + this.proofBytes.length + this.publicInputsBytes.length;
     const buffer = new Uint8Array(totalSize);
     let offset = 0;
 
@@ -394,7 +399,9 @@ export class UniversalProof {
    */
   static decode(bytes: Uint8Array): UniversalProof {
     if (bytes.length < 46) {
-      throw new Error(`Buffer too short: expected at least 46 bytes, got ${bytes.length}`);
+      throw new Error(
+        `Buffer too short: expected at least 46 bytes, got ${bytes.length}`,
+      );
     }
 
     let offset = 0;
@@ -403,13 +410,19 @@ export class UniversalProof {
     const version = bytes[offset];
     offset += 1;
     if (version !== 1) {
-      throw new Error(`Unsupported protocol version: ${version} (only version 1 supported)`);
+      throw new Error(
+        `Unsupported protocol version: ${version} (only version 1 supported)`,
+      );
     }
 
     // Parse proof_type
     const proofType = bytes[offset];
     offset += 1;
-    if (proofType !== ProofType.Groth16 && proofType !== ProofType.PLONK && proofType !== ProofType.STARK) {
+    if (
+      proofType !== ProofType.Groth16 &&
+      proofType !== ProofType.PLONK &&
+      proofType !== ProofType.STARK
+    ) {
       throw new Error(`Invalid proof type: ${proofType}`);
     }
 
@@ -429,7 +442,7 @@ export class UniversalProof {
 
     if (bytes.length < offset + proofLen) {
       throw new Error(
-        `Buffer too short for proof: expected ${offset + proofLen} bytes, got ${bytes.length}`
+        `Buffer too short for proof: expected ${offset + proofLen} bytes, got ${bytes.length}`,
       );
     }
     const proofBytes = bytes.slice(offset, offset + proofLen);
@@ -437,7 +450,7 @@ export class UniversalProof {
 
     // Parse public_inputs_bytes length and data
     if (bytes.length < offset + 4) {
-      throw new Error('Buffer too short for public inputs length field');
+      throw new Error("Buffer too short for public inputs length field");
     }
     const publicInputsLenBytes = bytes.slice(offset, offset + 4);
     const publicInputsLen = bytesToU32(publicInputsLenBytes);
@@ -445,7 +458,7 @@ export class UniversalProof {
 
     if (bytes.length < offset + publicInputsLen) {
       throw new Error(
-        `Buffer too short for public inputs: expected ${offset + publicInputsLen} bytes, got ${bytes.length}`
+        `Buffer too short for public inputs: expected ${offset + publicInputsLen} bytes, got ${bytes.length}`,
       );
     }
     const publicInputsBytes = bytes.slice(offset, offset + publicInputsLen);
@@ -511,10 +524,10 @@ function bytesToU32(bytes: Uint8Array): number {
  */
 function u128ToBytes(value: bigint): Uint8Array {
   if (value < 0n) {
-    throw new Error('u128 value must be non-negative');
+    throw new Error("u128 value must be non-negative");
   }
   if (value >= 2n ** 128n) {
-    throw new Error('u128 value must be less than 2^128');
+    throw new Error("u128 value must be less than 2^128");
   }
 
   const buffer = new Uint8Array(16);

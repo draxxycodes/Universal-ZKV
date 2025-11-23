@@ -1,7 +1,6 @@
 ---
-name: Bug Report 
+name: Bug Report
 about: Create a report to help us squash bugs!
-
 ---
 
 <!-- < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < ☺ 
@@ -22,4 +21,3 @@ v    Please also ensure that this is not a duplicate issue :)
 
 <!-- Also please note what feature flags the library was compiled with? -->
 <!-- If this is a build issue, also indicate your OS and compiler versions (clang --version) -->
-

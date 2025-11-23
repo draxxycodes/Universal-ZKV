@@ -9,12 +9,14 @@ This guide demonstrates how to test the Universal Verifier with **all three proo
 ## ✅ **Quick Test - Verify All Systems**
 
 ### Run the Universal Verifier E2E Test
+
 ```bash
 cd packages/stylus
 cargo test universal_verifier_e2e --release -- --nocapture
 ```
 
 **Expected Output:**
+
 ```
 🌟 UNIVERSAL VERIFIER - COMPLETE WORKFLOW TEST
 ============================================================
@@ -53,6 +55,7 @@ cargo test universal_verifier_e2e --release -- --nocapture
 ### 1. Generate Proofs for All Circuits
 
 #### **Poseidon Circuit** (Groth16 + PLONK)
+
 ```bash
 cd packages/circuits
 
@@ -77,6 +80,7 @@ snarkjs groth16 prove build/poseidon_final.zkey witness.wtns proof.json public.j
 ```
 
 #### **EdDSA Circuit** (Groth16 + PLONK)
+
 ```bash
 # Compile EdDSA circuit
 circom src/eddsa_verify.circom --r1cs --wasm --sym -o build/
@@ -86,6 +90,7 @@ circom src/eddsa_verify.circom --r1cs --wasm --sym -o build/
 ```
 
 #### **Merkle Circuit** (Groth16 + PLONK)
+
 ```bash
 # Compile Merkle proof circuit
 circom src/merkle_proof.circom --r1cs --wasm --sym -o build/
@@ -97,17 +102,20 @@ circom src/merkle_proof.circom --r1cs --wasm --sym -o build/
 ### 2. Test Each Proof System
 
 #### **Test Groth16**
+
 ```bash
 cd packages/stylus
 cargo test groth16 --release -- --nocapture
 ```
 
 #### **Test PLONK**
+
 ```bash
 cargo test plonk --release -- --nocapture
 ```
 
 #### **Test STARK**
+
 ```bash
 cargo test stark --release -- --nocapture
 ```
@@ -152,6 +160,7 @@ cargo test test_universal_verifier_complete_workflow --release -- --nocapture
 ```
 
 **Run this scenario:**
+
 ```bash
 cargo test test_universal_verifier_complete_workflow --release -- --nocapture
 ```
@@ -160,15 +169,15 @@ cargo test test_universal_verifier_complete_workflow --release -- --nocapture
 
 ## 📊 **Gas Cost Comparison**
 
-| Proof System | Circuit | Gas Cost | Proof Size | Setup Type |
-|--------------|---------|----------|------------|------------|
-| **Groth16** | Poseidon | ~280k | 256 bytes | Trusted |
-| **Groth16** | EdDSA | ~290k | 256 bytes | Trusted |
-| **Groth16** | Merkle | ~285k | 256 bytes | Trusted |
-| **PLONK** | Poseidon | ~400k | 512 bytes | Universal |
-| **PLONK** | EdDSA | ~410k | 512 bytes | Universal |
-| **PLONK** | Merkle | ~405k | 512 bytes | Universal |
-| **STARK** | Fibonacci | ~540k | 1024 bytes | Transparent |
+| Proof System | Circuit   | Gas Cost | Proof Size | Setup Type  |
+| ------------ | --------- | -------- | ---------- | ----------- |
+| **Groth16**  | Poseidon  | ~280k    | 256 bytes  | Trusted     |
+| **Groth16**  | EdDSA     | ~290k    | 256 bytes  | Trusted     |
+| **Groth16**  | Merkle    | ~285k    | 256 bytes  | Trusted     |
+| **PLONK**    | Poseidon  | ~400k    | 512 bytes  | Universal   |
+| **PLONK**    | EdDSA     | ~410k    | 512 bytes  | Universal   |
+| **PLONK**    | Merkle    | ~405k    | 512 bytes  | Universal   |
+| **STARK**    | Fibonacci | ~540k    | 1024 bytes | Transparent |
 
 **Total for complete workflow:** ~2,115k gas
 
@@ -190,6 +199,7 @@ cargo test test_universal_verifier_complete_workflow --release -- --nocapture
 ## 🚀 **Next Steps After Testing**
 
 ### 1. Deploy to Arbitrum Sepolia
+
 ```bash
 cd packages/stylus
 cargo stylus deploy \
@@ -198,6 +208,7 @@ cargo stylus deploy \
 ```
 
 ### 2. Verify On-Chain
+
 ```bash
 # Test with real proofs on testnet
 cast send <CONTRACT_ADDRESS> "verifyGroth16(bytes,bytes)" \
@@ -207,6 +218,7 @@ cast send <CONTRACT_ADDRESS> "verifyGroth16(bytes,bytes)" \
 ```
 
 ### 3. Monitor Performance
+
 ```bash
 # Run gas benchmarks
 cd benchmarks

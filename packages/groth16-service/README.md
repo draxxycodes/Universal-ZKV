@@ -58,6 +58,7 @@ nano .env
 ```
 
 Required environment variables:
+
 - `ATTESTOR_CONTRACT` - Deployed attestor contract address
 - `ATTESTOR_SIGNER_PRIVATE_KEY` - Private key for signing attestations
 - `ARBITRUM_SEPOLIA_RPC` - RPC endpoint for Arbitrum Sepolia
@@ -88,6 +89,7 @@ pnpm start
 Verify a Groth16 proof and attest it on-chain.
 
 **Request:**
+
 ```json
 {
   "proof": {
@@ -107,6 +109,7 @@ Verify a Groth16 proof and attest it on-chain.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "valid": true,
@@ -117,6 +120,7 @@ Verify a Groth16 proof and attest it on-chain.
 ```
 
 **Response (Invalid Proof):**
+
 ```json
 {
   "valid": false,
@@ -130,6 +134,7 @@ Verify a Groth16 proof and attest it on-chain.
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -143,6 +148,7 @@ Health check endpoint.
 Service statistics.
 
 **Response:**
+
 ```json
 {
   "totalVerifications": 1234,
@@ -188,6 +194,7 @@ cp ../stylus/target/wasm32-unknown-unknown/release/uzkv_stylus.wasm wasm/
 Logs are output in JSON format (production) or pretty format (development).
 
 Log levels:
+
 - `trace` - Very detailed debugging
 - `debug` - Debugging information
 - `info` - General informational messages
@@ -223,16 +230,19 @@ pm2 logs groth16-service
 ## Troubleshooting
 
 **WASM not loading:**
+
 - Ensure WASM file exists in `wasm/` directory
 - Check file permissions
 - Verify WASM was built with correct target
 
 **Attestation failing:**
+
 - Verify `ATTESTOR_SIGNER_PRIVATE_KEY` matches the attestor address set in contract
 - Check RPC endpoint is accessible
 - Ensure contract is initialized
 
 **Rate limiting issues:**
+
 - Adjust `RATE_LIMIT_MAX_REQUESTS` in `.env`
 - Implement IP whitelisting for trusted clients
 

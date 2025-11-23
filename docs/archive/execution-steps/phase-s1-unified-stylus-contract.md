@@ -48,6 +48,7 @@ impl ProofType {
 #### 2. Extended Error Types
 
 Added new error variants:
+
 - `InvalidProofType` - Invalid proof type value
 - `ProofTypeNotSupported` - Proof type exists but module not enabled yet
 
@@ -64,6 +65,7 @@ pub fn verify(
 ```
 
 **Features:**
+
 - ✅ Routes to Groth16 verifier (production-ready)
 - 🔄 Routes to PLONK verifier (TODO: enable module)
 - 🔄 Routes to STARK verifier (TODO: enable module)
@@ -73,6 +75,7 @@ pub fn verify(
 - ✅ Verification counter increment
 
 **Gas Optimization:**
+
 - Reuses precomputed pairings for Groth16 (~80k gas savings)
 - Single verification counter for all proof types
 - Early validation before expensive crypto operations
@@ -88,6 +91,7 @@ pub fn register_vk_typed(
 ```
 
 **Features:**
+
 - Type-specific VK registration
 - Automatic precomputation based on proof type:
   - Groth16: Precompute e(α, β) pairing
@@ -114,6 +118,7 @@ pub fn batch_verify(
 ```
 
 **Features:**
+
 - ✅ Validates input lengths match
 - ✅ Deserializes VK once (shared across all proofs)
 - ✅ Reuses precomputed pairing for all verifications
@@ -122,11 +127,13 @@ pub fn batch_verify(
 - ✅ Early exit for empty batches
 
 **Gas Savings:**
+
 - VK deserialization: ~20k gas (done once instead of N times)
 - Precomputed pairing reuse: ~80k gas per proof
 - Total savings for batch of 10: ~820k gas (~82k per proof)
 
 **Implementation Details:**
+
 ```rust
 // Deserialize VK once
 let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)?;
@@ -143,13 +150,13 @@ let precomputed = if !precomputed_pairing_bytes.is_empty() {
 for i in 0..proofs.len() {
     let proof = Proof::deserialize_compressed(&proofs[i])?;
     let inputs = deserialize_public_inputs(&public_inputs[i])?;
-    
+
     let is_valid = if let Some(ref alpha_beta) = precomputed {
         verify_proof_with_precomputed(&vk, &proof, &inputs, alpha_beta)?
     } else {
         verify_proof_internal(&vk, &proof, &inputs)?
     };
-    
+
     results.push(is_valid);
 }
 ```
@@ -167,6 +174,7 @@ pub fn batch_verify(
 ```
 
 **Features:**
+
 - ✅ Routes to appropriate batch verifier based on proof type
 - ✅ Retrieves VK and precomputed pairing from storage
 - ✅ Validates input lengths match
@@ -174,6 +182,7 @@ pub fn batch_verify(
 - ✅ Returns individual results for each proof
 
 **Verification Counter Logic:**
+
 ```rust
 // Count valid proofs
 let valid_count = results.iter().filter(|&&r| r).count();
@@ -202,30 +211,30 @@ if valid_count > 0 {
 ```solidity
 interface IUniversalVerifier {
     // Universal verification
-    function verify(uint8 proofType, bytes calldata proof, 
-                   bytes calldata publicInputs, bytes32 vkHash) 
+    function verify(uint8 proofType, bytes calldata proof,
+                   bytes calldata publicInputs, bytes32 vkHash)
                    external returns (bool);
-    
+
     function batchVerify(uint8 proofType, bytes[] calldata proofs,
                         bytes[] calldata publicInputs, bytes32 vkHash)
                         external returns (bool[] memory);
-    
+
     // VK registration
-    function registerVkTyped(uint8 proofType, bytes calldata vk) 
+    function registerVkTyped(uint8 proofType, bytes calldata vk)
                             external returns (bytes32);
-    
+
     // Legacy Groth16
-    function verifyGroth16(bytes calldata proof, 
+    function verifyGroth16(bytes calldata proof,
                           bytes calldata publicInputs, bytes32 vkHash)
                           external returns (bool);
-    
+
     function registerVk(bytes calldata vk) external returns (bytes32);
-    
+
     // Admin functions
     function pause() external;
     function unpause() external;
     function markNullifierUsed(bytes32 nullifier) external returns (bool);
-    
+
     // Queries
     function getVerificationCount() external view returns (uint256);
     function isVkRegistered(bytes32 vkHash) external view returns (bool);
@@ -235,6 +244,7 @@ interface IUniversalVerifier {
 ```
 
 **Features:**
+
 - ✅ Complete interface for Stylus contract
 - ✅ All 13 functions documented
 - ✅ Custom error types defined
@@ -246,6 +256,7 @@ interface IUniversalVerifier {
 **File:** `packages/stylus/build-wasm.sh`
 
 **Features:**
+
 - ✅ Automated WASM build with cargo-stylus
 - ✅ WASM optimization with wasm-opt (targets <128KB)
 - ✅ ABI export
@@ -255,12 +266,14 @@ interface IUniversalVerifier {
 - ✅ Colored output for UX
 
 **Commands:**
+
 ```bash
 chmod +x build-wasm.sh
 ./build-wasm.sh
 ```
 
 **Output:**
+
 - `artifacts/uzkv_verifier_unoptimized.wasm`
 - `artifacts/uzkv_verifier_optimized.wasm`
 - `artifacts/IUniversalVerifier.sol`
@@ -274,6 +287,7 @@ chmod +x build-wasm.sh
 **Purpose:** Enables WASM builds on Windows via Docker
 
 **Usage:**
+
 ```bash
 docker build -t uzkv-stylus-builder .
 docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
@@ -281,6 +295,7 @@ docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
 ```
 
 **Features:**
+
 - ✅ Rust nightly-2024-02-01
 - ✅ cargo-stylus pre-installed
 - ✅ wasm-opt (binaryen) pre-installed
@@ -291,6 +306,7 @@ docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
 **File:** `packages/stylus/BUILD.md`
 
 **Contents:**
+
 - Quick start (Linux/WSL/Docker)
 - Prerequisites installation
 - Manual build steps
@@ -299,6 +315,7 @@ docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
 - Contract interface reference
 
 **Features:**
+
 - ✅ Step-by-step instructions
 - ✅ Platform-specific guides
 - ✅ Common error solutions
@@ -309,6 +326,7 @@ docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
 **File:** `packages/stylus/DEPLOYMENT.md`
 
 **Contents:**
+
 - Deployment checklist
 - Testnet deployment steps
 - Mainnet deployment steps
@@ -317,6 +335,7 @@ docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
 - Cost estimates
 
 **Features:**
+
 - ✅ Complete deployment workflow
 - ✅ Cast CLI examples
 - ✅ Verification steps
@@ -330,6 +349,7 @@ docker run --rm -v ${PWD}:/workspace uzkv-stylus-builder \
 **Windows Compatibility Note:**
 
 Since the WASM binary cannot be built on Windows due to linker issues, we've provided:
+
 1. ✅ Solidity ABI interface (manually created from Rust code)
 2. ✅ Build script ready for Linux execution
 3. ✅ Docker environment for Windows users
@@ -343,6 +363,7 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 ## 📊 Code Metrics
 
 **Lines Added:**
+
 - `lib.rs`: +204 lines
   - ProofType enum: 25 lines
   - verify(): 75 lines
@@ -365,6 +386,7 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 **Total:** +1,173 lines (code + documentation)
 
 **Functions Added:**
+
 - ✅ `ProofType::from_u8()` - Enum conversion
 - ✅ `verify()` - Universal proof verification
 - ✅ `register_vk_typed()` - Type-specific VK registration
@@ -372,6 +394,7 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 - ✅ `batch_verify()` - Batch verification (contract)
 
 **Files Created:**
+
 - ✅ `IUniversalVerifier.sol` - Solidity interface
 - ✅ `build-wasm.sh` - Build script
 - ✅ `BUILD.md` - Build documentation
@@ -379,6 +402,7 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 - ✅ `Dockerfile` - Build environment
 
 **Error Types Added:**
+
 - ✅ `InvalidProofType`
 - ✅ `ProofTypeNotSupported`
 
@@ -387,18 +411,21 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 ## 🔒 Security Considerations
 
 ### Input Validation
+
 - ✅ Proof type validated (0-2 only)
 - ✅ Batch size validated (proofs.len() == inputs.len())
 - ✅ Pause state checked before verification
 - ✅ VK existence checked before use
 
 ### Gas Safety
+
 - ✅ Batch verify fails fast on invalid inputs
 - ✅ Invalid proofs return false (don't revert entire batch)
 - ✅ Counter increments only for valid proofs
 - ✅ Precomputed pairing reused across batch
 
 ### Denial of Service Protection
+
 - ✅ No unbounded loops (batch size controlled by caller)
 - ✅ Early validation before expensive operations
 - ✅ Graceful degradation (missing precomputed pairing)
@@ -408,18 +435,21 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 ## 🧪 Testing Status
 
 **Unit Tests:**
+
 - ⏳ TODO: Add tests for ProofType::from_u8()
 - ⏳ TODO: Add tests for verify() routing
 - ⏳ TODO: Add tests for batch_verify() edge cases
 - ⏳ TODO: Add tests for error conditions
 
 **Integration Tests:**
+
 - ⏳ TODO: Test verify() with real Groth16 proofs
 - ⏳ TODO: Test batch_verify() with 10 proofs
 - ⏳ TODO: Test counter increment logic
 - ⏳ TODO: Test pause/unpause with verify()
 
 **Gas Benchmarks:**
+
 - ⏳ TODO: Measure batch_verify() gas savings
 - ⏳ TODO: Compare to individual verify() calls
 - ⏳ TODO: Test with/without precomputed pairings
@@ -433,6 +463,7 @@ The actual WASM build will be executed during Phase S5 (Testnet Deployment) on a
 **Problem:** `stylus-sdk` has Windows MSVC linker issue.
 
 **Error:**
+
 ```
 error LNK2019: unresolved external symbol native_keccak256
 ```
@@ -512,6 +543,7 @@ feat(stylus): add multi-proof routing and batch verification (Phase S1.1-S1.2)
 ## 🎯 Next Steps
 
 **Phase S2: Solidity Integration (Week 2)**
+
 - Refactor `UniversalZKVerifier.sol`
 - Add Stylus WASM delegatecall
 - Update existing 29 tests
@@ -519,6 +551,7 @@ feat(stylus): add multi-proof routing and batch verification (Phase S1.1-S1.2)
 - Integration test suite
 
 **Prerequisites:**
+
 - ✅ Multi-proof routing complete (S1.1)
 - ✅ Batch verification complete (S1.2)
 - ✅ ABI interface created (S1.3)

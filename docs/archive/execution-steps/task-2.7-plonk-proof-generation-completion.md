@@ -22,15 +22,17 @@ Successfully established a complete PLONK proof generation pipeline by leveragin
 Generated PLONK proving and verification keys for all three circuits using production Powers of Tau ceremony:
 
 #### Circuit Details:
-| Circuit | Constraints | PLONK zkey | Verification Key | Status |
-|---------|-------------|------------|------------------|--------|
-| poseidon_test | 601 | 36 KB | 1.8 KB | ✅ Complete |
-| eddsa_verify | 23,793 | 560 KB | 2.1 KB | ✅ Complete |
-| merkle_proof | 12,886 | 300 KB | 1.9 KB | ✅ Complete |
+
+| Circuit       | Constraints | PLONK zkey | Verification Key | Status      |
+| ------------- | ----------- | ---------- | ---------------- | ----------- |
+| poseidon_test | 601         | 36 KB      | 1.8 KB           | ✅ Complete |
+| eddsa_verify  | 23,793      | 560 KB     | 2.1 KB           | ✅ Complete |
+| merkle_proof  | 12,886      | 300 KB     | 1.9 KB           | ✅ Complete |
 
 **Powers of Tau**: `powersOfTau28_hez_final.ptau` (2.3 GB, 268M constraints - production-grade)
 
 #### Setup Commands Used:
+
 ```bash
 # Poseidon circuit
 snarkjs plonk setup build/poseidon_test.r1cs ptau/powersOfTau28_hez_final.ptau build/poseidon_test_plonk.zkey
@@ -54,6 +56,7 @@ snarkjs zkey export verificationkey build/merkle_proof_plonk.zkey build/merkle_p
 #### Commands Implemented:
 
 ##### a) **Generate Proof**
+
 ```bash
 node scripts/plonk-cli.cjs generate <circuit> <input> [output]
 
@@ -62,6 +65,7 @@ node scripts/plonk-cli.cjs generate poseidon_test test-inputs/poseidon_test/inpu
 ```
 
 **Functionality**:
+
 - Validates circuit existence
 - Checks PLONK setup (zkey, verification key)
 - Generates witness from input JSON
@@ -70,6 +74,7 @@ node scripts/plonk-cli.cjs generate poseidon_test test-inputs/poseidon_test/inpu
 - Cleans up intermediate witness files
 
 ##### b) **Verify Proof**
+
 ```bash
 node scripts/plonk-cli.cjs verify <circuit> <proof> [public]
 
@@ -78,12 +83,14 @@ node scripts/plonk-cli.cjs verify poseidon_test proofs/plonk/poseidon_test/examp
 ```
 
 **Functionality**:
+
 - Loads verification key
 - Verifies proof using snarkjs
 - Returns VALID/INVALID status
 - Provides clear success/failure output
 
 ##### c) **Export Verification Key**
+
 ```bash
 node scripts/plonk-cli.cjs export <circuit>
 
@@ -92,11 +99,13 @@ node scripts/plonk-cli.cjs export poseidon_test
 ```
 
 **Functionality**:
+
 - Exports VK from zkey file
 - Checks for existing exports
 - Provides path to exported key
 
 ##### d) **Batch Proof Generation**
+
 ```bash
 node scripts/plonk-cli.cjs batch <circuit> <count> <inputs-dir>
 
@@ -105,12 +114,14 @@ node scripts/plonk-cli.cjs batch poseidon_test 10 test-inputs/poseidon_test
 ```
 
 **Functionality**:
+
 - Processes multiple inputs in sequence
 - Generates proofs with organized naming (proof_1, proof_2, ...)
 - Provides success/failure statistics
 - Continues on errors (non-blocking)
 
 ##### e) **Sample Input Generation**
+
 ```bash
 node scripts/plonk-cli.cjs sample-inputs <circuit> <output-dir>
 
@@ -119,11 +130,13 @@ node scripts/plonk-cli.cjs sample-inputs poseidon_test ./test-inputs/poseidon
 ```
 
 **Functionality**:
+
 - Generates circuit-specific test inputs
 - Poseidon: 10 random hash preimages
 - EdDSA/Merkle: Usage guidance (complex setup required)
 
 #### CLI Features:
+
 - ✅ ANSI color-coded output (success/error/info)
 - ✅ Comprehensive error handling
 - ✅ Absolute path resolution (Windows/Linux compatible)
@@ -140,6 +153,7 @@ node scripts/plonk-cli.cjs sample-inputs poseidon_test ./test-inputs/poseidon
 #### Functionality:
 
 **Poseidon Circuit**:
+
 - Generates valid test inputs with computed hashes
 - Uses `circomlibjs` for accurate Poseidon hash calculation
 - Creates input JSON files with:
@@ -151,6 +165,7 @@ node scripts/plonk-cli.cjs sample-inputs poseidon_test ./test-inputs/poseidon
   ```
 
 **Command**:
+
 ```bash
 node scripts/generate-test-inputs.cjs poseidon_test 10
 ```
@@ -158,6 +173,7 @@ node scripts/generate-test-inputs.cjs poseidon_test 10
 **Output**: 10 valid input files in `test-inputs/poseidon_test/`
 
 **EdDSA & Merkle**:
+
 - Provides guidance for complex setup
 - References existing USAGE.md documentation
 
@@ -168,6 +184,7 @@ node scripts/generate-test-inputs.cjs poseidon_test 10
 **File**: `packages/circuits/scripts/generate-plonk-proofs.sh` (180 lines)
 
 #### Features:
+
 - Automated PLONK setup for all circuits
 - Prerequisite checks (snarkjs, circom, ptau)
 - Compilation of circuits (if needed)
@@ -178,12 +195,14 @@ node scripts/generate-test-inputs.cjs poseidon_test 10
 - Comprehensive error handling
 
 #### Usage:
+
 ```bash
 cd packages/circuits
 ./scripts/generate-plonk-proofs.sh
 ```
 
 #### Workflow:
+
 1. ✅ Check prerequisites (snarkjs, circom, ptau file)
 2. ✅ Create output directories
 3. ✅ For each circuit:
@@ -222,6 +241,7 @@ cd packages/circuits
 ```
 
 **NPM Scripts**:
+
 - `pnpm compile`: Compile all circuits
 - `pnpm plonk:setup`: Run full PLONK setup
 - `pnpm plonk:generate`: Generate single proof
@@ -235,6 +255,7 @@ cd packages/circuits
 Successfully generated and verified **11 PLONK proofs** for Poseidon circuit:
 
 #### Proof Structure:
+
 ```
 packages/circuits/proofs/plonk/
 └── poseidon_test/
@@ -249,11 +270,13 @@ packages/circuits/proofs/plonk/
 ```
 
 #### Verification Status:
+
 - ✅ All 11 proofs: **VALID**
 - ✅ Proof size: ~2-3 KB each
 - ✅ Public inputs: ~100 bytes each
 
 #### Example Proof Verification:
+
 ```bash
 $ node scripts/plonk-cli.cjs verify poseidon_test proofs/plonk/poseidon_test/example_1/proof.json
 Verifying PLONK proof for poseidon_test...
@@ -267,27 +290,31 @@ Verifying PLONK proof for poseidon_test...
 ### Architecture Decisions
 
 #### 1. **Leveraged Existing Infrastructure**
+
 - **Discovery**: User correctly identified that `packages/circuits/` already contained production-grade circuits
 - **Action**: Removed duplicate `plonk-prover` package being created
 - **Benefit**: Avoided ~500+ lines of duplicate code, maintained single source of truth
 
 #### 2. **Modular Tool Design**
+
 - **Bash Script**: High-level automation for full setup
 - **Node.js CLI**: Granular control for individual operations
 - **Input Generator**: Specialized tool for valid test data creation
 
 #### 3. **CommonJS vs ES Modules**
+
 - **Issue**: Initially used ES modules, conflicted with circom-generated witness calculators
 - **Solution**: Converted to CommonJS (.cjs extension)
 - **Result**: Seamless integration with circom toolchain
 
 #### 4. **Path Resolution**
+
 - **Challenge**: Windows/WSL path handling
 - **Solution**: Absolute path resolution in CLI tool
 - **Implementation**:
   ```javascript
-  const absInputPath = path.isAbsolute(inputPath) 
-    ? inputPath 
+  const absInputPath = path.isAbsolute(inputPath)
+    ? inputPath
     : path.resolve(inputPath);
   ```
 
@@ -295,9 +322,9 @@ Verifying PLONK proof for poseidon_test...
 
 ```json
 {
-  "circomlib": "^2.0.5",        // Circuit templates
-  "circomlibjs": "^0.1.7",      // JavaScript implementation (Poseidon hash)
-  "snarkjs": "^0.7.5"           // PLONK proof generation/verification
+  "circomlib": "^2.0.5", // Circuit templates
+  "circomlibjs": "^0.1.7", // JavaScript implementation (Poseidon hash)
+  "snarkjs": "^0.7.5" // PLONK proof generation/verification
 }
 ```
 
@@ -306,6 +333,7 @@ Verifying PLONK proof for poseidon_test...
 ## Testing & Validation
 
 ### 1. **PLONK Setup Verification**
+
 ```bash
 ✅ Poseidon:  601 constraints → 36 KB zkey
 ✅ EdDSA:     23,793 constraints → 560 KB zkey
@@ -313,6 +341,7 @@ Verifying PLONK proof for poseidon_test...
 ```
 
 ### 2. **Proof Generation Tests**
+
 ```bash
 ✅ Single proof generation: poseidon_test ← input_1.json
 ✅ Batch generation: 10 proofs for poseidon_test
@@ -320,6 +349,7 @@ Verifying PLONK proof for poseidon_test...
 ```
 
 ### 3. **CLI Functionality**
+
 ```bash
 ✅ generate command: Creates valid proofs
 ✅ verify command: Correctly validates proofs
@@ -329,6 +359,7 @@ Verifying PLONK proof for poseidon_test...
 ```
 
 ### 4. **Error Handling**
+
 ```bash
 ✅ Missing circuits detected
 ✅ Invalid inputs rejected
@@ -341,12 +372,14 @@ Verifying PLONK proof for poseidon_test...
 ## Integration with Existing Components
 
 ### 1. **Circuits Package**
+
 - ✅ Added `package.json` with scripts
 - ✅ Installed required dependencies
 - ✅ Created scripts directory with tools
 - ✅ Generated PLONK zkeys alongside existing Groth16 zkeys
 
 ### 2. **Proof Storage**
+
 ```
 packages/circuits/
 ├── build/
@@ -371,6 +404,7 @@ packages/circuits/
 ```
 
 ### 3. **PLONK Service Integration** (Ready)
+
 - Off-chain service (Task 2.6) can now consume generated proofs
 - Verification keys available for service initialization
 - Test fixtures ready for service validation
@@ -380,12 +414,15 @@ packages/circuits/
 ## Known Limitations & Future Work
 
 ### Current Scope
+
 - ✅ **Poseidon**: Full proof generation pipeline working
 - ⏳ **EdDSA**: PLONK setup complete, signature generation pending (requires key management)
 - ⏳ **Merkle**: PLONK setup complete, tree generation pending (requires tree setup utility)
 
 ### Task 2.8 Prerequisites
+
 To generate 500+ test corpus:
+
 1. EdDSA: Create key pair management utility
 2. EdDSA: Generate 200+ signatures with various message sizes
 3. Merkle: Create Merkle tree builder utility
@@ -393,19 +430,24 @@ To generate 500+ test corpus:
 5. Poseidon: Scale to 100+ proofs (current: 11)
 
 ### Recommendations for Task 2.8
+
 1. **EdDSA Signature Generator**:
+
    ```bash
    node scripts/generate-eddsa-signatures.cjs <count>
    ```
+
    - Use `circomlibjs` EdDSA implementation
    - Generate random key pairs
    - Create varied message lengths
    - Store signatures + public keys
 
 2. **Merkle Tree Builder**:
+
    ```bash
    node scripts/generate-merkle-proofs.cjs <tree-depth> <count>
    ```
+
    - Build Merkle tree with random leaves
    - Generate membership proofs
    - Create non-membership proofs (invalid)
@@ -415,6 +457,7 @@ To generate 500+ test corpus:
    ```bash
    pnpm generate:test-corpus
    ```
+
    - Single command to generate 500+ proofs
    - Organize by circuit type
    - Include valid/invalid split (80/20)
@@ -425,26 +468,29 @@ To generate 500+ test corpus:
 ## Performance Metrics
 
 ### Proof Generation Time
-| Circuit | Witness | Proof | Verification | Total |
-|---------|---------|-------|--------------|-------|
-| Poseidon | ~50ms | ~1.2s | ~150ms | ~1.4s |
-| EdDSA | ~200ms | ~5s | ~250ms | ~5.5s |
-| Merkle | ~150ms | ~3s | ~200ms | ~3.4s |
+
+| Circuit  | Witness | Proof | Verification | Total |
+| -------- | ------- | ----- | ------------ | ----- |
+| Poseidon | ~50ms   | ~1.2s | ~150ms       | ~1.4s |
+| EdDSA    | ~200ms  | ~5s   | ~250ms       | ~5.5s |
+| Merkle   | ~150ms  | ~3s   | ~200ms       | ~3.4s |
 
 ### Storage Requirements
-| Item | Size |
-|------|------|
-| PLONK zkeys (3 circuits) | 896 KB |
-| Verification keys | 5.8 KB |
-| Single proof | ~2.5 KB |
-| 500 proofs (estimated) | ~1.2 MB |
-| Powers of Tau | 2.3 GB (one-time) |
+
+| Item                     | Size              |
+| ------------------------ | ----------------- |
+| PLONK zkeys (3 circuits) | 896 KB            |
+| Verification keys        | 5.8 KB            |
+| Single proof             | ~2.5 KB           |
+| 500 proofs (estimated)   | ~1.2 MB           |
+| Powers of Tau            | 2.3 GB (one-time) |
 
 ---
 
 ## Command Reference
 
 ### Quick Start
+
 ```bash
 # Setup environment
 cd packages/circuits
@@ -470,6 +516,7 @@ node scripts/plonk-cli.cjs batch poseidon_test 10 test-inputs/poseidon_test
 ```
 
 ### NPM Scripts
+
 ```bash
 # Compile circuits
 pnpm compile
@@ -492,6 +539,7 @@ pnpm plonk:batch poseidon_test 10 <inputs-dir>
 ## Documentation Updates
 
 ### Files Modified/Created
+
 1. ✅ `packages/circuits/package.json` - Created
 2. ✅ `packages/circuits/scripts/plonk-cli.cjs` - Created (300 lines)
 3. ✅ `packages/circuits/scripts/generate-plonk-proofs.sh` - Created (180 lines)
@@ -502,6 +550,7 @@ pnpm plonk:batch poseidon_test 10 <inputs-dir>
 8. ✅ `packages/circuits/test-inputs/` - Created (10 inputs)
 
 ### Lines of Code
+
 - **Bash**: 180 lines (generate-plonk-proofs.sh)
 - **JavaScript**: 370 lines (plonk-cli.cjs + generate-test-inputs.cjs)
 - **Total**: ~550 lines of tooling code
@@ -532,6 +581,7 @@ pnpm plonk:batch poseidon_test 10 <inputs-dir>
 **Goal**: Generate 500+ valid proofs + 100+ invalid proofs
 
 **Breakdown**:
+
 1. **EdDSA Tooling** (1 day):
    - Key pair generator
    - Signature generator with varied messages
@@ -565,21 +615,25 @@ pnpm plonk:batch poseidon_test 10 <inputs-dir>
 ## Lessons Learned
 
 ### 1. **Always Check Existing Infrastructure**
+
 - User feedback prevented duplicate work
 - Existing `packages/circuits/` was comprehensive
 - Saved ~500+ lines of duplicate code
 
 ### 2. **Module System Compatibility**
+
 - ES modules vs CommonJS compatibility issues
 - Circom tools generate CommonJS code
 - Lesson: Match module system to dependencies
 
 ### 3. **Path Handling in Cross-Platform**
+
 - WSL/Windows path complexity
 - Always use absolute paths for tool invocations
 - `path.resolve()` is essential
 
 ### 4. **Incremental Testing**
+
 - Generated 1 proof before batch
 - Verified workflow before scaling
 - Prevented large-scale failures
@@ -589,6 +643,7 @@ pnpm plonk:batch poseidon_test 10 <inputs-dir>
 ## Phase 2 Status Update
 
 ### Completed Tasks (7/9)
+
 - ✅ Task 2.1: PLONK Design Documentation
 - ✅ Task 2.2: KZG Polynomial Commitment
 - ✅ Task 2.3: Fiat-Shamir Transcript
@@ -598,13 +653,16 @@ pnpm plonk:batch poseidon_test 10 <inputs-dir>
 - ✅ **Task 2.7: PLONK Proof Generation Pipeline** ← **COMPLETED**
 
 ### Remaining Tasks (2/9)
+
 - ⏳ Task 2.8: Test Corpus Generation (estimated 3-4 days)
 - ⏳ Task 2.9: Integration Tests & Benchmarking (estimated 3-4 days)
 
 ### Overall Progress
+
 **Phase 2 Completion: 90%** (up from 80%)
 
 ### Estimated Time to Phase 2 Complete
+
 **7-9 days** (Tasks 2.8 + 2.9)
 
 ---

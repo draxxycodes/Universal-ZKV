@@ -4,8 +4,8 @@
  * This script orchestrates the entire proof lifecycle
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+const { execSync } = require("child_process");
+const path = require("path");
 
 console.log(`
 ╔════════════════════════════════════════════════════════════╗
@@ -16,51 +16,50 @@ console.log(`
 
 const steps = [
   {
-    name: 'Generate Proofs',
-    description: 'Generate Groth16 and PLONK proofs for all circuits',
-    script: 'scripts/generate-all-proofs.cjs',
-    required: true
+    name: "Generate Proofs",
+    description: "Generate Groth16 and PLONK proofs for all circuits",
+    script: "scripts/generate-all-proofs.cjs",
+    required: true,
   },
   {
-    name: 'Verify Proofs Locally',
-    description: 'Verify all generated proofs using UZKV (Universal Verifier)',
-    script: 'scripts/verify-with-uzkv.cjs',
-    required: true
+    name: "Verify Proofs Locally",
+    description: "Verify all generated proofs using UZKV (Universal Verifier)",
+    script: "scripts/verify-with-uzkv.cjs",
+    required: true,
   },
   {
-    name: 'Attest on Arbitrum Sepolia',
-    description: 'Submit proof attestations to the on-chain contract',
-    script: 'scripts/attest-proofs.cjs',
-    required: false
-  }
+    name: "Attest on Arbitrum Sepolia",
+    description: "Submit proof attestations to the on-chain contract",
+    script: "scripts/attest-proofs.cjs",
+    required: false,
+  },
 ];
 
 let currentStep = 1;
 
 for (const step of steps) {
-  console.log(`\n[${ currentStep}/${steps.length}] ${step.name}`);
+  console.log(`\n[${currentStep}/${steps.length}] ${step.name}`);
   console.log(`    ${step.description}`);
-  console.log('─'.repeat(60));
-  
+  console.log("─".repeat(60));
+
   try {
     execSync(`node ${step.script}`, {
-      stdio: 'inherit',
-      cwd: path.join(__dirname, '..')
+      stdio: "inherit",
+      cwd: path.join(__dirname, ".."),
     });
-    
+
     console.log(`\n✅ Step ${currentStep} completed successfully`);
-    
   } catch (error) {
     console.error(`\n❌ Step ${currentStep} failed!`);
-    
+
     if (step.required) {
-      console.error('   This step is required. Cannot proceed.');
+      console.error("   This step is required. Cannot proceed.");
       process.exit(1);
     } else {
-      console.log('   Continuing to next step...');
+      console.log("   Continuing to next step...");
     }
   }
-  
+
   currentStep++;
 }
 

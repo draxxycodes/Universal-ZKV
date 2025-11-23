@@ -14,6 +14,7 @@
 **Context:** With circuits compiled and trusted setup complete (Task 3.5.3), we now need REAL proofs to test the verification infrastructure. This is critical for validating the verifier implementation in Phase 6+ and ensuring production readiness.
 
 **Execution Rules Applied:**
+
 - ✅ Production-grade implementation (no shortcuts)
 - ✅ Git Bash terminal used exclusively
 - ✅ Real proofs generated using production zkeys
@@ -27,11 +28,13 @@
 ### 1. ✅ Proof Generation Infrastructure
 
 **Created Scripts:**
+
 - `scripts/witness-generators.js` (145 lines)
 - `scripts/generate-test-proofs.js` (245 lines)
 - `scripts/generate-invalid-proofs.js` (290 lines)
 
 **Directory Structure:**
+
 ```
 packages/circuits/proofs/
 ├── poseidon_test/
@@ -52,91 +55,105 @@ packages/circuits/proofs/
 **Implemented witness generators for all circuit types:**
 
 #### Poseidon Hash Witness
+
 ```javascript
 async function generateRandomPoseidonWitness() {
-    const poseidon = await buildPoseidon();
-    
-    // Generate random preimages (mod field size)
-    const preimage0 = poseidon.F.e(BigInt('0x' + crypto.randomBytes(32).toString('hex')));
-    const preimage1 = poseidon.F.e(BigInt('0x' + crypto.randomBytes(32).toString('hex')));
-    
-    // Compute expected hash
-    const hash = poseidon([preimage0, preimage1]);
-    
-    return {
-        preimage: [preimage0.toString(), preimage1.toString()],
-        expectedHash: hash.toString()
-    };
+  const poseidon = await buildPoseidon();
+
+  // Generate random preimages (mod field size)
+  const preimage0 = poseidon.F.e(
+    BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+  );
+  const preimage1 = poseidon.F.e(
+    BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+  );
+
+  // Compute expected hash
+  const hash = poseidon([preimage0, preimage1]);
+
+  return {
+    preimage: [preimage0.toString(), preimage1.toString()],
+    expectedHash: hash.toString(),
+  };
 }
 ```
 
 **Key Features:**
+
 - Uses circomlibjs `buildPoseidon()` for correct field arithmetic
 - Ensures field elements are within valid range (mod prime)
 - Generates cryptographically valid Poseidon hashes
 
 #### EdDSA Signature Witness
+
 ```javascript
 async function generateRandomEdDSAWitness() {
-    const babyJub = await buildBabyjub();
-    const eddsa = await buildEddsa();
-    
-    // Generate random private key
-    const prvKey = Buffer.from(crypto.randomBytes(32));
-    
-    // Derive public key
-    const pubKey = eddsa.prv2pub(prvKey);
-    
-    // Generate and sign random message
-    const msg = babyJub.F.e(BigInt('0x' + crypto.randomBytes(32).toString('hex')));
-    const signature = eddsa.signMiMC(prvKey, msg);
-    
-    return {
-        Ax: pubKey[0].toString(),
-        Ay: pubKey[1].toString(),
-        S: signature.S.toString(),
-        R8x: signature.R8[0].toString(),
-        R8y: signature.R8[1].toString(),
-        M: msg.toString()
-    };
+  const babyJub = await buildBabyjub();
+  const eddsa = await buildEddsa();
+
+  // Generate random private key
+  const prvKey = Buffer.from(crypto.randomBytes(32));
+
+  // Derive public key
+  const pubKey = eddsa.prv2pub(prvKey);
+
+  // Generate and sign random message
+  const msg = babyJub.F.e(
+    BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+  );
+  const signature = eddsa.signMiMC(prvKey, msg);
+
+  return {
+    Ax: pubKey[0].toString(),
+    Ay: pubKey[1].toString(),
+    S: signature.S.toString(),
+    R8x: signature.R8[0].toString(),
+    R8y: signature.R8[1].toString(),
+    M: msg.toString(),
+  };
 }
 ```
 
 **Key Features:**
+
 - Uses Baby Jubjub elliptic curve (EdDSA standard for ZK)
 - Generates valid key pairs and signatures
 - MiMC hash-based signature scheme
 
 #### Merkle Tree Witness
+
 ```javascript
 async function generateRandomMerkleWitness(levels) {
-    const mimc7 = await buildMimc7();
-    
-    // Generate random leaf
-    const leaf = mimc7.F.e(BigInt('0x' + crypto.randomBytes(32).toString('hex')));
-    
-    const pathElements = [];
-    const pathIndices = [];
-    let currentHash = leaf;
-    
-    for (let i = 0; i < levels; i++) {
-        const sibling = mimc7.F.e(BigInt('0x' + crypto.randomBytes(32).toString('hex')));
-        const direction = Math.random() < 0.5 ? 0 : 1;
-        
-        pathElements.push(sibling.toString());
-        pathIndices.push(direction);
-        
-        // Compute parent hash
-        const left = direction === 0 ? currentHash : sibling;
-        const right = direction === 0 ? sibling : currentHash;
-        currentHash = mimc7.hash(left, right);
-    }
-    
-    return { leaf, pathElements, pathIndices, root: currentHash };
+  const mimc7 = await buildMimc7();
+
+  // Generate random leaf
+  const leaf = mimc7.F.e(BigInt("0x" + crypto.randomBytes(32).toString("hex")));
+
+  const pathElements = [];
+  const pathIndices = [];
+  let currentHash = leaf;
+
+  for (let i = 0; i < levels; i++) {
+    const sibling = mimc7.F.e(
+      BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+    );
+    const direction = Math.random() < 0.5 ? 0 : 1;
+
+    pathElements.push(sibling.toString());
+    pathIndices.push(direction);
+
+    // Compute parent hash
+    const left = direction === 0 ? currentHash : sibling;
+    const right = direction === 0 ? sibling : currentHash;
+    currentHash = mimc7.hash(left, right);
+  }
+
+  return { leaf, pathElements, pathIndices, root: currentHash };
 }
 ```
 
 **Key Features:**
+
 - Generates 20-level Merkle tree proofs
 - Uses MiMC7 hash function (ZK-friendly)
 - Random path directions for diversity
@@ -144,6 +161,7 @@ async function generateRandomMerkleWitness(levels) {
 ### 3. ✅ Valid Proof Generation Script
 
 **Features:**
+
 - Batch processing (100 proofs per batch)
 - Progress tracking with visual indicators
 - Performance metrics (proofs/sec, time per proof)
@@ -152,6 +170,7 @@ async function generateRandomMerkleWitness(levels) {
 - Summary report generation
 
 **Usage:**
+
 ```bash
 # Generate 10,000 proofs for all circuits (default)
 node scripts/generate-test-proofs.js
@@ -164,31 +183,33 @@ node scripts/generate-test-proofs.js 1000 poseidon_test
 ```
 
 **Output Files (per proof):**
+
 - `{circuit}_{id}_proof.json` - Groth16 proof (pi_a, pi_b, pi_c)
 - `{circuit}_{id}_public.json` - Public signals
 - `{circuit}_{id}_witness.json` - Original witness (for debugging)
 
 **Performance Metrics (10-proof test run):**
 
-| Circuit | Proofs | Time | Speed | Constraints |
-|---------|--------|------|-------|-------------|
-| Poseidon | 10 | 5.92s | 1.69 proofs/sec | 520 |
-| EdDSA | 10 | 19.70s | 0.51 proofs/sec | 9,073 |
-| Merkle | 10 | 5.72s | 1.75 proofs/sec | 7,324 |
-| **Total** | **30** | **31.37s** | **0.96 avg** | **16,917** |
+| Circuit   | Proofs | Time       | Speed           | Constraints |
+| --------- | ------ | ---------- | --------------- | ----------- |
+| Poseidon  | 10     | 5.92s      | 1.69 proofs/sec | 520         |
+| EdDSA     | 10     | 19.70s     | 0.51 proofs/sec | 9,073       |
+| Merkle    | 10     | 5.72s      | 1.75 proofs/sec | 7,324       |
+| **Total** | **30** | **31.37s** | **0.96 avg**    | **16,917**  |
 
 **Extrapolated Time Estimates (10,000 proofs per circuit):**
 
-| Circuit | Est. Time (10k proofs) | Total Files |
-|---------|------------------------|-------------|
-| Poseidon | ~98 minutes (1.6 hours) | 30,000 |
-| EdDSA | ~325 minutes (5.4 hours) | 30,000 |
-| Merkle | ~95 minutes (1.6 hours) | 30,000 |
-| **Total** | **~8.6 hours** | **90,000 files** |
+| Circuit   | Est. Time (10k proofs)   | Total Files      |
+| --------- | ------------------------ | ---------------- |
+| Poseidon  | ~98 minutes (1.6 hours)  | 30,000           |
+| EdDSA     | ~325 minutes (5.4 hours) | 30,000           |
+| Merkle    | ~95 minutes (1.6 hours)  | 30,000           |
+| **Total** | **~8.6 hours**           | **90,000 files** |
 
 ### 4. ✅ Invalid Proof Generation Script
 
 **Corruption Methods:**
+
 1. **Witness Corruption:** Generate valid proof of invalid statement
 2. **Proof pi_a Corruption:** Corrupt G1 point in proof
 3. **Proof pi_b Corruption:** Corrupt G2 point in proof
@@ -196,30 +217,33 @@ node scripts/generate-test-proofs.js 1000 poseidon_test
 5. **Public Signal Corruption:** Corrupt public inputs
 
 **Implementation:**
+
 ```javascript
 function corruptProof(proof, corruptionType = null) {
-    const corrupted = JSON.parse(JSON.stringify(proof));
-    const types = ['pi_a', 'pi_b', 'pi_c'];
-    const type = corruptionType || types[Math.floor(Math.random() * types.length)];
-    
-    // Corrupt random coordinate
-    if (type === 'pi_a' || type === 'pi_c') {
-        const coordIndex = Math.floor(Math.random() * 3);
-        const value = BigInt(corrupted[type][coordIndex]);
-        corrupted[type][coordIndex] = (value + BigInt(1)).toString();
-    } else if (type === 'pi_b') {
-        // G2 points have nested structure
-        const coordIndex = Math.floor(Math.random() * 3);
-        const subIndex = Math.floor(Math.random() * 2);
-        const value = BigInt(corrupted[type][coordIndex][subIndex]);
-        corrupted[type][coordIndex][subIndex] = (value + BigInt(1)).toString();
-    }
-    
-    return corrupted;
+  const corrupted = JSON.parse(JSON.stringify(proof));
+  const types = ["pi_a", "pi_b", "pi_c"];
+  const type =
+    corruptionType || types[Math.floor(Math.random() * types.length)];
+
+  // Corrupt random coordinate
+  if (type === "pi_a" || type === "pi_c") {
+    const coordIndex = Math.floor(Math.random() * 3);
+    const value = BigInt(corrupted[type][coordIndex]);
+    corrupted[type][coordIndex] = (value + BigInt(1)).toString();
+  } else if (type === "pi_b") {
+    // G2 points have nested structure
+    const coordIndex = Math.floor(Math.random() * 3);
+    const subIndex = Math.floor(Math.random() * 2);
+    const value = BigInt(corrupted[type][coordIndex][subIndex]);
+    corrupted[type][coordIndex][subIndex] = (value + BigInt(1)).toString();
+  }
+
+  return corrupted;
 }
 ```
 
 **Usage:**
+
 ```bash
 # Generate 1,000 invalid proofs for all circuits (default)
 node scripts/generate-invalid-proofs.js
@@ -232,6 +256,7 @@ node scripts/generate-invalid-proofs.js 500 eddsa_verify
 ```
 
 **Output Files (per invalid proof):**
+
 - `{circuit}_invalid_{id}_proof.json` - Corrupted proof
 - `{circuit}_invalid_{id}_public.json` - Public signals (may be corrupted)
 - `{circuit}_invalid_{id}_metadata.json` - Corruption method info
@@ -257,17 +282,19 @@ pnpm add -w -D snarkjs circomlibjs
 **Challenge:** Circuit names don't match zkey file names.
 
 **Solution:**
+
 ```javascript
 const zkeyMap = {
-    'poseidon_test': 'poseidon',    // Circuit → zkey base
-    'eddsa_verify': 'eddsa',
-    'merkle_proof': 'merkle'
+  poseidon_test: "poseidon", // Circuit → zkey base
+  eddsa_verify: "eddsa",
+  merkle_proof: "merkle",
 };
 const zkeyBase = zkeyMap[circuit] || circuit;
 const zkeyFile = path.join(BUILD_DIR, `${zkeyBase}_beacon.zkey`);
 ```
 
 This maps:
+
 - `poseidon_test.circom` → `poseidon_beacon.zkey`
 - `eddsa_verify.circom` → `eddsa_beacon.zkey`
 - `merkle_proof.circom` → `merkle_beacon.zkey`
@@ -277,13 +304,17 @@ This maps:
 **Critical Fix:** Initial implementation used raw `BigInt` values that could exceed the BN254 field modulus.
 
 **Before (WRONG):**
+
 ```javascript
-const preimage0 = BigInt('0x' + crypto.randomBytes(32).toString('hex'));
+const preimage0 = BigInt("0x" + crypto.randomBytes(32).toString("hex"));
 ```
 
 **After (CORRECT):**
+
 ```javascript
-const preimage0 = poseidon.F.e(BigInt('0x' + crypto.randomBytes(32).toString('hex')));
+const preimage0 = poseidon.F.e(
+  BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+);
 ```
 
 The `F.e()` function ensures the value is reduced modulo the field prime, preventing invalid field elements.
@@ -414,34 +445,39 @@ snarkjs groth16 verify \
 ### Disk Space Requirements
 
 **Per 10,000 proofs (estimated):**
+
 - Poseidon: ~50 MB (3 files × 10k proofs × ~1.7 KB/file)
 - EdDSA: ~150 MB (larger proof size due to 9k constraints)
 - Merkle: ~120 MB (medium complexity)
 - **Total (valid):** ~320 MB per 10k proofs
 
 **Invalid proofs (1,000 per circuit):**
+
 - ~35 MB (includes metadata files)
 
 **Total Dataset (10k valid + 1k invalid per circuit):**
+
 - ~355 MB for all 3 circuits
 
 ### Time Estimates (Based on Test Results)
 
-| Dataset Size | Poseidon | EdDSA | Merkle | Total |
-|--------------|----------|-------|--------|-------|
-| 10 proofs | 6s | 20s | 6s | 32s |
-| 100 proofs | 1m | 3.3m | 1m | 5.3m |
-| 1,000 proofs | 10m | 33m | 10m | 53m |
-| 10,000 proofs | 98m | 325m | 95m | 518m (8.6h) |
+| Dataset Size  | Poseidon | EdDSA | Merkle | Total       |
+| ------------- | -------- | ----- | ------ | ----------- |
+| 10 proofs     | 6s       | 20s   | 6s     | 32s         |
+| 100 proofs    | 1m       | 3.3m  | 1m     | 5.3m        |
+| 1,000 proofs  | 10m      | 33m   | 10m    | 53m         |
+| 10,000 proofs | 98m      | 325m  | 95m    | 518m (8.6h) |
 
 ### Parallelization Strategy (Future Enhancement)
 
 For production runs (10k+ proofs), consider:
+
 1. Split into 10 parallel processes (1,000 proofs each)
 2. Run on multi-core machine (8+ cores)
 3. Expected speedup: ~8x (reduce 8.6h → ~1.1h)
 
 **Implementation:**
+
 ```bash
 # Run 10 parallel batches
 for i in {0..9}; do
@@ -469,6 +505,7 @@ packages/circuits/proofs/poseidon_test/valid/
 ```
 
 **Proof JSON Structure:**
+
 ```json
 {
   "pi_a": ["...", "...", "1"],
@@ -494,11 +531,12 @@ packages/circuits/proofs/poseidon_test/invalid/
 ```
 
 **Metadata JSON:**
+
 ```json
 {
   "id": 0,
   "circuit": "poseidon_test",
-  "corruptionMethod": "proof",  // or "witness", "public"
+  "corruptionMethod": "proof", // or "witness", "public"
   "timestamp": "2025-11-20T..."
 }
 ```
@@ -506,6 +544,7 @@ packages/circuits/proofs/poseidon_test/invalid/
 ### Summary Reports
 
 **generation-summary.json:**
+
 ```json
 {
   "timestamp": "2025-11-20T...",
@@ -536,32 +575,42 @@ packages/circuits/proofs/poseidon_test/invalid/
 ### Common Issues
 
 **1. "zkey file not found" error:**
+
 ```
 ERROR: zkey file not found: .../poseidon_test_beacon.zkey
 ```
+
 **Solution:** Ensure Task 3.5.3 (Trusted Setup) completed successfully. Check `packages/circuits/build/` for `*_beacon.zkey` files.
 
 **2. "WASM file not found" error:**
+
 ```
 ERROR: WASM file not found: .../poseidon_test.wasm
 ```
+
 **Solution:** Recompile circuits:
+
 ```bash
 cd packages/circuits
 circom src/poseidon_test.circom --r1cs --wasm --sym -o build/
 ```
 
 **3. Field element out of range:**
+
 ```
 ERROR: Element not in field
 ```
+
 **Solution:** Use `F.e()` to reduce values modulo field prime (already fixed in current implementation).
 
 **4. Out of memory (for large runs):**
+
 ```
 FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed
 ```
+
 **Solution:** Increase Node.js heap size:
+
 ```bash
 NODE_OPTIONS="--max-old-space-size=8192" node scripts/generate-test-proofs.js 10000
 ```
@@ -608,12 +657,14 @@ NODE_OPTIONS="--max-old-space-size=8192" node scripts/generate-test-proofs.js 10
 ## 📚 Next Steps
 
 **Immediate (Task 3.5.5):**
+
 - Verify all generated proofs using snarkjs
 - Create proof catalog with metadata
 - Document proof structure and format
 - Run verification benchmark tests
 
 **Production Runs (When Ready):**
+
 ```bash
 # Run overnight (8+ hours)
 nohup node scripts/generate-test-proofs.js 10000 > proof-gen.log 2>&1 &
@@ -623,6 +674,7 @@ nohup node scripts/generate-invalid-proofs.js 1000 > invalid-gen.log 2>&1 &
 ```
 
 **Phase 6 Integration:**
+
 - Use valid proofs for differential fuzzing (1M+ iterations)
 - Use invalid proofs for negative testing
 - Benchmark verifier gas costs with real proofs
@@ -633,6 +685,7 @@ nohup node scripts/generate-invalid-proofs.js 1000 > invalid-gen.log 2>&1 &
 ## 📊 Performance Summary
 
 **Test Run (30 proofs total):**
+
 - Total time: 31.37 seconds
 - Success rate: 100% (30/30)
 - Average: 1.046s per proof
@@ -640,6 +693,7 @@ nohup node scripts/generate-invalid-proofs.js 1000 > invalid-gen.log 2>&1 &
 - Slowest circuit: EdDSA (0.51 proofs/sec)
 
 **Production Estimates (30,000 proofs total):**
+
 - Estimated time: ~8.6 hours (sequential)
 - Disk space: ~355 MB
 - Files created: ~93,000 JSON files
@@ -653,7 +707,7 @@ nohup node scripts/generate-invalid-proofs.js 1000 > invalid-gen.log 2>&1 &
 
 ---
 
-*Completed by: AI Assistant*  
-*Date: November 20, 2025*  
-*Project: Universal ZK-Proof Verifier (UZKV)*  
-*Phase: 3.5 - Production Circuit Infrastructure*
+_Completed by: AI Assistant_  
+_Date: November 20, 2025_  
+_Project: Universal ZK-Proof Verifier (UZKV)_  
+_Phase: 3.5 - Production Circuit Infrastructure_

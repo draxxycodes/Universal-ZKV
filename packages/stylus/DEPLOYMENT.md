@@ -65,6 +65,7 @@ STYLUS_ADDRESS="0x..."
 ```
 
 **Output:**
+
 ```
 deployed code at address: 0x1234567890abcdef1234567890abcdef12345678
 deployment tx hash: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
@@ -79,6 +80,7 @@ cargo stylus verify \
 ```
 
 **Or verify manually:**
+
 1. Go to https://sepolia.arbiscan.io/address/<STYLUS_ADDRESS>
 2. Click "Contract" tab
 3. Click "Verify and Publish"
@@ -203,11 +205,11 @@ cast send $STYLUS_ADDRESS \
 ## 📊 Deployment Costs
 
 | Network | Deployment | VK Registration | Verification |
-|---------|-----------|-----------------|--------------|
-| Sepolia | ~0.01 ETH | ~0.0001 ETH | ~0.00006 ETH |
-| Mainnet | ~0.1 ETH | ~0.001 ETH | ~0.0006 ETH |
+| ------- | ---------- | --------------- | ------------ |
+| Sepolia | ~0.01 ETH  | ~0.0001 ETH     | ~0.00006 ETH |
+| Mainnet | ~0.1 ETH   | ~0.001 ETH      | ~0.0006 ETH  |
 
-*Costs are estimates and vary with gas prices*
+_Costs are estimates and vary with gas prices_
 
 ## 🔐 Security Best Practices
 
@@ -234,6 +236,7 @@ cast send $STYLUS_ADDRESS \
 ## 📝 Deployment Addresses
 
 ### Arbitrum Sepolia
+
 ```
 Stylus Verifier: <pending deployment>
 Proxy Address:   <pending deployment>
@@ -241,6 +244,7 @@ Admin Address:   <pending deployment>
 ```
 
 ### Arbitrum One (Mainnet)
+
 ```
 Stylus Verifier: <not deployed>
 Proxy Address:   <not deployed>
@@ -250,15 +254,19 @@ Admin Address:   <not deployed>
 ## 🐛 Troubleshooting
 
 ### Error: "insufficient funds"
+
 **Solution:** Get testnet ETH from faucet
 
 ### Error: "WASM too large"
+
 **Solution:** Re-optimize with `wasm-opt -Oz`
 
 ### Error: "deployment reverted"
+
 **Solution:** Check RPC endpoint and network
 
 ### Error: "verification failed"
+
 **Solution:** Ensure contract is deployed first
 
 ## 🔗 Resources

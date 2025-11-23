@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { arbitrumSepolia } from 'viem/chains';
-import { formatAddress } from '@/lib/utils';
-import { Wallet, LogOut, AlertCircle } from 'lucide-react';
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useChainId,
+  useSwitchChain,
+} from "wagmi";
+import { arbitrumSepolia } from "viem/chains";
+import { formatAddress } from "@/lib/utils";
+import { Wallet, LogOut, AlertCircle } from "lucide-react";
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount();

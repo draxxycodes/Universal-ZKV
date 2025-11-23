@@ -103,17 +103,20 @@ Offset  | Size  | Field
 #### Field Semantics
 
 **version** (1 byte)
+
 - Current version: `1`
 - Future versions may support recursion, aggregation
 - Decoder MUST reject unknown versions
 
 **proof_type** (1 byte)
+
 - `0x00` = Groth16
 - `0x01` = PLONK
 - `0x02` = STARK
 - Other values MUST be rejected
 
 **program_id** (4 bytes, u32 little-endian)
+
 - Identifies which circuit/program generated this proof
 - Allows multiple circuits per proof type
 - Examples:
@@ -123,17 +126,20 @@ Offset  | Size  | Field
   - `42` = Custom application circuit
 
 **vk_hash** (32 bytes)
+
 - Keccak256 or SHA256 of verification key bytes
 - MUST match on-chain registered VK for `(proof_type, program_id)`
 - Prevents VK substitution attacks
 
 **proof_bytes** (variable length)
+
 - Groth16: ~128 bytes (2 G1 points + 1 G2 point, compressed)
 - PLONK: ~800 bytes (commitments + evaluations + KZG opening)
 - STARK: ~40-100 KB (FRI proof + trace commitments)
 - Format is proof-system-specific
 
 **public_inputs_bytes** (variable length)
+
 - Borsh-encoded `PublicStatement`
 - Typically 116 bytes (no extra data)
 - Can be larger with application extensions
@@ -188,7 +194,7 @@ assert_eq!(statement.value, 12345u128);
 ### TypeScript Encoding (Task 2 - To Be Implemented)
 
 ```typescript
-import { UniversalProof, PublicStatement, ProofType } from '@uzkv/sdk';
+import { UniversalProof, PublicStatement, ProofType } from "@uzkv/sdk";
 
 // Create public statement
 const statement = new PublicStatement({
@@ -204,8 +210,8 @@ const proof = new UniversalProof({
   version: 1,
   proofType: ProofType.Groth16,
   programId: 0,
-  vkHash: new Uint8Array(32).fill(0xAB),
-  proofBytes: new Uint8Array([0xDE, 0xAD, 0xBE, 0xEF]),
+  vkHash: new Uint8Array(32).fill(0xab),
+  proofBytes: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
   publicInputsBytes: statement.encode(),
 });
 
@@ -224,7 +230,7 @@ function verify(bytes calldata universalProofBytes) external returns (bool) {
     (bool success, bytes memory result) = stylusVerifier.call(
         universalProofBytes
     );
-    
+
     require(success, "Stylus verification failed");
     return abi.decode(result, (bool));
 }
@@ -237,12 +243,12 @@ function verify(bytes calldata universalProofBytes) external returns (bool) {
 pub fn verify(ctx: &mut Context, universal_proof_bytes: Vec<u8>) -> bool {
     // Decode universal proof
     let proof = UniversalProof::decode(&universal_proof_bytes)?;
-    
+
     // Validate version
     if proof.version != 1 {
         return false;
     }
-    
+
     // Route to appropriate verifier
     match proof.proof_type {
         ProofType::Groth16 => groth16::verify(&proof),
@@ -261,6 +267,7 @@ pub fn verify(ctx: &mut Context, universal_proof_bytes: Vec<u8>) -> bool {
 **Attack Prevented:** User cannot submit Groth16 proof with PLONK VK hash, or vice versa.
 
 **Implementation:**
+
 ```rust
 // On-chain storage
 mapping(proof_type => mapping(program_id => mapping(vk_hash => vk_bytes)))
@@ -279,6 +286,7 @@ if stored_vk.is_none() {
 **Attack Prevented:** Replay attacks, double-spending.
 
 **Implementation:**
+
 ```rust
 // On-chain storage
 mapping(nullifier => bool) used_nullifiers;
@@ -300,6 +308,7 @@ used_nullifiers.insert(statement.nullifier, true);
 **Attack Prevented:** Downgrade attacks, future incompatibility.
 
 **Implementation:**
+
 ```rust
 if proof.version != 1 {
     return Err(Error::UnsupportedVersion);
@@ -313,6 +322,7 @@ if proof.version != 1 {
 **Attack Prevented:** DoS via extremely large proofs.
 
 **Recommended Limits:**
+
 - Groth16: max 256 bytes
 - PLONK: max 2 KB
 - STARK: max 200 KB
@@ -328,6 +338,7 @@ cargo test types::tests
 ```
 
 **Coverage:**
+
 - ✅ ProofType enum roundtrip (from_u8/to_u8)
 - ✅ PublicStatement encode/decode
 - ✅ PublicStatement with extra data
@@ -345,6 +356,7 @@ pnpm test
 ```
 
 **Coverage (planned):**
+
 - Rust ↔ TypeScript encoding compatibility
 - Groth16 proof end-to-end flow
 - PLONK proof end-to-end flow
@@ -356,12 +368,14 @@ pnpm test
 ### Version 1 (Current)
 
 **Features:**
+
 - Groth16, PLONK, STARK support
 - Unified PublicStatement format
 - VK registry with (proofType, programId, vkHash) binding
 - Nullifier-based replay protection
 
 **Limitations:**
+
 - No recursive proof support
 - No aggregation (batch proofs still separate)
 - Single-level program_id (no namespacing)
@@ -369,12 +383,14 @@ pnpm test
 ### Version 2 (Future)
 
 **Planned Features:**
+
 - `ProofType::Recursive = 3` for Groth16-in-PLONK
 - `ProofType::Aggregate = 4` for batched verifications
 - Extended PublicStatement with commitment trees
 - Hierarchical program_id (namespace.circuit_id)
 
 **Migration Path:**
+
 - Version 1 contracts continue working
 - Version 2 decoders MUST support version 1 (backward compat)
 - Version 1 decoders reject version 2 (forward incompatibility)
@@ -382,6 +398,7 @@ pnpm test
 ## Implementation Checklist
 
 ### Phase 1: Core Protocol ✅
+
 - [x] Define ProofType enum in Rust
 - [x] Define PublicStatement struct in Rust
 - [x] Define UniversalProof struct in Rust
@@ -392,6 +409,7 @@ pnpm test
 - [x] Commit to git as frozen protocol
 
 ### Phase 2: TypeScript SDK (Task 2) 🚧
+
 - [ ] Create `packages/sdk/src/types.ts`
 - [ ] Implement PublicStatement class
 - [ ] Implement UniversalProof class
@@ -400,12 +418,14 @@ pnpm test
 - [ ] Update SDK to use UniversalProof envelope
 
 ### Phase 3: VK Registry (Task 3) 🔜
+
 - [ ] Add storage mapping to Stylus contract
 - [ ] Implement registerVK() with binding
 - [ ] Add vkHash validation to verify()
 - [ ] Write tests for VK mismatch rejection
 
 ### Phase 4: Events & Monitoring (Task 4) 🔜
+
 - [ ] Add ProofVerified event to Stylus
 - [ ] Emit event on every verify() call
 - [ ] Create off-chain monitoring dashboard
@@ -421,6 +441,7 @@ pnpm test
 ## Changelog
 
 ### 2025-11-23 - Version 1.0 (Frozen)
+
 - Initial protocol specification
 - Rust implementation complete
 - 8 unit tests passing

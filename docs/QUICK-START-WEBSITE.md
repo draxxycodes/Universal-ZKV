@@ -29,12 +29,13 @@ pnpm create next-app@latest . --typescript --tailwind --app
 ```
 
 Choose these options:
+
 - ✅ TypeScript: Yes
-- ✅ ESLint: Yes  
+- ✅ ESLint: Yes
 - ✅ Tailwind CSS: Yes
 - ✅ src/ directory: Yes
 - ✅ App Router: Yes
-- ✅ Import alias: @/*
+- ✅ Import alias: @/\*
 
 ### Step 2: Install Dependencies (3 minutes)
 
@@ -61,14 +62,14 @@ pnpm dlx shadcn-ui@latest add button card tabs progress badge
 Create `src/lib/wagmi.ts`:
 
 ```typescript
-import { http, createConfig } from 'wagmi';
-import { arbitrumSepolia } from 'wagmi/chains';
+import { http, createConfig } from "wagmi";
+import { arbitrumSepolia } from "wagmi/chains";
 
 export const config = createConfig({
   chains: [arbitrumSepolia],
   transports: {
-    [arbitrumSepolia.id]: http(process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC)
-  }
+    [arbitrumSepolia.id]: http(process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC),
+  },
 });
 ```
 
@@ -79,14 +80,14 @@ See `docs/WEBSITE-DEMO-PLAN.md` Phase 3 for API route code.
 Quick example for `src/app/api/verify/route.ts`:
 
 ```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { NextRequest, NextResponse } from "next/server";
+import { execSync } from "child_process";
 
 export async function POST(req: NextRequest) {
-  const result = execSync(
-    'node scripts/verify-with-uzkv.cjs',
-    { cwd: process.cwd(), encoding: 'utf8' }
-  );
+  const result = execSync("node scripts/verify-with-uzkv.cjs", {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
   return NextResponse.json({ verified: true });
 }
 ```
@@ -96,18 +97,21 @@ export async function POST(req: NextRequest) {
 ## 🎯 Key Features to Implement
 
 ### Priority 1 (Must Have) 🔴
+
 - ✅ Landing page with hero section
 - ✅ Proof system comparison cards
 - ✅ "Try Demo" button linking to workflow
 - ✅ Wallet connection
 
 ### Priority 2 (Should Have) 🟡
+
 - ✅ Interactive proof generator
 - ✅ Gas comparison charts
 - ✅ Live verification display
 - ✅ Attestation status
 
 ### Priority 3 (Nice to Have) 🟢
+
 - ✅ Dark/light mode toggle
 - ✅ Mobile responsive design
 - ✅ Video demo embed
@@ -154,7 +158,7 @@ theme: {
   extend: {
     colors: {
       groth16: '#3b82f6',
-      plonk: '#8b5cf6', 
+      plonk: '#8b5cf6',
       stark: '#ec4899',
     }
   }
@@ -166,9 +170,9 @@ theme: {
 Put your logo in `public/logo.svg` and import in layout:
 
 ```tsx
-import Image from 'next/image';
+import Image from "next/image";
 
-<Image src="/logo.svg" alt="UZKV" width={40} height={40} />
+<Image src="/logo.svg" alt="UZKV" width={40} height={40} />;
 ```
 
 ---
@@ -203,15 +207,19 @@ vercel --prod
 ## 🐛 Common Issues
 
 ### Issue: "Module not found: wagmi"
+
 **Fix**: Make sure you're in `apps/web` and run `pnpm install`
 
 ### Issue: "Cannot find module 'next/link'"
+
 **Fix**: Run `pnpm add next react react-dom`
 
 ### Issue: Wallet not connecting
+
 **Fix**: Check that `.env.local` has correct RPC URL
 
 ### Issue: API routes failing
+
 **Fix**: Ensure scripts path is correct: `../../scripts/...`
 
 ---
@@ -238,17 +246,17 @@ vercel --prod
 
 ## ⏱️ Time Estimates
 
-| Task | Time |
-|------|------|
-| Setup Next.js | 5 min |
-| Install deps | 3 min |
-| Landing page | 30 min |
-| Demo page | 2 hours |
-| API routes | 1 hour |
-| Wallet integration | 1 hour |
-| Charts & stats | 1 hour |
-| Polish & deploy | 1 hour |
-| **TOTAL** | **~7 hours** |
+| Task               | Time         |
+| ------------------ | ------------ |
+| Setup Next.js      | 5 min        |
+| Install deps       | 3 min        |
+| Landing page       | 30 min       |
+| Demo page          | 2 hours      |
+| API routes         | 1 hour       |
+| Wallet integration | 1 hour       |
+| Charts & stats     | 1 hour       |
+| Polish & deploy    | 1 hour       |
+| **TOTAL**          | **~7 hours** |
 
 ---
 

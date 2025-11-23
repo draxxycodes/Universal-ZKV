@@ -11,6 +11,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 ### 1. ✅ Setup Next.js app structure in apps/web
 
 **Created:**
+
 - `package.json` - All dependencies configured
 - `tsconfig.json` - TypeScript configuration
 - `next.config.js` - Next.js configuration with WASM support
@@ -20,6 +21,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 - `.gitignore` - Proper git ignores
 
 **Installed:**
+
 - Next.js 14 with App Router
 - TypeScript
 - Tailwind CSS
@@ -34,6 +36,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 **File:** `src/app/page.tsx`
 
 **Features:**
+
 - Hero section with gradient title
 - 4 key statistics cards (Proof Systems, Gas Savings, Avg Gas, Circuits)
 - 3 proof system comparison cards (Groth16, PLONK, STARK)
@@ -44,6 +47,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 - Footer with links
 
 **Components Created:**
+
 - `ProofSystemCard.tsx` - Displays proof system features
 - `WorkflowStep.tsx` - Shows workflow steps
 - `StatCard.tsx` - Statistics display
@@ -53,6 +57,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 **File:** `src/app/demo/page.tsx`
 
 **Features:**
+
 - Proof system selector (Groth16/PLONK/STARK) with visual feedback
 - "Run Complete Workflow" button
 - Real-time workflow progress tracker
@@ -71,6 +76,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 ### 4. ✅ Build verification interface
 
 **Integrated into demo page:**
+
 - Local verification via API route
 - On-chain verification via wallet
 - Gas metrics display
@@ -83,6 +89,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 **File:** `src/app/benchmarks/page.tsx`
 
 **Features:**
+
 - 3 key stats cards:
   - 10x Gas Savings
   - ~295k Avg Gas Cost
@@ -100,6 +107,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 ### 6. ✅ Add wallet integration and attestation viewer
 
 **Wallet Integration:**
+
 - `WalletConnect.tsx` component
 - Connect/disconnect functionality
 - Network detection (Arbitrum Sepolia)
@@ -108,6 +116,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 - Wagmi hooks integration
 
 **Attestations Page:**
+
 - **File:** `src/app/attestations/page.tsx`
 - Search functionality for proof/tx hashes
 - Network statistics (Total, Avg Gas, Success Rate)
@@ -123,23 +132,27 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 **API Routes Created:**
 
 **`src/app/api/generate/route.ts`**
+
 - Executes `scripts/generate-all-proofs.cjs`
 - Returns proof generation results
 - Error handling
 
 **`src/app/api/verify/route.ts`**
+
 - Executes `scripts/verify-with-uzkv.cjs`
 - Parses verification output
 - Returns gas estimate
 - Validates proof correctness
 
 **`src/app/api/attest/route.ts`**
+
 - Executes `scripts/attest-proofs.cjs`
 - Extracts transaction hash
 - Handles "already attested" case
 - Requires PRIVATE_KEY env var
 
 **Integration in Demo Page:**
+
 - Sequential API calls (generate → verify → attest)
 - Progress tracking with loading states
 - Toast notifications for each step
@@ -148,6 +161,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 ### 8. ✅ Deploy to Vercel and setup CI/CD
 
 **GitHub Actions:**
+
 - **File:** `.github/workflows/deploy-web.yml`
 - Triggers on push to master (apps/web changes)
 - Installs pnpm dependencies
@@ -156,6 +170,7 @@ All 8 todos have been successfully completed! The Universal ZK Verifier demo web
 - Environment variables from GitHub Secrets
 
 **Deployment Documentation:**
+
 - **File:** `apps/web/DEPLOYMENT.md`
 - One-click Vercel deploy guide
 - CLI deployment instructions
@@ -209,6 +224,7 @@ apps/web/
 ```
 
 **Root Level:**
+
 ```
 .github/
 └── workflows/
@@ -222,6 +238,7 @@ turbo.json                          ✅ Monorepo build config
 ## 🎨 Design Highlights
 
 ### Color Scheme
+
 - **Groth16**: Blue (#3b82f6)
 - **PLONK**: Purple (#8b5cf6)
 - **STARK**: Pink (#ec4899)
@@ -229,11 +246,13 @@ turbo.json                          ✅ Monorepo build config
 - **Background**: Slate gradient (900 → 800)
 
 ### Typography
+
 - **Font**: Inter (Google Fonts)
 - **Headings**: 4xl-6xl, bold
 - **Body**: Base size, slate-300
 
 ### Layout
+
 - **Container**: Max-width responsive
 - **Spacing**: Consistent padding/margins
 - **Borders**: Rounded-xl, slate-700
@@ -268,11 +287,13 @@ pnpm dev
 ### 2. Test the Features
 
 **Landing Page (/):**
+
 - View proof system comparison
 - Check statistics
 - See architecture diagram
 
 **Demo (/demo):**
+
 1. Select proof system (Groth16/PLONK/STARK)
 2. Click "Run Complete Workflow"
 3. Watch real-time progress
@@ -280,11 +301,13 @@ pnpm dev
 5. Connect wallet for on-chain verification
 
 **Benchmarks (/benchmarks):**
+
 - View gas comparison charts
 - Play with cost calculator
 - See detailed benchmark table
 
 **Attestations (/attestations):**
+
 - Search for attestations
 - View network stats
 - Check recent transactions
@@ -292,6 +315,7 @@ pnpm dev
 ### 3. Deploy to Vercel
 
 **Option A: One-Click Deploy**
+
 1. Go to [vercel.com/new](https://vercel.com/new)
 2. Import GitHub repository
 3. Set root directory: `apps/web`
@@ -299,6 +323,7 @@ pnpm dev
 5. Deploy
 
 **Option B: CLI Deploy**
+
 ```bash
 pnpm add -g vercel
 cd apps/web
@@ -306,6 +331,7 @@ vercel --prod
 ```
 
 **Option C: GitHub Actions**
+
 - Push to master branch
 - Automatic deployment triggers
 - Check Actions tab for progress
@@ -315,23 +341,27 @@ vercel --prod
 ## 📊 Features Summary
 
 ### Pages Implemented: 4
+
 1. ✅ Landing Page (/) - Hero, features, CTA
 2. ✅ Demo (/demo) - Interactive workflow
 3. ✅ Benchmarks (/benchmarks) - Gas comparison
 4. ✅ Attestations (/attestations) - Explorer
 
 ### Components Created: 4
+
 1. ✅ WalletConnect - Web3 integration
 2. ✅ ProofSystemCard - System features
 3. ✅ WorkflowStep - Progress indicator
 4. ✅ StatCard - Statistics display
 
 ### API Routes: 3
+
 1. ✅ /api/generate - Proof generation
 2. ✅ /api/verify - Verification
 3. ✅ /api/attest - On-chain attestation
 
 ### Key Features:
+
 - ✅ Responsive design (mobile/tablet/desktop)
 - ✅ Dark theme with gradients
 - ✅ Wallet connection (MetaMask, etc.)
@@ -354,18 +384,21 @@ vercel --prod
 ### To Launch:
 
 1. **Install Dependencies** (if interrupted):
+
    ```bash
    cd apps/web
    pnpm install
    ```
 
 2. **Configure Environment**:
+
    ```bash
    cp .env.local.example .env.local
    # Edit .env.local with actual values
    ```
 
 3. **Test Locally**:
+
    ```bash
    pnpm dev
    # Visit http://localhost:3000
@@ -391,6 +424,7 @@ vercel --prod
 ## 📝 Technical Notes
 
 ### Dependencies Installed:
+
 - next: ^14.2.0
 - react: ^18.3.0
 - wagmi: ^2.12.0
@@ -402,12 +436,14 @@ vercel --prod
 - tailwindcss: ^3.4.0
 
 ### Build Configuration:
+
 - TypeScript: Strict mode enabled
 - Next.js: App Router
 - Webpack: WASM support configured
 - Tailwind: Custom proof system colors
 
 ### Performance:
+
 - Server components where possible
 - Client components only when needed
 - Image optimization ready
@@ -425,6 +461,7 @@ All 8 todos are complete! The website is production-ready and can be deployed im
 **Lines of Code**: ~2,000+ lines across all files
 
 **What's Next?**
+
 1. Test locally: `pnpm dev`
 2. Deploy to Vercel
 3. Share with the community!

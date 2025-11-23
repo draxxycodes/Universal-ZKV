@@ -52,22 +52,26 @@ Transform the Universal ZK Verifier into a **live interactive demo** that showca
 ## 📦 Tech Stack
 
 ### Core Framework
+
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
 
 ### Web3 Libraries
+
 - **wagmi v2** - React hooks for Ethereum
 - **viem** - TypeScript utilities for Ethereum
 - **@uzkv/sdk** - Your existing TypeScript SDK
 
 ### UI Components
+
 - **shadcn/ui** - High-quality accessible components
 - **Radix UI** - Primitives for complex components
 - **lucide-react** - Icon library
 - **recharts** - Interactive charts for gas comparison
 
 ### Additional Tools
+
 - **zustand** - Lightweight state management
 - **react-dropzone** - File upload interface
 - **react-hot-toast** - Notification system
@@ -82,6 +86,7 @@ Transform the Universal ZK Verifier into a **live interactive demo** that showca
 **Purpose**: First impression, showcase capabilities
 
 **Sections**:
+
 ```tsx
 ┌─────────────────────────────────────┐
 │  Hero Section                       │
@@ -128,6 +133,7 @@ Transform the Universal ZK Verifier into a **live interactive demo** that showca
 **Purpose**: Let users experience the complete workflow
 
 **Features**:
+
 ```tsx
 ┌─────────────────────────────────────┐
 │  Step 1: Select Proof System        │
@@ -158,6 +164,7 @@ Transform the Universal ZK Verifier into a **live interactive demo** that showca
 ```
 
 **Key Component**: `CompleteWorkflowDemo`
+
 ```typescript
 'use client';
 
@@ -170,22 +177,22 @@ export default function CompleteWorkflowDemo() {
   const [circuit, setCircuit] = useState('poseidon_test');
   const [proof, setProof] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
-  
+
   const runCompleteWorkflow = async () => {
     // Call your complete-workflow.cjs logic
     // Step 1: Generate
     await generateProof(circuit, proofType);
     setStep(2);
-    
+
     // Step 2: Verify
     await verifyProof();
     setStep(3);
-    
+
     // Step 3: Attest
     await attestProof();
     setStep(4);
   };
-  
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Workflow steps visualization */}
@@ -202,6 +209,7 @@ export default function CompleteWorkflowDemo() {
 **Purpose**: Show gas savings and performance metrics
 
 **Visualizations**:
+
 ```tsx
 ┌─────────────────────────────────────┐
 │  Gas Cost Comparison Chart           │
@@ -230,6 +238,7 @@ export default function CompleteWorkflowDemo() {
 **Purpose**: View on-chain attestation history
 
 **Features**:
+
 ```tsx
 ┌─────────────────────────────────────┐
 │  Search Attestations                 │
@@ -252,6 +261,7 @@ export default function CompleteWorkflowDemo() {
 **Purpose**: API reference and integration guide
 
 **Sections**:
+
 - Quick Start
 - SDK Usage Examples
 - Contract Addresses
@@ -284,6 +294,7 @@ pnpm dlx shadcn-ui@latest add button card tabs progress badge
 ```
 
 **File Structure**:
+
 ```
 apps/web/
 ├── src/
@@ -322,6 +333,7 @@ apps/web/
 ### Phase 2: Core Components (4 hours)
 
 #### 2.1 Wallet Connection
+
 ```typescript
 // src/components/WalletConnect.tsx
 'use client';
@@ -333,7 +345,7 @@ export function WalletConnect() {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  
+
   if (isConnected) {
     return (
       <div className="flex items-center gap-2">
@@ -342,7 +354,7 @@ export function WalletConnect() {
       </div>
     );
   }
-  
+
   return (
     <Button onClick={() => connect({ connector: connectors[0] })}>
       Connect Wallet
@@ -352,6 +364,7 @@ export function WalletConnect() {
 ```
 
 #### 2.2 Complete Workflow Integration
+
 ```typescript
 // src/components/CompleteWorkflow.tsx
 'use client';
@@ -362,17 +375,17 @@ import { execSync } from 'child_process'; // Use API route instead
 export function CompleteWorkflow() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  
+
   const runWorkflow = async () => {
     setLoading(true);
-    
+
     try {
       // Call your complete-workflow.cjs via API route
       const response = await fetch('/api/run-workflow', {
         method: 'POST',
         body: JSON.stringify({ proofType: 'groth16' })
       });
-      
+
       const data = await response.json();
       // Display results
     } catch (error) {
@@ -381,7 +394,7 @@ export function CompleteWorkflow() {
       setLoading(false);
     }
   };
-  
+
   return (
     <div>
       <button onClick={runWorkflow}>
@@ -394,6 +407,7 @@ export function CompleteWorkflow() {
 ```
 
 #### 2.3 Gas Comparison Chart
+
 ```typescript
 // src/components/GasChart.tsx
 'use client';
@@ -423,21 +437,22 @@ export function GasChart() {
 ### Phase 3: API Routes (3 hours)
 
 #### 3.1 Generate Proof API
+
 ```typescript
 // src/app/api/generate/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { NextRequest, NextResponse } from "next/server";
+import { execSync } from "child_process";
 
 export async function POST(req: NextRequest) {
   try {
     const { circuit, proofType } = await req.json();
-    
+
     // Call your generate-all-proofs.cjs
-    const result = execSync(
-      `node scripts/generate-all-proofs.cjs`,
-      { cwd: process.cwd(), encoding: 'utf8' }
-    );
-    
+    const result = execSync(`node scripts/generate-all-proofs.cjs`, {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+
     return NextResponse.json({ success: true, result });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -446,21 +461,22 @@ export async function POST(req: NextRequest) {
 ```
 
 #### 3.2 Verify Proof API
+
 ```typescript
 // src/app/api/verify/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { NextRequest, NextResponse } from "next/server";
+import { execSync } from "child_process";
 
 export async function POST(req: NextRequest) {
   try {
     const { proof, publicInputs, proofType } = await req.json();
-    
+
     // Call verify-with-uzkv.cjs
-    const result = execSync(
-      `node scripts/verify-with-uzkv.cjs`,
-      { cwd: process.cwd(), encoding: 'utf8' }
-    );
-    
+    const result = execSync(`node scripts/verify-with-uzkv.cjs`, {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+
     return NextResponse.json({ verified: true, result });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -469,20 +485,21 @@ export async function POST(req: NextRequest) {
 ```
 
 #### 3.3 Attest Proof API
+
 ```typescript
 // src/app/api/attest/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { NextRequest, NextResponse } from "next/server";
+import { execSync } from "child_process";
 
 export async function POST(req: NextRequest) {
   try {
     // Call attest-proofs.cjs
-    const result = execSync(
-      `node scripts/attest-proofs.cjs`,
-      { cwd: process.cwd(), encoding: 'utf8' }
-    );
-    
-    return NextResponse.json({ success: true, txHash: '0x...' });
+    const result = execSync(`node scripts/attest-proofs.cjs`, {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+
+    return NextResponse.json({ success: true, txHash: "0x..." });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -492,6 +509,7 @@ export async function POST(req: NextRequest) {
 ### Phase 4: Polish & Deploy (2 hours)
 
 #### 4.1 Environment Variables
+
 ```env
 # .env.local
 NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
@@ -503,6 +521,7 @@ PRIVATE_KEY=your_private_key_here
 ```
 
 #### 4.2 Deploy to Vercel
+
 ```bash
 # Install Vercel CLI
 pnpm add -g vercel
@@ -513,6 +532,7 @@ vercel --prod
 ```
 
 #### 4.3 CI/CD with GitHub Actions
+
 ```yaml
 # .github/workflows/deploy-web.yml
 name: Deploy Website
@@ -521,7 +541,7 @@ on:
   push:
     branches: [master]
     paths:
-      - 'apps/web/**'
+      - "apps/web/**"
 
 jobs:
   deploy:
@@ -530,13 +550,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v3
-      
+
       - name: Install dependencies
         run: pnpm install
-      
+
       - name: Build
         run: pnpm --filter web build
-      
+
       - name: Deploy to Vercel
         run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
 ```
@@ -546,24 +566,31 @@ jobs:
 ## 🎨 Design Guidelines
 
 ### Color Scheme
+
 ```css
 /* Arbitrum-inspired palette */
---primary: #28a0f0;      /* Arbitrum blue */
---secondary: #0a2540;    /* Dark blue */
---success: #10b981;      /* Green */
---warning: #f59e0b;      /* Orange */
---error: #ef4444;        /* Red */
+--primary: #28a0f0; /* Arbitrum blue */
+--secondary: #0a2540; /* Dark blue */
+--success: #10b981; /* Green */
+--warning: #f59e0b; /* Orange */
+--error: #ef4444; /* Red */
 
 /* Proof system colors */
---groth16: #3b82f6;      /* Blue */
---plonk: #8b5cf6;        /* Purple */
---stark: #ec4899;        /* Pink */
+--groth16: #3b82f6; /* Blue */
+--plonk: #8b5cf6; /* Purple */
+--stark: #ec4899; /* Pink */
 ```
 
 ### Typography
+
 ```css
 /* Font stack */
-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+font-family:
+  "Inter",
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
 
 /* Sizes */
 --text-xs: 0.75rem;
@@ -577,6 +604,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ```
 
 ### Components
+
 - Use **shadcn/ui** for consistency
 - Dark mode support
 - Responsive breakpoints: mobile (640px), tablet (768px), desktop (1024px)
@@ -587,14 +615,18 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ## 📊 Key Features to Highlight
 
 ### 1. **Live Demo Button**
+
 Big, prominent button on homepage: "Try Complete Workflow"
+
 - Runs the entire generate → verify → attest flow
 - Shows real-time progress
 - Displays gas costs
 - Links to Arbiscan for transactions
 
 ### 2. **Proof System Comparison**
+
 Side-by-side cards:
+
 ```
 ┌─────────┬─────────┬─────────┐
 │ Groth16 │  PLONK  │  STARK  │
@@ -606,6 +638,7 @@ Side-by-side cards:
 ```
 
 ### 3. **Gas Savings Calculator**
+
 ```
 How many proofs per month? [input: 1000]
 Estimated gas savings: 2.5 ETH (~$4,000)
@@ -613,6 +646,7 @@ Compared to Solidity: 10x cheaper
 ```
 
 ### 4. **Real-Time Stats**
+
 ```
 📊 Network Stats (Arbitrum Sepolia)
 ├── Total Proofs Verified: 1,234
@@ -647,18 +681,21 @@ Compared to Solidity: 10x cheaper
 ## 📈 Success Metrics
 
 ### Technical
+
 - ✅ Page load time < 2s
 - ✅ Wallet connection < 1s
 - ✅ Proof verification < 5s
 - ✅ 99.9% uptime
 
 ### User Experience
+
 - ✅ Clear call-to-action
 - ✅ Intuitive workflow
 - ✅ Mobile-friendly
 - ✅ Accessible (WCAG 2.1 AA)
 
 ### Engagement
+
 - ✅ Demo completion rate > 50%
 - ✅ Avg session duration > 3 min
 - ✅ Bounce rate < 40%

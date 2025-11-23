@@ -1,6 +1,6 @@
 /**
  * UZKV SDK - Universal ZK Verifier Client
- * 
+ *
  * TypeScript SDK for interacting with the Universal ZK Verifier
  * Supports Groth16, PLONK, and STARK proof systems
  */
@@ -10,11 +10,11 @@ import {
   type PublicClient,
   type Address,
   http,
-} from 'viem';
-import { arbitrumSepolia } from 'viem/chains';
+} from "viem";
+import { arbitrumSepolia } from "viem/chains";
 
 // Export Universal Proof Protocol types
-export { ProofType, PublicStatement, UniversalProof } from './types';
+export { ProofType, PublicStatement, UniversalProof } from "./types";
 
 // Export Circuit Helpers
 export {
@@ -28,25 +28,28 @@ export {
   createProofPayload,
   isNullifierUsed,
   type CircuitPublicInputs,
-} from './circuit-helpers';
+} from "./circuit-helpers";
 
 export interface Groth16Proof {
   pi_a: [string, string];
   pi_b: [[string, string], [string, string]];
   pi_c: [string, string];
-  protocol: 'groth16';
-  curve: 'bn128';
+  protocol: "groth16";
+  curve: "bn128";
 }
 
 export interface VerificationKey {
-  protocol: 'groth16';
-  curve: 'bn128';
+  protocol: "groth16";
+  curve: "bn128";
   nPublic: number;
   vk_alpha_1: [string, string];
   vk_beta_2: [[string, string], [string, string]];
   vk_gamma_2: [[string, string], [string, string]];
   vk_delta_2: [[string, string], [string, string]];
-  vk_alphabeta_12: [[[string, string], [string, string]], [[string, string], [string, string]]];
+  vk_alphabeta_12: [
+    [[string, string], [string, string]],
+    [[string, string], [string, string]],
+  ];
   IC: Array<[string, string]>;
 }
 
@@ -91,9 +94,9 @@ export class UZKVClient {
   private attestorAddress?: Address;
 
   constructor(config: UZKVConfig = {}) {
-    this.serviceUrl = config.serviceUrl || 'http://localhost:3001';
-    this.attestorAddress = (config.attestorAddress || 
-      '0x36e937ebcf56c5dec6ecb0695001becc87738177') as Address;
+    this.serviceUrl = config.serviceUrl || "http://localhost:3001";
+    this.attestorAddress = (config.attestorAddress ||
+      "0x36e937ebcf56c5dec6ecb0695001becc87738177") as Address;
 
     if (config.rpcUrl) {
       this.publicClient = createPublicClient({
@@ -109,22 +112,22 @@ export class UZKVClient {
   async verify(request: VerifyRequest): Promise<VerifyResponse> {
     try {
       const response = await fetch(`${this.serviceUrl}/verify`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(request),
       });
 
       if (!response.ok) {
-        const error = await response.json() as { message?: string };
-        throw new Error(error.message || 'Verification failed');
+        const error = (await response.json()) as { message?: string };
+        throw new Error(error.message || "Verification failed");
       }
 
-      return await response.json() as VerifyResponse;
+      return (await response.json()) as VerifyResponse;
     } catch (error) {
       throw new Error(
-        `Failed to verify proof: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to verify proof: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -145,19 +148,19 @@ export class UZKVClient {
   }> {
     try {
       const response = await fetch(`${this.serviceUrl}/verify/batch`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ proofs: requests }),
       });
 
       if (!response.ok) {
-        const error = await response.json() as { message?: string };
-        throw new Error(error.message || 'Batch verification failed');
+        const error = (await response.json()) as { message?: string };
+        throw new Error(error.message || "Batch verification failed");
       }
 
-      return await response.json() as {
+      return (await response.json()) as {
         totalProofs: number;
         validProofs: number;
         invalidProofs: number;
@@ -170,7 +173,7 @@ export class UZKVClient {
       };
     } catch (error) {
       throw new Error(
-        `Failed to verify proofs: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to verify proofs: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -180,17 +183,19 @@ export class UZKVClient {
    */
   async getAttestationStatus(proofHash: string): Promise<AttestationStatus> {
     try {
-      const response = await fetch(`${this.serviceUrl}/attestation/${proofHash}`);
+      const response = await fetch(
+        `${this.serviceUrl}/attestation/${proofHash}`,
+      );
 
       if (!response.ok) {
-        const error = await response.json() as { message?: string };
-        throw new Error(error.message || 'Failed to get attestation status');
+        const error = (await response.json()) as { message?: string };
+        throw new Error(error.message || "Failed to get attestation status");
       }
 
-      return await response.json() as AttestationStatus;
+      return (await response.json()) as AttestationStatus;
     } catch (error) {
       throw new Error(
-        `Failed to get attestation status: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get attestation status: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -215,11 +220,11 @@ export class UZKVClient {
       const response = await fetch(url);
 
       if (!response.ok) {
-        const error = await response.json() as { message?: string };
-        throw new Error(error.message || 'Failed to get attestation events');
+        const error = (await response.json()) as { message?: string };
+        throw new Error(error.message || "Failed to get attestation events");
       }
 
-      return await response.json() as {
+      return (await response.json()) as {
         count: number;
         events: Array<{
           proofHash: string;
@@ -230,7 +235,7 @@ export class UZKVClient {
       };
     } catch (error) {
       throw new Error(
-        `Failed to get attestation events: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get attestation events: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -247,17 +252,17 @@ export class UZKVClient {
       const response = await fetch(`${this.serviceUrl}/health`);
 
       if (!response.ok) {
-        throw new Error('Service unhealthy');
+        throw new Error("Service unhealthy");
       }
 
-      return await response.json() as {
+      return (await response.json()) as {
         status: string;
         service: string;
         timestamp: string;
       };
     } catch (error) {
       throw new Error(
-        `Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Health check failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -270,13 +275,13 @@ export class UZKVClient {
       const response = await fetch(`${this.serviceUrl}/`);
 
       if (!response.ok) {
-        throw new Error('Failed to get service info');
+        throw new Error("Failed to get service info");
       }
 
-      return await response.json() as any;
+      return (await response.json()) as any;
     } catch (error) {
       throw new Error(
-        `Failed to get service info: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get service info: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }

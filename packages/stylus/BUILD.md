@@ -46,21 +46,24 @@ artifacts/
 ### Prerequisites
 
 1. **Rust Toolchain:**
+
    ```bash
    rustup install nightly-2024-02-01
    rustup target add wasm32-unknown-unknown --toolchain nightly-2024-02-01
    ```
 
 2. **cargo-stylus:**
+
    ```bash
    cargo install cargo-stylus
    ```
 
 3. **wasm-opt (for optimization):**
+
    ```bash
    # Ubuntu/Debian
    sudo apt install binaryen
-   
+
    # macOS
    brew install binaryen
    ```
@@ -130,6 +133,7 @@ The build script uses these `wasm-opt` flags:
 **Error:** WASM size exceeds 128KB
 
 **Solutions:**
+
 1. Review dependencies in `Cargo.toml`
 2. Disable unused features
 3. Use more aggressive optimization
@@ -140,6 +144,7 @@ The build script uses these `wasm-opt` flags:
 **Error:** `cargo: 'stylus' is not a cargo command`
 
 **Solution:**
+
 ```bash
 cargo install cargo-stylus
 ```

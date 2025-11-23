@@ -28,34 +28,40 @@ This plan **consolidates and unifies** existing Stylus modules into a production
 ### ✅ **What We Already Have (Production-Ready - KEEP)**
 
 #### 1. **Groth16 Core Module** - `packages/stylus/src/groth16.rs` ✅
+
 - **Status:** PRODUCTION-READY (400+ lines)
 - **Features:** BN254 validation, precomputed pairing, panic-free
 - **Action:** KEEP & INTEGRATE into unified contract
 - **Note:** Already has batch verification placeholder
 
 #### 2. **PLONK Module** - `packages/stylus/plonk/` ✅
+
 - **Status:** PRODUCTION-READY (2,300+ lines, 31 tests)
 - **Features:** KZG commitments, Fiat-Shamir transcript
 - **Action:** KEEP & INTEGRATE into unified contract
 - **Structure:** Separate workspace, needs consolidation
 
 #### 3. **STARK Module** - `packages/stylus/stark-simple/` ✅
+
 - **Status:** PRODUCTION-READY (700+ lines, 18 tests)
 - **Features:** Transparent setup, Blake3, post-quantum
 - **Action:** KEEP & INTEGRATE into unified contract
 - **Structure:** Separate workspace, needs consolidation
 
 #### 4. **Main Contract Entry** - `packages/stylus/src/lib.rs` ✅
+
 - **Status:** PRODUCTION-READY (UZKVContract with Groth16)
 - **Features:** ERC-7201 storage, admin controls, nullifiers
 - **Action:** EXTEND for multi-proof routing
 - **Gap:** Only supports Groth16, needs PLONK/STARK
 
 #### 5. **Storage Module** - `packages/stylus/src/storage.rs` ✅
+
 - **Status:** PRODUCTION-READY (ERC-7201 namespaced)
 - **Action:** KEEP as-is (already correct)
 
 #### 6. **Solidity Contracts** - `packages/contracts/src/` ✅
+
 - **Status:** PRODUCTION-READY (65 tests passing)
 - **Files:**
   - `UZKVProxy.sol` - UUPS with Stylus gateway capability
@@ -65,16 +71,18 @@ This plan **consolidates and unifies** existing Stylus modules into a production
 ### ❌ **What to DELETE (Redundant/Experimental)**
 
 #### 1. **Old STARK Implementation** - `packages/stylus/stark/` ❌
+
 - **Status:** EXPERIMENTAL (Winterfell v0.9 attempt, 1500+ lines)
 - **Reason:** Replaced by `stark-simple/` (700 lines, simpler, production-ready)
 - **Action:** DELETE entire directory
 - **Command:** `rm -rf packages/stylus/stark`
 
 #### 2. **Separate PLONK Workspace** - `packages/stylus/plonk/Cargo.toml` ⚠️
+
 - **Status:** Will be MERGED into main workspace
 - **Reason:** Separate workspace complicates build
 - **Action:** MOVE code to `packages/stylus/src/plonk/`, DELETE workspace
-- **Command:** 
+- **Command:**
   ```bash
   mkdir -p packages/stylus/src/plonk
   mv packages/stylus/plonk/src/* packages/stylus/src/plonk/
@@ -83,6 +91,7 @@ This plan **consolidates and unifies** existing Stylus modules into a production
   ```
 
 #### 3. **Separate STARK Workspace** - `packages/stylus/stark-simple/Cargo.toml` ⚠️
+
 - **Status:** Will be MERGED into main workspace
 - **Reason:** Separate workspace complicates build
 - **Action:** MOVE code to `packages/stylus/src/stark/`, DELETE workspace
@@ -97,6 +106,7 @@ This plan **consolidates and unifies** existing Stylus modules into a production
   ```
 
 #### 4. **Test Artifacts** - Various build outputs ⚠️
+
 - **Paths:**
   - `packages/stylus/target/` (keep in .gitignore)
   - `packages/stylus/plonk/target/` (will be deleted with workspace)
@@ -156,6 +166,7 @@ DELETED:
 ### 📋 Task S0.1: Delete Redundant Code
 
 **Commands:**
+
 ```bash
 cd packages/stylus
 
@@ -178,6 +189,7 @@ git commit -m "chore(stylus): delete redundant STARK implementation and clean ar
 ```
 
 **Definition of Done:**
+
 - ✅ `packages/stylus/stark/` deleted
 - ✅ Build artifacts cleaned
 - ✅ Archive created for reference
@@ -188,6 +200,7 @@ git commit -m "chore(stylus): delete redundant STARK implementation and clean ar
 ### 📋 Task S0.2: Consolidate PLONK Module
 
 **Commands:**
+
 ```bash
 cd packages/stylus
 
@@ -230,6 +243,7 @@ git commit -m "refactor(stylus): consolidate PLONK module into main workspace (P
 ```
 
 **Definition of Done:**
+
 - ✅ PLONK code moved to `src/plonk/`
 - ✅ PLONK tests moved to `tests/plonk/`
 - ✅ `mod.rs` created with re-exports
@@ -241,6 +255,7 @@ git commit -m "refactor(stylus): consolidate PLONK module into main workspace (P
 ### 📋 Task S0.3: Consolidate STARK Module
 
 **Commands:**
+
 ```bash
 cd packages/stylus
 
@@ -282,6 +297,7 @@ git commit -m "refactor(stylus): consolidate STARK module into main workspace (P
 ```
 
 **Definition of Done:**
+
 - ✅ STARK code moved to `src/stark/`
 - ✅ STARK tests moved to `tests/stark/`
 - ✅ `mod.rs` created with re-exports
@@ -295,6 +311,7 @@ git commit -m "refactor(stylus): consolidate STARK module into main workspace (P
 **File:** `packages/stylus/Cargo.toml`
 
 **Changes:**
+
 ```toml
 [package]
 name = "uzkv-stylus"
@@ -339,12 +356,14 @@ export-abi = ["stylus-sdk/export-abi"]
 ```
 
 **Commit:**
+
 ```bash
 git add packages/stylus/Cargo.toml
 git commit -m "chore(stylus): update Cargo.toml for unified workspace (Phase S0.4)"
 ```
 
 **Definition of Done:**
+
 - ✅ Cargo.toml updated with all dependencies
 - ✅ Compiles successfully: `cargo check`
 - ✅ All tests pass: `cargo test`
@@ -357,6 +376,7 @@ git commit -m "chore(stylus): update Cargo.toml for unified workspace (Phase S0.
 **File:** `packages/stylus/src/lib.rs`
 
 **Add at top after existing modules:**
+
 ```rust
 pub mod groth16;
 pub mod plonk;  // ← NEW
@@ -365,12 +385,14 @@ pub mod storage;
 ```
 
 **Commit:**
+
 ```bash
 git add packages/stylus/src/lib.rs
 git commit -m "feat(stylus): declare plonk and stark modules in lib.rs (Phase S0.5)"
 ```
 
 **Definition of Done:**
+
 - ✅ Module declarations added
 - ✅ Compiles: `cargo check`
 - ✅ Git committed
@@ -380,6 +402,7 @@ git commit -m "feat(stylus): declare plonk and stark modules in lib.rs (Phase S0
 ### 📋 Task S0.6: Verification Build & Test
 
 **Commands:**
+
 ```bash
 cd packages/stylus
 
@@ -403,6 +426,7 @@ cargo doc --no-deps --document-private-items
 ```
 
 **Expected Output:**
+
 ```
    Compiling uzkv-stylus v1.0.0
     Finished release [optimized] target(s) in X.XXs
@@ -416,6 +440,7 @@ test result: ok. 57 passed; 0 failed; 0 ignored
 ```
 
 **Definition of Done:**
+
 - ✅ All code compiles without errors
 - ✅ All 57 tests pass (8 groth16 + 31 plonk + 18 stark)
 - ✅ Zero clippy warnings
@@ -435,6 +460,7 @@ test result: ok. 57 passed; 0 failed; 0 ignored
 **File:** `packages/stylus/src/lib.rs`
 
 **Add ProofType enum and routing:**
+
 ```rust
 /// Proof type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -458,6 +484,7 @@ impl ProofType {
 ```
 
 **Update verify function:**
+
 ```rust
 #[external]
 impl UZKVContract {
@@ -506,6 +533,7 @@ impl UZKVContract {
 ```
 
 **Definition of Done:**
+
 - ✅ ProofType enum added
 - ✅ verify() routes to all 3 verifiers
 - ✅ Compiles successfully
@@ -516,6 +544,7 @@ impl UZKVContract {
 ### 📋 Task S1.2: Implement Batch Verification
 
 **Add batch_verify to groth16.rs:**
+
 ```rust
 pub fn batch_verify(
     proofs: &[Vec<u8>],
@@ -560,6 +589,7 @@ pub fn batch_verify(
 ```
 
 **Add batch_verify to plonk/verifier.rs:**
+
 ```rust
 pub fn batch_verify(
     proofs: &[Vec<u8>],
@@ -576,6 +606,7 @@ pub fn batch_verify(
 ```
 
 **Add batch_verify to stark/lib.rs:**
+
 ```rust
 pub fn batch_verify(
     proofs: &[Vec<u8>],
@@ -591,6 +622,7 @@ pub fn batch_verify(
 ```
 
 **Add to lib.rs:**
+
 ```rust
 pub fn batch_verify(
     &mut self,
@@ -623,6 +655,7 @@ pub fn batch_verify(
 ```
 
 **Definition of Done:**
+
 - ✅ batch_verify() in all 3 modules
 - ✅ batch_verify() in lib.rs
 - ✅ All tests pass
@@ -633,6 +666,7 @@ pub fn batch_verify(
 ### 📋 Task S1.3: Build & Export ABI
 
 **Commands:**
+
 ```bash
 cd packages/stylus
 
@@ -652,6 +686,7 @@ ls -lh artifacts/uzkv_verifier_optimized.wasm
 ```
 
 **Expected ABI:**
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
@@ -663,14 +698,14 @@ interface IUniversalVerifier {
         bytes calldata publicInputs,
         bytes32 vkHash
     ) external returns (bool);
-    
+
     function batchVerify(
         uint8 proofType,
         bytes[] calldata proofs,
         bytes[] calldata publicInputs,
         bytes32 vkHash
     ) external returns (bool[] memory);
-    
+
     function registerVK(uint8 proofType, bytes calldata vk) external returns (bytes32);
     function pause() external;
     function unpause() external;
@@ -680,6 +715,7 @@ interface IUniversalVerifier {
 ```
 
 **Definition of Done:**
+
 - ✅ WASM builds successfully
 - ✅ WASM size <128KB
 - ✅ ABI exported
@@ -698,6 +734,7 @@ interface IUniversalVerifier {
 **File:** `packages/contracts/src/UniversalZKVerifier.sol`
 
 **Completed Changes:**
+
 1. ✅ Added `address public stylusVerifier` storage
 2. ✅ Refactored `verify()` to call Stylus (primary) or Solidity modules (fallback)
 3. ✅ Added `batchVerify()` for batch verification via Stylus
@@ -710,6 +747,7 @@ interface IUniversalVerifier {
 ### 📋 Task S2.2: Update Verification Tests ✅
 
 **Completed:**
+
 - ✅ Updated 39 existing tests in UniversalZKVerifier.t.sol
 - ✅ Added 7 new Stylus-specific tests
 - ✅ All tests passing (39/39)
@@ -718,6 +756,7 @@ interface IUniversalVerifier {
 ### 📋 Task S2.3: Add Stylus Integration Tests ✅
 
 **Completed:**
+
 - ✅ Created MockStylusVerifier.sol (180 lines)
 - ✅ Created StylusIntegration.t.sol (500+ lines, 18 tests)
 - ✅ Gas benchmarks captured
@@ -725,6 +764,7 @@ interface IUniversalVerifier {
 - ✅ All tests passing (18/18)
 
 **Definition of Done:**
+
 - ✅ UniversalZKVerifier refactored
 - ✅ All 39 existing tests updated and passing
 - ✅ MockStylusVerifier created for testing
@@ -735,6 +775,7 @@ interface IUniversalVerifier {
 - ✅ Documentation: `phase-s2-solidity-integration.md` created
 
 **Results:**
+
 - Single verification: ~50k gas
 - Batch verification (10): ~80k gas (84% savings)
 - VK registration: ~41k gas
@@ -801,6 +842,7 @@ contract StylusIntegrationTest is Test {
 ```
 
 **Definition of Done:**
+
 - ✅ Integration tests created
 - ✅ Tests pass with mock
 - ✅ Tests pass with real WASM (testnet)
@@ -817,33 +859,50 @@ contract StylusIntegrationTest is Test {
 **Script:** `scripts/benchmark_gas.js`
 
 ```javascript
-const { ethers } = require('hardhat');
+const { ethers } = require("hardhat");
 
 async function benchmark() {
-    // Deploy Solidity baseline verifier
-    const SolidityVerifier = await ethers.getContractFactory('Groth16VerifierSolidity');
-    const solidityVerifier = await SolidityVerifier.deploy();
+  // Deploy Solidity baseline verifier
+  const SolidityVerifier = await ethers.getContractFactory(
+    "Groth16VerifierSolidity",
+  );
+  const solidityVerifier = await SolidityVerifier.deploy();
 
-    // Deploy Stylus verifier
-    const StylusVerifier = await ethers.getContractAt('IUniversalVerifier', STYLUS_ADDRESS);
+  // Deploy Stylus verifier
+  const StylusVerifier = await ethers.getContractAt(
+    "IUniversalVerifier",
+    STYLUS_ADDRESS,
+  );
 
-    // Benchmark single verification
-    const proof = loadProof('test1');
-    const inputs = loadInputs('test1');
+  // Benchmark single verification
+  const proof = loadProof("test1");
+  const inputs = loadInputs("test1");
 
-    const solidityGas = await solidityVerifier.estimateGas.verify(proof, inputs, vk);
-    const stylusGas = await StylusVerifier.estimateGas.verify(0, proof, inputs, vkHash);
+  const solidityGas = await solidityVerifier.estimateGas.verify(
+    proof,
+    inputs,
+    vk,
+  );
+  const stylusGas = await StylusVerifier.estimateGas.verify(
+    0,
+    proof,
+    inputs,
+    vkHash,
+  );
 
-    console.log(`Solidity: ${solidityGas} gas`);
-    console.log(`Stylus: ${stylusGas} gas`);
-    console.log(`Savings: ${((solidityGas - stylusGas) / solidityGas * 100).toFixed(2)}%`);
+  console.log(`Solidity: ${solidityGas} gas`);
+  console.log(`Stylus: ${stylusGas} gas`);
+  console.log(
+    `Savings: ${(((solidityGas - stylusGas) / solidityGas) * 100).toFixed(2)}%`,
+  );
 
-    // Benchmark batch (10 proofs)
-    // ... similar
+  // Benchmark batch (10 proofs)
+  // ... similar
 }
 ```
 
 **Definition of Done:**
+
 - ✅ Benchmark script created
 - ✅ Solidity baseline deployed
 - ✅ Gas measurements collected
@@ -859,6 +918,7 @@ async function benchmark() {
 ### 📋 Task S5.1: Deploy Stylus WASM
 
 **Commands:**
+
 ```bash
 cd packages/stylus
 
@@ -877,24 +937,30 @@ echo "STYLUS_ADDRESS=0x..." >> .env.sepolia
 
 ```typescript
 async function main() {
-    const stylusAddress = process.env.STYLUS_ADDRESS;
+  const stylusAddress = process.env.STYLUS_ADDRESS;
 
-    // Deploy proxy
-    const UZKVProxy = await ethers.getContractFactory('UZKVProxy');
-    const proxy = await upgrades.deployProxy(UZKVProxy, [admin, upgrader, pauser, stylusAddress]);
-    await proxy.deployed();
+  // Deploy proxy
+  const UZKVProxy = await ethers.getContractFactory("UZKVProxy");
+  const proxy = await upgrades.deployProxy(UZKVProxy, [
+    admin,
+    upgrader,
+    pauser,
+    stylusAddress,
+  ]);
+  await proxy.deployed();
 
-    console.log('UZKVProxy deployed:', proxy.address);
+  console.log("UZKVProxy deployed:", proxy.address);
 
-    // Verify on Arbiscan
-    await hre.run('verify:verify', {
-        address: proxy.address,
-        constructorArguments: [],
-    });
+  // Verify on Arbiscan
+  await hre.run("verify:verify", {
+    address: proxy.address,
+    constructorArguments: [],
+  });
 }
 ```
 
 **Definition of Done:**
+
 - ✅ Stylus WASM deployed to Sepolia
 - ✅ Solidity contracts deployed
 - ✅ Contracts verified on Arbiscan
@@ -911,25 +977,29 @@ async function main() {
 **Phase S9:** Mainnet Deployment (Phased rollout, monitoring)  
 **Phase S10:** Post-Launch (Documentation, SDK updates, community support)
 
-*(Detailed tasks available in PROJECT-EXECUTION-PROD.md Phases 14-23)*
+_(Detailed tasks available in PROJECT-EXECUTION-PROD.md Phases 14-23)_
 
 ---
 
 ## 📋 EXECUTION RULES (MANDATORY)
 
 ### Rule 1: NO MOCK IMPLEMENTATIONS ❌
+
 - Test fixtures acceptable ONLY in test files
 - Production code must be real implementations
 
 ### Rule 2: GIT COMMIT AFTER EVERY TASK ✅
+
 - Format: `<type>(<scope>): <description> (Phase SX.Y)`
 - Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, `build`
 
 ### Rule 3: DOCUMENTATION FOR EVERY PHASE 📝
+
 - Location: `execution_steps_details/`
 - Naming: `phase-sX.Y-<description>.md`
 
 ### Rule 4: CLEANUP BEFORE STARTING ⚠️
+
 - **MUST complete Phase S0 (Cleanup) before Phase S1**
 - Verify all redundant code deleted
 - Verify consolidated structure works
@@ -952,18 +1022,21 @@ Before marking any phase complete:
 ## 🎯 SUCCESS METRICS
 
 ### Gas Efficiency
+
 - ✅ Groth16: <65,000 gas (vs 280k Solidity = 77% savings)
 - ✅ PLONK: <125,000 gas (vs 450k Solidity = 72% savings)
 - ✅ STARK: <300,000 gas (transparent, no trusted setup)
 - ✅ Batch (10): >60% savings vs individual
 
 ### Code Quality
+
 - ✅ Single unified WASM binary
 - ✅ All 57 tests passing (8+31+18)
 - ✅ Zero redundant code
 - ✅ Clean module structure
 
 ### Deployment
+
 - ✅ WASM size <128KB
 - ✅ Testnet deployment successful
 - ✅ Mainnet deployment ready
@@ -973,15 +1046,15 @@ Before marking any phase complete:
 
 ## 📅 TIMELINE SUMMARY
 
-| Week | Phase | Focus | Completion |
-|------|-------|-------|------------|
-| 0 | **S0: Cleanup** | Delete redundant code, consolidate modules | ✅ 100% |
-| 1 | **S1: Unified Contract** | Multi-proof routing, batch verification | ✅ 100% |
-| 2 | **S2: Solidity Integration** | Refactor UniversalZKVerifier | 0% |
-| 3 | **S3: Testing** | End-to-end integration tests | 0% |
-| 4 | **S4: Benchmarking** | Gas measurement vs Solidity | 0% |
-| 5 | **S5: Testnet** | Deploy to Arbitrum Sepolia | 0% |
-| 6-10 | **S6-S10** | Production, Security, Mainnet | 0% |
+| Week | Phase                        | Focus                                      | Completion |
+| ---- | ---------------------------- | ------------------------------------------ | ---------- |
+| 0    | **S0: Cleanup**              | Delete redundant code, consolidate modules | ✅ 100%    |
+| 1    | **S1: Unified Contract**     | Multi-proof routing, batch verification    | ✅ 100%    |
+| 2    | **S2: Solidity Integration** | Refactor UniversalZKVerifier               | 0%         |
+| 3    | **S3: Testing**              | End-to-end integration tests               | 0%         |
+| 4    | **S4: Benchmarking**         | Gas measurement vs Solidity                | 0%         |
+| 5    | **S5: Testnet**              | Deploy to Arbitrum Sepolia                 | 0%         |
+| 6-10 | **S6-S10**                   | Production, Security, Mainnet              | 0%         |
 
 **Total Duration:** 10 weeks (vs 16 weeks in original - 37.5% faster)  
 **Reason:** Reuses existing production-ready modules, focuses on integration
@@ -1005,7 +1078,6 @@ Before marking any phase complete:
   - Phase 3: PLONK (100%) ✅
   - Phase 3C: STARK (100%) ✅
 - **This Plan:** Consolidates existing work into deployable system
-
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1071,24 +1143,24 @@ Before marking any phase complete:
 
 ## 📅 EXECUTION PHASES (16 WEEKS)
 
-| Phase | Week | Focus | Deliverable |
-|-------|------|-------|-------------|
-| **1** | 1 | **Stylus Contract Unification** | Single WASM module with all verifiers |
-| **2** | 2 | **Multi-Proof Routing (Rust)** | Stylus-based proof type dispatch |
-| **3** | 3 | **Batch Verification (Rust)** | Parallel batch processing in WASM |
-| **4** | 4 | **Solidity Integration** | Refactor UniversalZKVerifier for Stylus |
-| **5** | 5 | **Circuit Infrastructure** | circom circuits + 30k proofs |
-| **6** | 6 | **Storage Optimization** | ERC-7201 alignment, VK compression |
-| **7** | 7 | **Gas Benchmarking** | Differential analysis vs Solidity |
-| **8** | 8 | **Security Hardening** | Differential fuzzing, CVE scanning |
-| **9** | 9 | **Formal Verification** | Certora specs for critical invariants |
-| **10** | 10 | **Integration Testing** | End-to-end Solidity ↔ Stylus tests |
-| **11** | 11 | **TypeScript SDK** | npm package with proof helpers |
-| **12** | 12 | **Next.js Demo App** | Live proof generation/verification UI |
-| **13** | 13 | **Deployment Automation** | Scripts for testnet/mainnet deployment |
-| **14** | 14 | **Production Infrastructure** | Docker, K8s, monitoring stack |
-| **15** | 15 | **Security Audit Prep** | Documentation, attack surface analysis |
-| **16** | 16 | **Testnet Deployment** | Full stack deployment on Arbitrum Sepolia |
+| Phase  | Week | Focus                           | Deliverable                               |
+| ------ | ---- | ------------------------------- | ----------------------------------------- |
+| **1**  | 1    | **Stylus Contract Unification** | Single WASM module with all verifiers     |
+| **2**  | 2    | **Multi-Proof Routing (Rust)**  | Stylus-based proof type dispatch          |
+| **3**  | 3    | **Batch Verification (Rust)**   | Parallel batch processing in WASM         |
+| **4**  | 4    | **Solidity Integration**        | Refactor UniversalZKVerifier for Stylus   |
+| **5**  | 5    | **Circuit Infrastructure**      | circom circuits + 30k proofs              |
+| **6**  | 6    | **Storage Optimization**        | ERC-7201 alignment, VK compression        |
+| **7**  | 7    | **Gas Benchmarking**            | Differential analysis vs Solidity         |
+| **8**  | 8    | **Security Hardening**          | Differential fuzzing, CVE scanning        |
+| **9**  | 9    | **Formal Verification**         | Certora specs for critical invariants     |
+| **10** | 10   | **Integration Testing**         | End-to-end Solidity ↔ Stylus tests       |
+| **11** | 11   | **TypeScript SDK**              | npm package with proof helpers            |
+| **12** | 12   | **Next.js Demo App**            | Live proof generation/verification UI     |
+| **13** | 13   | **Deployment Automation**       | Scripts for testnet/mainnet deployment    |
+| **14** | 14   | **Production Infrastructure**   | Docker, K8s, monitoring stack             |
+| **15** | 15   | **Security Audit Prep**         | Documentation, attack surface analysis    |
+| **16** | 16   | **Testnet Deployment**          | Full stack deployment on Arbitrum Sepolia |
 
 ---
 
@@ -1103,15 +1175,17 @@ Before marking any phase complete:
 **Detailed Steps:**
 
 1. **Create Main Contract Structure:**
+
    ```bash
    cd packages/stylus
-   
+
    # Create new unified contract
    cargo new --lib unified-verifier
    cd unified-verifier
    ```
 
 2. **Implement Main Contract** (`packages/stylus/unified-verifier/src/lib.rs`):
+
    ```rust
    #![cfg_attr(not(feature = "export-abi"), no_main)]
    #![cfg_attr(not(test), no_std)]
@@ -1161,22 +1235,22 @@ Before marking any phase complete:
            // Admin controls
            address admin;
            bool paused;
-           
+
            // Verification keys (vkHash => vkData)
            mapping(bytes32 => bytes) verification_keys;
-           
+
            // Precomputed pairings (vkHash => pairingData)
            mapping(bytes32 => bytes) precomputed_pairings;
-           
+
            // VK registration status
            mapping(bytes32 => bool) vk_registered;
-           
+
            // Proof type for each VK (vkHash => ProofType)
            mapping(bytes32 => uint8) vk_proof_types;
-           
+
            // Verification counter
            uint256 verification_count;
-           
+
            // Nullifier tracking
            mapping(bytes32 => bool) nullifiers;
        }
@@ -1425,6 +1499,7 @@ Before marking any phase complete:
    ```
 
 3. **Create Cargo.toml:**
+
    ```toml
    [package]
    name = "uzkv-unified-verifier"
@@ -1459,13 +1534,14 @@ Before marking any phase complete:
    opt-level = "z"
    strip = true
    lto = true
-   
+
    [features]
    default = []
    export-abi = ["stylus-sdk/export-abi"]
    ```
 
 **Definition of Done:**
+
 - ✅ Single `lib.rs` file with `#[entrypoint]` macro
 - ✅ `verify()` function routing to Groth16/PLONK/STARK
 - ✅ `batch_verify()` function for all proof types
@@ -1509,7 +1585,7 @@ pub fn batch_verify(
     // Deserialize VK once (reused for all proofs)
     let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)
         .map_err(|_| Error::InvalidVerificationKey)?;
-    
+
     validate_vk(&vk)?;
 
     // Deserialize precomputed pairing once
@@ -1524,12 +1600,12 @@ pub fn batch_verify(
 
     // Verify each proof
     let mut results = Vec::with_capacity(proofs.len());
-    
+
     for i in 0..proofs.len() {
         // Deserialize proof
         let proof = Proof::<Bn254>::deserialize_compressed(&proofs[i][..])
             .map_err(|_| Error::DeserializationError)?;
-        
+
         validate_proof(&proof)?;
 
         // Deserialize public inputs
@@ -1550,6 +1626,7 @@ pub fn batch_verify(
 ```
 
 **Definition of Done:**
+
 - ✅ `batch_verify()` function implemented
 - ✅ VK reused across all proofs
 - ✅ Precomputed pairing optimization applied
@@ -1582,7 +1659,7 @@ pub fn batch_verify(
 
     // Verify each proof
     let mut results = Vec::with_capacity(proofs.len());
-    
+
     for i in 0..proofs.len() {
         let result = verify(&proofs[i], &public_inputs[i], vk_bytes)?;
         results.push(result);
@@ -1593,6 +1670,7 @@ pub fn batch_verify(
 ```
 
 **Definition of Done:**
+
 - ✅ `batch_verify()` function implemented
 - ✅ Compatible with PLONK verification
 - ✅ Tests with 10+ proofs
@@ -1612,7 +1690,7 @@ pub fn batch_verify(
 ) -> Result<Vec<bool>> {
     // STARK doesn't use VKs (transparent setup)
     let mut results = Vec::with_capacity(proofs.len());
-    
+
     for i in 0..proofs.len() {
         let result = verify(&proofs[i], &public_inputs[i])?;
         results.push(result);
@@ -1623,6 +1701,7 @@ pub fn batch_verify(
 ```
 
 **Definition of Done:**
+
 - ✅ `batch_verify()` function implemented
 - ✅ Tests with STARK proofs
 - ✅ Git commit: `feat(stylus): STARK batch verification (Phase 1.4)`
@@ -1632,6 +1711,7 @@ pub fn batch_verify(
 ### 📋 Task 1.5: Build & Export ABI
 
 **Commands:**
+
 ```bash
 cd packages/stylus/unified-verifier
 
@@ -1651,6 +1731,7 @@ ls -lh uzkv_verifier_optimized.wasm  # Target: <128KB
 ```
 
 **Expected ABI** (`IUniversalVerifier.sol`):
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
@@ -1662,19 +1743,19 @@ interface IUniversalVerifier {
         bytes calldata publicInputs,
         bytes32 vkHash
     ) external returns (bool);
-    
+
     function batchVerify(
         uint8 proofType,
         bytes[] calldata proofs,
         bytes[] calldata publicInputs,
         bytes32 vkHash
     ) external returns (bool[] memory);
-    
+
     function registerVK(
         uint8 proofType,
         bytes calldata vk
     ) external returns (bytes32);
-    
+
     function pause() external;
     function unpause() external;
     function getVerificationCount() external view returns (uint256);
@@ -1685,6 +1766,7 @@ interface IUniversalVerifier {
 ```
 
 **Definition of Done:**
+
 - ✅ WASM binary compiles successfully
 - ✅ Optimized WASM size <128KB
 - ✅ ABI exported to Solidity interface
@@ -1704,6 +1786,7 @@ interface IUniversalVerifier {
 **File:** `packages/contracts/src/UniversalZKVerifier.sol`
 
 **Changes:**
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
@@ -1716,11 +1799,11 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 /// @title UniversalZKVerifier - Stylus Integration
 /// @notice Routes zero-knowledge proof verification to Stylus WASM modules
 /// @dev Delegates all verification logic to Arbitrum Stylus for gas efficiency
-contract UniversalZKVerifier is 
-    Initializable, 
-    AccessControlUpgradeable, 
-    PausableUpgradeable, 
-    UUPSUpgradeable 
+contract UniversalZKVerifier is
+    Initializable,
+    AccessControlUpgradeable,
+    PausableUpgradeable,
+    UUPSUpgradeable
 {
     /// @notice Proof type enumeration (matches Stylus contract)
     enum ProofType {
@@ -1885,15 +1968,16 @@ contract UniversalZKVerifier is
     }
 
     /// @notice Authorize upgrade (UUPS)
-    function _authorizeUpgrade(address newImplementation) 
-        internal 
-        override 
-        onlyRole(UPGRADER_ROLE) 
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyRole(UPGRADER_ROLE)
     {}
 }
 ```
 
 **Definition of Done:**
+
 - ✅ UniversalZKVerifier.sol refactored
 - ✅ `stylusModule` address storage
 - ✅ `verify()` delegatecalls to Stylus
@@ -1909,6 +1993,7 @@ contract UniversalZKVerifier is
 **File:** `packages/contracts/test/UniversalZKVerifier.t.sol`
 
 **Changes:**
+
 ```solidity
 contract UniversalZKVerifierTest is Test {
     UniversalZKVerifier public verifier;
@@ -1979,6 +2064,7 @@ contract MockStylusVerifier {
 ```
 
 **Definition of Done:**
+
 - ✅ All existing tests updated
 - ✅ MockStylusVerifier created
 - ✅ New tests for `setStylusModule()`
@@ -2017,6 +2103,7 @@ b2sum powersOfTau28_hez_final_21.ptau
 ```
 
 **Definition of Done:**
+
 - ✅ circom installed and verified
 - ✅ snarkjs installed and verified
 - ✅ Powers of Tau downloaded and hash verified
@@ -2027,6 +2114,7 @@ b2sum powersOfTau28_hez_final_21.ptau
 ### 📋 Task 3.2: Create Example Circuits
 
 **Circuit 1:** Poseidon Hash (`packages/circuits/poseidon_test.circom`)
+
 ```circom
 pragma circom 2.1.6;
 
@@ -2036,11 +2124,11 @@ template PoseidonHashVerifier() {
     signal input preimage[2];
     signal input expectedHash;
     signal output valid;
-    
+
     component hasher = Poseidon(2);
     hasher.inputs[0] <== preimage[0];
     hasher.inputs[1] <== preimage[1];
-    
+
     signal hash <== hasher.out;
     valid <== (hash === expectedHash) ? 1 : 0;
 }
@@ -2049,6 +2137,7 @@ component main {public [expectedHash]} = PoseidonHashVerifier();
 ```
 
 **Circuit 2:** Merkle Tree (`packages/circuits/merkle_proof.circom`)
+
 ```circom
 pragma circom 2.1.6;
 
@@ -2059,18 +2148,18 @@ template MerkleTreeChecker(levels) {
     signal input pathElements[levels];
     signal input pathIndices[levels];
     signal input root;
-    
+
     component hashers[levels];
     signal computedHash[levels + 1];
     computedHash[0] <== leaf;
-    
+
     for (var i = 0; i < levels; i++) {
         hashers[i] = MiMC7(91);
         hashers[i].x_in <== computedHash[i];
         hashers[i].k <== pathElements[i];
         computedHash[i + 1] <== hashers[i].out;
     }
-    
+
     root === computedHash[levels];
 }
 
@@ -2078,6 +2167,7 @@ component main {public [root]} = MerkleTreeChecker(20);
 ```
 
 **Definition of Done:**
+
 - ✅ 3 example circuits created
 - ✅ Circuits compile successfully
 - ✅ R1CS info shows correct constraint counts
@@ -2101,25 +2191,25 @@ for circuit in poseidon_test merkle_proof; do
         build/${circuit}.r1cs \
         ptau/powersOfTau28_hez_final_21.ptau \
         build/${circuit}_0000.zkey
-    
+
     # Contribute to ceremony (2 rounds)
     snarkjs zkey contribute \
         build/${circuit}_0000.zkey \
         build/${circuit}_0001.zkey \
         --name="First contribution" \
         -v -e="$(openssl rand -hex 32)"
-    
+
     snarkjs zkey contribute \
         build/${circuit}_0001.zkey \
         build/${circuit}_final.zkey \
         --name="Second contribution" \
         -v -e="$(openssl rand -hex 32)"
-    
+
     # Export verification key
     snarkjs zkey export verificationkey \
         build/${circuit}_final.zkey \
         build/${circuit}_vk.json
-    
+
     # Verify zkey integrity
     snarkjs zkey verify \
         build/${circuit}.r1cs \
@@ -2129,6 +2219,7 @@ done
 ```
 
 **Definition of Done:**
+
 - ✅ Trusted setup complete for all circuits
 - ✅ .zkey files generated and verified
 - ✅ Verification keys exported
@@ -2141,85 +2232,86 @@ done
 **Script:** `packages/circuits/scripts/generate-proofs.js`
 
 ```javascript
-const snarkjs = require('snarkjs');
-const fs = require('fs');
-const crypto = require('crypto');
-const path = require('path');
+const snarkjs = require("snarkjs");
+const fs = require("fs");
+const crypto = require("crypto");
+const path = require("path");
 
 async function generateProof(circuit, witness, id) {
-    const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        witness,
-        path.join(__dirname, `../build/${circuit}_js/${circuit}.wasm`),
-        path.join(__dirname, `../build/${circuit}_final.zkey`)
-    );
-    
-    const proofsDir = path.join(__dirname, `../proofs/${circuit}`);
-    if (!fs.existsSync(proofsDir)) {
-        fs.mkdirSync(proofsDir, { recursive: true });
-    }
-    
-    fs.writeFileSync(
-        path.join(proofsDir, `${id}_proof.json`),
-        JSON.stringify(proof, null, 2)
-    );
-    
-    fs.writeFileSync(
-        path.join(proofsDir, `${id}_public.json`),
-        JSON.stringify(publicSignals, null, 2)
-    );
-    
-    return { proof, publicSignals };
+  const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+    witness,
+    path.join(__dirname, `../build/${circuit}_js/${circuit}.wasm`),
+    path.join(__dirname, `../build/${circuit}_final.zkey`),
+  );
+
+  const proofsDir = path.join(__dirname, `../proofs/${circuit}`);
+  if (!fs.existsSync(proofsDir)) {
+    fs.mkdirSync(proofsDir, { recursive: true });
+  }
+
+  fs.writeFileSync(
+    path.join(proofsDir, `${id}_proof.json`),
+    JSON.stringify(proof, null, 2),
+  );
+
+  fs.writeFileSync(
+    path.join(proofsDir, `${id}_public.json`),
+    JSON.stringify(publicSignals, null, 2),
+  );
+
+  return { proof, publicSignals };
 }
 
 async function main() {
-    const circuits = ['poseidon_test', 'merkle_proof'];
-    const proofsPerCircuit = 15000; // 15k per circuit = 30k total
-    
-    for (const circuit of circuits) {
-        console.log(`Generating ${proofsPerCircuit} proofs for ${circuit}...`);
-        
-        for (let i = 0; i < proofsPerCircuit; i++) {
-            let witness;
-            
-            if (circuit === 'poseidon_test') {
-                witness = {
-                    preimage: [
-                        BigInt('0x' + crypto.randomBytes(32).toString('hex')),
-                        BigInt('0x' + crypto.randomBytes(32).toString('hex'))
-                    ],
-                    expectedHash: BigInt('0x' + crypto.randomBytes(32).toString('hex'))
-                };
-            } else if (circuit === 'merkle_proof') {
-                const levels = 20;
-                witness = {
-                    leaf: BigInt('0x' + crypto.randomBytes(32).toString('hex')),
-                    pathElements: Array(levels).fill(0).map(() => 
-                        BigInt('0x' + crypto.randomBytes(32).toString('hex'))
-                    ),
-                    pathIndices: Array(levels).fill(0).map(() => 
-                        Math.random() > 0.5 ? 1 : 0
-                    ),
-                    root: BigInt('0x' + crypto.randomBytes(32).toString('hex'))
-                };
-            }
-            
-            await generateProof(circuit, witness, i);
-            
-            if (i % 100 === 0) {
-                console.log(`  Progress: ${i}/${proofsPerCircuit}`);
-            }
-        }
-        
-        console.log(`✅ Completed ${circuit}`);
+  const circuits = ["poseidon_test", "merkle_proof"];
+  const proofsPerCircuit = 15000; // 15k per circuit = 30k total
+
+  for (const circuit of circuits) {
+    console.log(`Generating ${proofsPerCircuit} proofs for ${circuit}...`);
+
+    for (let i = 0; i < proofsPerCircuit; i++) {
+      let witness;
+
+      if (circuit === "poseidon_test") {
+        witness = {
+          preimage: [
+            BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+            BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+          ],
+          expectedHash: BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+        };
+      } else if (circuit === "merkle_proof") {
+        const levels = 20;
+        witness = {
+          leaf: BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+          pathElements: Array(levels)
+            .fill(0)
+            .map(() => BigInt("0x" + crypto.randomBytes(32).toString("hex"))),
+          pathIndices: Array(levels)
+            .fill(0)
+            .map(() => (Math.random() > 0.5 ? 1 : 0)),
+          root: BigInt("0x" + crypto.randomBytes(32).toString("hex")),
+        };
+      }
+
+      await generateProof(circuit, witness, i);
+
+      if (i % 100 === 0) {
+        console.log(`  Progress: ${i}/${proofsPerCircuit}`);
+      }
     }
-    
-    console.log('✅ Generated 30,000 total proofs');
+
+    console.log(`✅ Completed ${circuit}`);
+  }
+
+  console.log("✅ Generated 30,000 total proofs");
 }
 
 main().catch(console.error);
 ```
 
 **Run:**
+
 ```bash
 cd packages/circuits
 node scripts/generate-proofs.js
@@ -2227,6 +2319,7 @@ node scripts/generate-proofs.js
 ```
 
 **Definition of Done:**
+
 - ✅ 30,000+ proofs generated
 - ✅ Proofs stored in `packages/circuits/proofs/`
 - ✅ Proof catalog created with hashes
@@ -2255,21 +2348,25 @@ node scripts/generate-proofs.js
 ## 📋 EXECUTION RULES (MANDATORY)
 
 ### Rule 1: NO MOCK IMPLEMENTATIONS ❌
+
 - ZERO tolerance for mock code in production
 - Test fixtures acceptable ONLY in test files
 - Reference implementations must be documented
 
 ### Rule 2: GIT COMMIT AFTER EVERY TASK ✅
+
 - Complete Task → Immediate Commit
 - Format: `<type>(<scope>): <description> (Phase X.Y)`
 - Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`
 
 ### Rule 3: DOCUMENTATION FOR EVERY TASK 📝
+
 - Generate markdown file for each task
 - Location: `execution_steps_details/`
 - Naming: `phase-X.Y-<description>.md`
 
 ### Rule 4: GIT BASH FOR ALL OPERATIONS 🖥️
+
 - ONLY use Git Bash terminal
 - No PowerShell, CMD, or WSL
 
@@ -2293,18 +2390,21 @@ Before marking any phase complete:
 ## 🎯 SUCCESS METRICS
 
 ### Gas Efficiency
+
 - ✅ Groth16: <61,000 gas per verification (vs 280k Solidity)
 - ✅ PLONK: <120,000 gas per verification (vs 450k Solidity)
 - ✅ STARK: <300,000 gas per verification (transparent setup)
 - ✅ Batch (10 proofs): >60% savings vs individual
 
 ### Code Quality
+
 - ✅ 100% production code (zero mocks)
 - ✅ >95% test coverage
 - ✅ Zero critical security findings
 - ✅ Formal verification passing
 
 ### Deployment
+
 - ✅ WASM binaries <128KB each
 - ✅ Testnet deployment successful
 - ✅ Mainnet deployment ready
@@ -2314,18 +2414,18 @@ Before marking any phase complete:
 
 ## 📅 TIMELINE SUMMARY
 
-| Week | Phase | Completion |
-|------|-------|------------|
-| 1 | Stylus Unification | 0% |
-| 2 | Solidity Integration | 0% |
-| 3 | Batch Verification | 0% |
-| 4 | Circuit Infrastructure | 0% |
-| 5-6 | Storage & Gas Optimization | 0% |
-| 7-8 | Security & Formal Verification | 0% |
-| 9-10 | Integration Testing | 0% |
-| 11-12 | SDK & Frontend | 0% |
-| 13-14 | Deployment Infrastructure | 0% |
-| 15-16 | Testnet Launch | 0% |
+| Week  | Phase                          | Completion |
+| ----- | ------------------------------ | ---------- |
+| 1     | Stylus Unification             | 0%         |
+| 2     | Solidity Integration           | 0%         |
+| 3     | Batch Verification             | 0%         |
+| 4     | Circuit Infrastructure         | 0%         |
+| 5-6   | Storage & Gas Optimization     | 0%         |
+| 7-8   | Security & Formal Verification | 0%         |
+| 9-10  | Integration Testing            | 0%         |
+| 11-12 | SDK & Frontend                 | 0%         |
+| 13-14 | Deployment Infrastructure      | 0%         |
+| 15-16 | Testnet Launch                 | 0%         |
 
 **Total Duration:** 16 weeks  
 **Start Date:** TBD  

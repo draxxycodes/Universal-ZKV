@@ -148,36 +148,41 @@ cast send $ATTESTOR_CONTRACT \
 Create a service that:
 
 1. **Runs 122KB Stylus Groth16 verifier locally**
+
 ```typescript
 // Load WASM verifier
-const verifier = await loadWasmVerifier('packages/stylus/target/.../uzkv_stylus.wasm');
+const verifier = await loadWasmVerifier(
+  "packages/stylus/target/.../uzkv_stylus.wasm",
+);
 
 // Verify proof
 const isValid = await verifier.verify_groth16(proof, publicInputs, vkHash);
 ```
 
 2. **Signs valid proofs**
+
 ```typescript
 if (isValid) {
-    const proofHash = ethers.keccak256(
-        ethers.concat([proofBytes, publicInputsBytes])
-    );
-    
-    const attestorWallet = new ethers.Wallet(ATTESTOR_PRIVATE_KEY);
-    const signature = await attestorWallet.signMessage(
-        ethers.getBytes(proofHash)
-    );
-    
-    return { proofHash, signature };
+  const proofHash = ethers.keccak256(
+    ethers.concat([proofBytes, publicInputsBytes]),
+  );
+
+  const attestorWallet = new ethers.Wallet(ATTESTOR_PRIVATE_KEY);
+  const signature = await attestorWallet.signMessage(
+    ethers.getBytes(proofHash),
+  );
+
+  return { proofHash, signature };
 }
 ```
 
 3. **Submits to on-chain attestor**
+
 ```typescript
 const attestorContract = new ethers.Contract(
-    ATTESTOR_CONTRACT,
-    ATTESTOR_ABI,
-    wallet
+  ATTESTOR_CONTRACT,
+  ATTESTOR_ABI,
+  wallet,
 );
 
 const tx = await attestorContract.attest_proof(proofHash, signature);
@@ -202,15 +207,18 @@ cast logs \
 ## Cost Analysis
 
 ### Deployment (One-Time)
+
 - Sepolia: FREE (testnet)
 - Arbitrum One: ~$0.45 (150k gas @ $3000 ETH)
 
 ### Per Attestation
+
 - Gas: ~35,000
 - Cost: ~$0.01 @ $3000 ETH
 - **vs. full on-chain verification: $1.50 savings per proof**
 
 ### Break-Even
+
 - After 1 attested proof, you've saved money vs. on-chain verification
 - After 100 proofs: saved $150
 - After 1000 proofs: saved $1,500
@@ -228,6 +236,7 @@ cast logs \
 ## Troubleshooting
 
 ### Build Fails with edition2024 Error
+
 ```bash
 # Update to newer nightly
 rustup update nightly
@@ -237,6 +246,7 @@ rustup default nightly
 ```
 
 ### WASM Too Large
+
 ```bash
 # Check actual size
 ls -lh target/wasm32-unknown-unknown/release/uzkv_attestor.wasm
@@ -246,6 +256,7 @@ ls -lh target/wasm32-unknown-unknown/release/uzkv_attestor.wasm
 ```
 
 ### Deployment Fails
+
 ```bash
 # Check wallet has ETH
 cast balance $YOUR_ADDRESS --rpc-url $RPC_URL
@@ -255,6 +266,7 @@ cargo stylus check
 ```
 
 ### Signature Verification Fails
+
 ```bash
 # Ensure using EIP-191 message signing
 # "\x19Ethereum Signed Message:\n32" + proof_hash

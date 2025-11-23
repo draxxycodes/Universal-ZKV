@@ -12,43 +12,41 @@ jobs:
     name: Check Style
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
 
-    - name: Checkout
-      uses: actions/checkout@v1
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        override: true
-        components: rustfmt
-
-    - name: cargo fmt --check
-      uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --all -- --check
+      - name: cargo fmt --check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
 
   docs:
     name: Check Documentation
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
 
-    - name: Checkout
-      uses: actions/checkout@v1
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        override: true
-        components: rustfmt
-
-    - name: cargo doc --all --no-deps --document-private-items --all-features
-      uses: actions-rs/cargo@v1
-      with:
-        command: doc
-        args: --all --no-deps --document-private-items --all-features
+      - name: cargo doc --all --no-deps --document-private-items --all-features
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all --no-deps --document-private-items --all-features
 
   test:
     name: Test
@@ -82,42 +80,42 @@ jobs:
       - name: Check examples
         uses: actions-rs/cargo@v1
         with:
-            command: check
-            args: --examples --all
+          command: check
+          args: --examples --all
 
       - name: Check examples with all features on stable
         uses: actions-rs/cargo@v1
         with:
-            command: check
-            args: --examples --all-features --all
+          command: check
+          args: --examples --all-features --all
         if: matrix.rust == 'stable'
 
       - name: Check benchmarks on nightly
         uses: actions-rs/cargo@v1
         with:
-            command: check
-            args: --all-features --examples --workspace --benches
+          command: check
+          args: --all-features --examples --workspace --benches
         if: matrix.rust == 'nightly'
 
       - name: Test
         uses: actions-rs/cargo@v1
         with:
-            command: test
-            args: "--workspace \
-                   --all-features \
-                   --exclude ark-poly-benches \
-                   --exclude ark-algebra-test-templates"
+          command: test
+          args: "--workspace \
+            --all-features \
+            --exclude ark-poly-benches \
+            --exclude ark-algebra-test-templates"
 
       - name: Test assembly on nightly
         env:
           RUSTFLAGS: -C target-cpu=native -Z macro-backtrace
         uses: actions-rs/cargo@v1
         with:
-            command: test
-            args: "--workspace \
-                   --package ark-test-curves \
-                   --all-features
-                   "
+          command: test
+          args: "--workspace \
+            --package ark-test-curves \
+            --all-features
+            "
         if: matrix.rust == 'nightly'
 
   test_assembly:
@@ -149,10 +147,10 @@ jobs:
           RUSTFLAGS: -C target-cpu=native
         uses: actions-rs/cargo@v1
         with:
-            command: test
-            args: "--workspace \
-                   --package ark-test-curves \
-                   --all-features"
+          command: test
+          args: "--workspace \
+            --package ark-test-curves \
+            --all-features"
 
   check_no_std:
     name: Check no_std
@@ -186,22 +184,22 @@ jobs:
       - name: check
         uses: actions-rs/cargo@v1
         with:
-            command: check
-            args: "--examples --workspace \
-                  --exclude ark-algebra-test-templates \
-                  --exclude ark-algebra-bench-templates \
-                  --exclude ark-poly-benches \
-                  --target thumbv6m-none-eabi"
+          command: check
+          args: "--examples --workspace \
+            --exclude ark-algebra-test-templates \
+            --exclude ark-algebra-bench-templates \
+            --exclude ark-poly-benches \
+            --target thumbv6m-none-eabi"
 
       - name: build
         uses: actions-rs/cargo@v1
         with:
-            command: build
-            args: "--examples --workspace \
-                  --exclude ark-algebra-test-templates \
-                  --exclude ark-algebra-bench-templates \
-                  --exclude ark-poly-benches \
-                  --target thumbv6m-none-eabi"
+          command: build
+          args: "--examples --workspace \
+            --exclude ark-algebra-test-templates \
+            --exclude ark-algebra-bench-templates \
+            --exclude ark-poly-benches \
+            --target thumbv6m-none-eabi"
 
   test_against_curves:
     name: Test against curves

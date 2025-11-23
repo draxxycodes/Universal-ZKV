@@ -17,6 +17,7 @@
 **REALITY**: Hybrid architecture leveraging Stylus where possible, off-chain where necessary
 
 **Architecture**:
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                    UNIVERSAL ZK VERIFIER                          │
@@ -37,6 +38,7 @@
 ### Starting Point (Already Completed)
 
 ✅ **Foundation (DONE)**:
+
 - Groth16 verifier (5,118 lines Rust) ✅ WORKS
 - Attestor contract deployed: `0x36e937ebcf56c5dec6ecb0695001becc87738177` ✅ DEPLOYED
 - 30,000+ test proofs (Groth16) ✅ READY
@@ -47,28 +49,33 @@
 ### What We Need to Build (16 Weeks)
 
 **Phase 1-2**: Groth16 Production System (Weeks 1-4)
+
 - Off-chain verification service
 - TypeScript SDK
 - Integration tests
 
 **Phase 3-4**: PLONK Implementation (Weeks 5-8)
+
 - Complete PLONK verifier in Stylus
 - KZG commitment scheme
 - Universal setup ceremony
 - PLONK proof generation pipeline
 
 **Phase 5-6**: STARK Implementation (Weeks 9-12)
+
 - Complete STARK verifier (no_std compatible)
 - FRI polynomial commitments
 - STARK proof generation
 - Air trait implementations
 
 **Phase 7**: Universal Router & Frontend (Weeks 13-15)
+
 - Proof type detection & routing
 - Multi-proof demo UI
 - Gas benchmarking suite
 
 **Phase 8**: Launch & Documentation (Week 16)
+
 - Comprehensive docs
 - Video demos
 - Gas comparison reports
@@ -80,30 +87,17 @@
 ### Universal Verifier Definition (Must Have)
 
 **Groth16 Support**:
+
 1. ✅ Stylus contract verifies Groth16 proofs on-chain
 2. ✅ Gas cost < 80k per verification
 3. ✅ VK registry with precomputed pairings
 4. ✅ Batch verification (30-50% gas savings)
 
-**PLONK Support**:
-5. ✅ Stylus contract with KZG commitments
-6. ✅ Universal setup (no circuit-specific trusted setup)
-7. ✅ Gas cost < 150k per verification
-8. ✅ Proof generation pipeline (snarkjs compatible)
+**PLONK Support**: 5. ✅ Stylus contract with KZG commitments 6. ✅ Universal setup (no circuit-specific trusted setup) 7. ✅ Gas cost < 150k per verification 8. ✅ Proof generation pipeline (snarkjs compatible)
 
-**STARK Support**:
-9. ✅ Off-chain STARK verifier (no_std WASM)
-10. ✅ FRI polynomial commitments
-11. ✅ Transparent setup (no trusted setup)
-12. ✅ Attestation via on-chain record
+**STARK Support**: 9. ✅ Off-chain STARK verifier (no_std WASM) 10. ✅ FRI polynomial commitments 11. ✅ Transparent setup (no trusted setup) 12. ✅ Attestation via on-chain record
 
-**Integration**:
-13. ✅ Universal router contract auto-detects proof type
-14. ✅ TypeScript SDK supports all three proof systems
-15. ✅ Demo UI with proof type selector
-16. ✅ 100+ integration tests (all proof types)
-17. ✅ Gas benchmarking comparing all systems
-18. ✅ Live demo on Arbitrum Sepolia
+**Integration**: 13. ✅ Universal router contract auto-detects proof type 14. ✅ TypeScript SDK supports all three proof systems 15. ✅ Demo UI with proof type selector 16. ✅ 100+ integration tests (all proof types) 17. ✅ Gas benchmarking comparing all systems 18. ✅ Live demo on Arbitrum Sepolia
 
 ### Out of Scope (Future Work)
 
@@ -153,6 +147,7 @@ touch src/utils/wasm-loader.ts
 **Files to Create**:
 
 1. `packages/verifier-service/package.json`:
+
 ```json
 {
   "name": "@uzkv/verifier-service",
@@ -184,6 +179,7 @@ touch src/utils/wasm-loader.ts
 ```
 
 2. `packages/verifier-service/tsconfig.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -205,6 +201,7 @@ touch src/utils/wasm-loader.ts
 ```
 
 3. `packages/verifier-service/.env.example`:
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -218,6 +215,7 @@ RATE_LIMIT_MAX_REQUESTS=100
 ```
 
 **Verification**:
+
 ```bash
 cd packages/verifier-service
 pnpm install
@@ -235,14 +233,16 @@ pnpm dev  # Should start without errors
 **Implementation**:
 
 1. Copy WASM to service:
+
 ```bash
 cp ../stylus/target/wasm32-unknown-unknown/release/uzkv_stylus.wasm packages/verifier-service/wasm/
 ```
 
 2. Create WASM loader (`src/utils/wasm-loader.ts`):
+
 ```typescript
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from "fs";
+import { join } from "path";
 
 export interface VerificationResult {
   isValid: boolean;
@@ -256,22 +256,24 @@ export class Groth16Verifier {
   private memory: WebAssembly.Memory | null = null;
 
   async initialize(): Promise<void> {
-    const wasmPath = join(process.cwd(), 'wasm', 'uzkv_stylus.wasm');
+    const wasmPath = join(process.cwd(), "wasm", "uzkv_stylus.wasm");
     const wasmBuffer = readFileSync(wasmPath);
-    
+
     const wasmModule = await WebAssembly.compile(wasmBuffer);
-    
+
     // Import memory for WASM
     this.memory = new WebAssembly.Memory({ initial: 256, maximum: 512 });
-    
+
     this.wasmInstance = await WebAssembly.instantiate(wasmModule, {
       env: {
         memory: this.memory,
-        abort: () => { throw new Error('WASM aborted'); }
-      }
+        abort: () => {
+          throw new Error("WASM aborted");
+        },
+      },
     });
-    
-    console.log('✅ Groth16 WASM verifier loaded');
+
+    console.log("✅ Groth16 WASM verifier loaded");
   }
 
   /**
@@ -284,10 +286,10 @@ export class Groth16Verifier {
   verify(
     proofHex: string,
     publicInputsHex: string,
-    vkHex: string
+    vkHex: string,
   ): VerificationResult {
     if (!this.wasmInstance) {
-      throw new Error('WASM not initialized');
+      throw new Error("WASM not initialized");
     }
 
     // Convert hex to bytes
@@ -314,7 +316,7 @@ export class Groth16Verifier {
         inputsPtr,
         publicInputsBytes.length,
         vkPtr,
-        vkBytes.length
+        vkBytes.length,
       );
 
       // Compute proof hash
@@ -324,7 +326,7 @@ export class Groth16Verifier {
         isValid: Boolean(result),
         proofHash,
         publicInputs: this.parsePublicInputs(publicInputsBytes),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } finally {
       // Free memory
@@ -335,7 +337,7 @@ export class Groth16Verifier {
   }
 
   private hexToBytes(hex: string): Uint8Array {
-    const cleanHex = hex.replace(/^0x/, '');
+    const cleanHex = hex.replace(/^0x/, "");
     const bytes = new Uint8Array(cleanHex.length / 2);
     for (let i = 0; i < cleanHex.length; i += 2) {
       bytes[i / 2] = parseInt(cleanHex.slice(i, i + 2), 16);
@@ -360,7 +362,7 @@ export class Groth16Verifier {
 
   private keccak256(data: Uint8Array): string {
     // Use viem for keccak256
-    const { keccak256 } = require('viem');
+    const { keccak256 } = require("viem");
     return keccak256(data);
   }
 
@@ -369,7 +371,12 @@ export class Groth16Verifier {
     const inputs: string[] = [];
     for (let i = 0; i < bytes.length; i += 32) {
       const input = bytes.slice(i, i + 32);
-      inputs.push('0x' + Array.from(input).map(b => b.toString(16).padStart(2, '0')).join(''));
+      inputs.push(
+        "0x" +
+          Array.from(input)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join(""),
+      );
     }
     return inputs;
   }
@@ -380,6 +387,7 @@ export const verifier = new Groth16Verifier();
 ```
 
 **Note**: The WASM exports might differ. Check actual exports:
+
 ```bash
 wasm-objdump -x packages/verifier-service/wasm/uzkv_stylus.wasm | grep -A 100 "Export\["
 ```
@@ -387,10 +395,11 @@ wasm-objdump -x packages/verifier-service/wasm/uzkv_stylus.wasm | grep -A 100 "E
 Adjust function names accordingly.
 
 3. Create verification route (`src/routes/verify.ts`):
+
 ```typescript
-import { Router, Request, Response } from 'express';
-import { verifier } from '../utils/wasm-loader.js';
-import { z } from 'zod';
+import { Router, Request, Response } from "express";
+import { verifier } from "../utils/wasm-loader.js";
+import { z } from "zod";
 
 const router = Router();
 
@@ -398,17 +407,17 @@ const router = Router();
 const VerifyRequestSchema = z.object({
   proof: z.string().regex(/^0x[0-9a-fA-F]+$/),
   publicInputs: z.string().regex(/^0x[0-9a-fA-F]+$/),
-  vk: z.string().regex(/^0x[0-9a-fA-F]+$/)
+  vk: z.string().regex(/^0x[0-9a-fA-F]+$/),
 });
 
-router.post('/verify', async (req: Request, res: Response) => {
+router.post("/verify", async (req: Request, res: Response) => {
   try {
     // Validate request
     const { proof, publicInputs, vk } = VerifyRequestSchema.parse(req.body);
 
     // Size limits
     if (proof.length > 1024) {
-      return res.status(400).json({ error: 'Proof too large' });
+      return res.status(400).json({ error: "Proof too large" });
     }
 
     console.log(`📝 Verifying proof: ${proof.slice(0, 20)}...`);
@@ -417,7 +426,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     const result = verifier.verify(
       proof.slice(2), // Remove 0x
       publicInputs.slice(2),
-      vk.slice(2)
+      vk.slice(2),
     );
 
     if (result.isValid) {
@@ -432,26 +441,25 @@ router.post('/verify', async (req: Request, res: Response) => {
         isValid: result.isValid,
         proofHash: result.proofHash,
         publicInputs: result.publicInputs,
-        timestamp: result.timestamp
-      }
+        timestamp: result.timestamp,
+      },
     });
-
   } catch (error: any) {
-    console.error('❌ Verification error:', error.message);
+    console.error("❌ Verification error:", error.message);
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // Health check
-router.get('/health', (req: Request, res: Response) => {
+router.get("/health", (req: Request, res: Response) => {
   res.json({
-    status: 'ok',
-    service: 'UZKV Verifier',
-    version: '0.1.0',
-    timestamp: Date.now()
+    status: "ok",
+    service: "UZKV Verifier",
+    version: "0.1.0",
+    timestamp: Date.now(),
   });
 });
 
@@ -459,12 +467,13 @@ export default router;
 ```
 
 4. Create main server (`src/server.ts`):
+
 ```typescript
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import verifyRouter from './routes/verify.js';
-import { verifier } from './utils/wasm-loader.js';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import verifyRouter from "./routes/verify.js";
+import { verifier } from "./utils/wasm-loader.js";
 
 dotenv.config();
 
@@ -472,16 +481,16 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(express.json({ limit: '10mb' }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
+app.use(express.json({ limit: "10mb" }));
 
 // Routes
-app.use('/api', verifyRouter);
+app.use("/api", verifyRouter);
 
 // Error handler
 app.use((err: any, req: any, res: any, next: any) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  console.error("Server error:", err);
+  res.status(500).json({ error: "Internal server error" });
 });
 
 // Initialize and start
@@ -489,13 +498,13 @@ async function start() {
   try {
     // Initialize WASM verifier
     await verifier.initialize();
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 UZKV Verifier Service running on port ${PORT}`);
       console.log(`📍 API: http://localhost:${PORT}/api`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 }
@@ -504,6 +513,7 @@ start();
 ```
 
 **Testing**:
+
 ```bash
 # Start service
 pnpm dev
@@ -529,26 +539,28 @@ curl -X POST http://localhost:3001/api/verify \
 **Implementation**:
 
 1. Install dependencies:
+
 ```bash
 pnpm add viem@2.x ethers@6.x
 ```
 
 2. Create attestor client (`src/utils/attestor-client.ts`):
+
 ```typescript
-import { createWalletClient, createPublicClient, http, parseAbi } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { arbitrumSepolia } from 'viem/chains';
-import dotenv from 'dotenv';
+import { createWalletClient, createPublicClient, http, parseAbi } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { arbitrumSepolia } from "viem/chains";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const ATTESTOR_ABI = parseAbi([
-  'function initialize(address attestor_address) external',
-  'function attest_proof(bytes32 proof_hash) external',
-  'function is_attested(bytes32 proof_hash) external view returns (bool)',
-  'function get_attestation_count() external view returns (uint256)',
-  'function get_attestor() external view returns (address)',
-  'function get_owner() external view returns (address)'
+  "function initialize(address attestor_address) external",
+  "function attest_proof(bytes32 proof_hash) external",
+  "function is_attested(bytes32 proof_hash) external view returns (bool)",
+  "function get_attestation_count() external view returns (uint256)",
+  "function get_attestor() external view returns (address)",
+  "function get_owner() external view returns (address)",
 ]);
 
 export class AttestorClient {
@@ -559,11 +571,11 @@ export class AttestorClient {
 
   constructor() {
     if (!process.env.ATTESTOR_SIGNER_PRIVATE_KEY) {
-      throw new Error('ATTESTOR_SIGNER_PRIVATE_KEY not set');
+      throw new Error("ATTESTOR_SIGNER_PRIVATE_KEY not set");
     }
 
     this.account = privateKeyToAccount(
-      process.env.ATTESTOR_SIGNER_PRIVATE_KEY as `0x${string}`
+      process.env.ATTESTOR_SIGNER_PRIVATE_KEY as `0x${string}`,
     );
 
     this.contractAddress = process.env.ATTESTOR_CONTRACT as `0x${string}`;
@@ -571,12 +583,12 @@ export class AttestorClient {
     this.walletClient = createWalletClient({
       account: this.account,
       chain: arbitrumSepolia,
-      transport: http(process.env.ARBITRUM_SEPOLIA_RPC)
+      transport: http(process.env.ARBITRUM_SEPOLIA_RPC),
     });
 
     this.publicClient = createPublicClient({
       chain: arbitrumSepolia,
-      transport: http(process.env.ARBITRUM_SEPOLIA_RPC)
+      transport: http(process.env.ARBITRUM_SEPOLIA_RPC),
     });
   }
 
@@ -584,13 +596,13 @@ export class AttestorClient {
    * Check if contract is initialized
    */
   async isInitialized(): Promise<boolean> {
-    const attestor = await this.publicClient.readContract({
+    const attestor = (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'get_attestor'
-    }) as `0x${string}`;
+      functionName: "get_attestor",
+    })) as `0x${string}`;
 
-    return attestor !== '0x0000000000000000000000000000000000000000';
+    return attestor !== "0x0000000000000000000000000000000000000000";
   }
 
   /**
@@ -600,15 +612,17 @@ export class AttestorClient {
     const tx = await this.walletClient.writeContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'initialize',
-      args: [this.account.address]
+      functionName: "initialize",
+      args: [this.account.address],
     });
 
     console.log(`📝 Initializing attestor: ${tx}`);
-    
-    const receipt = await this.publicClient.waitForTransactionReceipt({ hash: tx });
+
+    const receipt = await this.publicClient.waitForTransactionReceipt({
+      hash: tx,
+    });
     console.log(`✅ Attestor initialized in block ${receipt.blockNumber}`);
-    
+
     return tx;
   }
 
@@ -623,28 +637,30 @@ export class AttestorClient {
     // Check if already attested
     const isAttested = await this.isAttested(proofHash);
     if (isAttested) {
-      throw new Error('Proof already attested');
+      throw new Error("Proof already attested");
     }
 
     // Submit attestation
     const tx = await this.walletClient.writeContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'attest_proof',
-      args: [proofHash as `0x${string}`]
+      functionName: "attest_proof",
+      args: [proofHash as `0x${string}`],
     });
 
     console.log(`📝 Attesting proof ${proofHash}: ${tx}`);
 
-    const receipt = await this.publicClient.waitForTransactionReceipt({ hash: tx });
-    
+    const receipt = await this.publicClient.waitForTransactionReceipt({
+      hash: tx,
+    });
+
     console.log(`✅ Proof attested in block ${receipt.blockNumber}`);
     console.log(`⛽ Gas used: ${receipt.gasUsed}`);
 
     return {
       txHash: tx,
       blockNumber: receipt.blockNumber,
-      gasUsed: receipt.gasUsed
+      gasUsed: receipt.gasUsed,
     };
   }
 
@@ -652,23 +668,23 @@ export class AttestorClient {
    * Check if proof is attested
    */
   async isAttested(proofHash: string): Promise<boolean> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'is_attested',
-      args: [proofHash as `0x${string}`]
-    }) as boolean;
+      functionName: "is_attested",
+      args: [proofHash as `0x${string}`],
+    })) as boolean;
   }
 
   /**
    * Get total attestation count
    */
   async getAttestationCount(): Promise<bigint> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'get_attestation_count'
-    }) as bigint;
+      functionName: "get_attestation_count",
+    })) as bigint;
   }
 
   /**
@@ -683,24 +699,24 @@ export class AttestorClient {
       this.publicClient.readContract({
         address: this.contractAddress,
         abi: ATTESTOR_ABI,
-        functionName: 'get_owner'
+        functionName: "get_owner",
       }),
       this.publicClient.readContract({
         address: this.contractAddress,
         abi: ATTESTOR_ABI,
-        functionName: 'get_attestor'
+        functionName: "get_attestor",
       }),
       this.publicClient.readContract({
         address: this.contractAddress,
         abi: ATTESTOR_ABI,
-        functionName: 'get_attestation_count'
-      })
+        functionName: "get_attestation_count",
+      }),
     ]);
 
     return {
       owner: owner as string,
       attestor: attestor as string,
-      attestationCount: count as bigint
+      attestationCount: count as bigint,
     };
   }
 }
@@ -710,11 +726,12 @@ export const attestorClient = new AttestorClient();
 ```
 
 3. Update verification route to include attestation:
+
 ```typescript
 // Add to src/routes/verify.ts
-import { attestorClient } from '../utils/attestor-client.js';
+import { attestorClient } from "../utils/attestor-client.js";
 
-router.post('/verify-and-attest', async (req: Request, res: Response) => {
+router.post("/verify-and-attest", async (req: Request, res: Response) => {
   try {
     const { proof, publicInputs, vk } = VerifyRequestSchema.parse(req.body);
 
@@ -722,13 +739,13 @@ router.post('/verify-and-attest', async (req: Request, res: Response) => {
     const result = verifier.verify(
       proof.slice(2),
       publicInputs.slice(2),
-      vk.slice(2)
+      vk.slice(2),
     );
 
     if (!result.isValid) {
       return res.status(400).json({
         success: false,
-        error: 'Proof verification failed'
+        error: "Proof verification failed",
       });
     }
 
@@ -740,10 +757,10 @@ router.post('/verify-and-attest', async (req: Request, res: Response) => {
         result: {
           ...result,
           attestation: {
-            status: 'already_attested',
-            proofHash: result.proofHash
-          }
-        }
+            status: "already_attested",
+            proofHash: result.proofHash,
+          },
+        },
       });
     }
 
@@ -755,38 +772,37 @@ router.post('/verify-and-attest', async (req: Request, res: Response) => {
       result: {
         ...result,
         attestation: {
-          status: 'attested',
+          status: "attested",
           txHash: attestation.txHash,
           blockNumber: attestation.blockNumber.toString(),
-          gasUsed: attestation.gasUsed.toString()
-        }
-      }
+          gasUsed: attestation.gasUsed.toString(),
+        },
+      },
     });
-
   } catch (error: any) {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // Check attestation status
-router.get('/attestation/:proofHash', async (req: Request, res: Response) => {
+router.get("/attestation/:proofHash", async (req: Request, res: Response) => {
   try {
     const { proofHash } = req.params;
-    
+
     if (!/^0x[0-9a-fA-F]{64}$/.test(proofHash)) {
-      return res.status(400).json({ error: 'Invalid proof hash' });
+      return res.status(400).json({ error: "Invalid proof hash" });
     }
 
     const isAttested = await attestorClient.isAttested(proofHash);
-    
+
     res.json({
       proofHash,
       isAttested,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -794,16 +810,16 @@ router.get('/attestation/:proofHash', async (req: Request, res: Response) => {
 });
 
 // Get contract stats
-router.get('/stats', async (req: Request, res: Response) => {
+router.get("/stats", async (req: Request, res: Response) => {
   try {
     const info = await attestorClient.getInfo();
-    
+
     res.json({
       contractAddress: process.env.ATTESTOR_CONTRACT,
       owner: info.owner,
       attestor: info.attestor,
       totalAttestations: info.attestationCount.toString(),
-      network: 'arbitrum-sepolia'
+      network: "arbitrum-sepolia",
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -812,24 +828,25 @@ router.get('/stats', async (req: Request, res: Response) => {
 ```
 
 4. Create initialization script (`scripts/init-attestor.ts`):
+
 ```typescript
-import { attestorClient } from '../src/utils/attestor-client.js';
+import { attestorClient } from "../src/utils/attestor-client.js";
 
 async function main() {
-  console.log('🔧 Checking attestor contract...');
-  
+  console.log("🔧 Checking attestor contract...");
+
   const isInit = await attestorClient.isInitialized();
-  
+
   if (isInit) {
-    console.log('✅ Attestor already initialized');
+    console.log("✅ Attestor already initialized");
     const info = await attestorClient.getInfo();
-    console.log('Owner:', info.owner);
-    console.log('Attestor:', info.attestor);
-    console.log('Attestations:', info.attestationCount.toString());
+    console.log("Owner:", info.owner);
+    console.log("Attestor:", info.attestor);
+    console.log("Attestations:", info.attestationCount.toString());
   } else {
-    console.log('⚠️  Attestor not initialized, initializing...');
+    console.log("⚠️  Attestor not initialized, initializing...");
     await attestorClient.initialize();
-    console.log('✅ Initialization complete');
+    console.log("✅ Initialization complete");
   }
 }
 
@@ -837,6 +854,7 @@ main().catch(console.error);
 ```
 
 **Testing**:
+
 ```bash
 # Initialize attestor (if not already done)
 pnpm tsx scripts/init-attestor.ts
@@ -861,62 +879,67 @@ curl http://localhost:3001/api/stats
 **Implementation**:
 
 1. Install dependencies:
+
 ```bash
 pnpm add express-rate-limit helmet pino pino-http
 ```
 
 2. Add middleware (`src/middleware/rate-limit.ts`):
+
 ```typescript
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 export const verifyLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 requests per minute
-  message: 'Too many verification requests, please try again later',
+  message: "Too many verification requests, please try again later",
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 
 export const attestLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5, // 5 attestations per minute (expensive)
-  message: 'Too many attestation requests, please try again later'
+  message: "Too many attestation requests, please try again later",
 });
 ```
 
 3. Add logging (`src/middleware/logger.ts`):
+
 ```typescript
-import pino from 'pino';
-import pinoHttp from 'pino-http';
+import pino from "pino";
+import pinoHttp from "pino-http";
 
 export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || "info",
   transport: {
-    target: 'pino-pretty',
+    target: "pino-pretty",
     options: {
-      colorize: true
-    }
-  }
+      colorize: true,
+    },
+  },
 });
 
 export const httpLogger = pinoHttp({ logger });
 ```
 
 4. Update server with security:
+
 ```typescript
 // src/server.ts
-import helmet from 'helmet';
-import { httpLogger } from './middleware/logger.js';
-import { verifyLimiter } from './middleware/rate-limit.js';
+import helmet from "helmet";
+import { httpLogger } from "./middleware/logger.js";
+import { verifyLimiter } from "./middleware/rate-limit.js";
 
 // Add to middleware section
 app.use(helmet());
 app.use(httpLogger);
-app.use('/api/verify', verifyLimiter);
-app.use('/api/verify-and-attest', attestLimiter);
+app.use("/api/verify", verifyLimiter);
+app.use("/api/verify-and-attest", attestLimiter);
 ```
 
 5. Create Dockerfile:
+
 ```dockerfile
 # packages/verifier-service/Dockerfile
 FROM node:20-alpine
@@ -946,9 +969,10 @@ CMD ["node", "dist/server.js"]
 ```
 
 6. Create docker-compose for local testing:
+
 ```yaml
 # packages/verifier-service/docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   verifier:
     build: .
@@ -964,6 +988,7 @@ services:
 ```
 
 **Testing**:
+
 ```bash
 # Build and run
 docker-compose up --build
@@ -995,6 +1020,7 @@ pnpm add -D typescript @types/node tsup vitest
 ```
 
 **Package structure**:
+
 ```
 packages/sdk/
 ├── src/
@@ -1014,6 +1040,7 @@ packages/sdk/
 **Files**:
 
 1. `package.json`:
+
 ```json
 {
   "name": "@uzkv/sdk",
@@ -1051,6 +1078,7 @@ packages/sdk/
 ```
 
 2. `src/types.ts`:
+
 ```typescript
 export interface ProofData {
   proof: `0x${string}`;
@@ -1085,61 +1113,65 @@ export interface VerifierConfig {
 ```
 
 3. `src/constants.ts`:
+
 ```typescript
 export const ATTESTOR_ABI = [
   {
-    type: 'function',
-    name: 'initialize',
-    inputs: [{ name: 'attestor_address', type: 'address' }],
+    type: "function",
+    name: "initialize",
+    inputs: [{ name: "attestor_address", type: "address" }],
     outputs: [],
-    stateMutability: 'nonpayable'
+    stateMutability: "nonpayable",
   },
   {
-    type: 'function',
-    name: 'attest_proof',
-    inputs: [{ name: 'proof_hash', type: 'bytes32' }],
+    type: "function",
+    name: "attest_proof",
+    inputs: [{ name: "proof_hash", type: "bytes32" }],
     outputs: [],
-    stateMutability: 'nonpayable'
+    stateMutability: "nonpayable",
   },
   {
-    type: 'function',
-    name: 'is_attested',
-    inputs: [{ name: 'proof_hash', type: 'bytes32' }],
-    outputs: [{ type: 'bool' }],
-    stateMutability: 'view'
+    type: "function",
+    name: "is_attested",
+    inputs: [{ name: "proof_hash", type: "bytes32" }],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
   },
   {
-    type: 'function',
-    name: 'get_attestation_count',
+    type: "function",
+    name: "get_attestation_count",
     inputs: [],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'view'
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
   },
   {
-    type: 'function',
-    name: 'get_attestor',
+    type: "function",
+    name: "get_attestor",
     inputs: [],
-    outputs: [{ type: 'address' }],
-    stateMutability: 'view'
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
   },
   {
-    type: 'function',
-    name: 'get_owner',
+    type: "function",
+    name: "get_owner",
     inputs: [],
-    outputs: [{ type: 'address' }],
-    stateMutability: 'view'
-  }
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
 ] as const;
 
-export const DEFAULT_ATTESTOR_ADDRESS = '0x36e937ebcf56c5dec6ecb0695001becc87738177' as const;
-export const DEFAULT_VERIFIER_URL = 'http://localhost:3001/api';
-export const ARBITRUM_SEPOLIA_RPC = 'https://arbitrum-sepolia-rpc.publicnode.com';
+export const DEFAULT_ATTESTOR_ADDRESS =
+  "0x36e937ebcf56c5dec6ecb0695001becc87738177" as const;
+export const DEFAULT_VERIFIER_URL = "http://localhost:3001/api";
+export const ARBITRUM_SEPOLIA_RPC =
+  "https://arbitrum-sepolia-rpc.publicnode.com";
 ```
 
 4. `src/verifier.ts`:
+
 ```typescript
-import type { ProofData, VerificationResult, VerifierConfig } from './types';
-import { DEFAULT_VERIFIER_URL } from './constants';
+import type { ProofData, VerificationResult, VerifierConfig } from "./types";
+import { DEFAULT_VERIFIER_URL } from "./constants";
 
 export class VerifierClient {
   private serviceUrl: string;
@@ -1155,12 +1187,12 @@ export class VerifierClient {
    */
   async verify(proofData: ProofData): Promise<VerificationResult> {
     const response = await fetch(`${this.serviceUrl}/verify`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        ...(this.apiKey && { 'X-API-Key': this.apiKey })
+        "Content-Type": "application/json",
+        ...(this.apiKey && { "X-API-Key": this.apiKey }),
       },
-      body: JSON.stringify(proofData)
+      body: JSON.stringify(proofData),
     });
 
     if (!response.ok) {
@@ -1178,19 +1210,19 @@ export class VerifierClient {
   async verifyAndAttest(proofData: ProofData): Promise<{
     verification: VerificationResult;
     attestation: {
-      status: 'attested' | 'already_attested';
+      status: "attested" | "already_attested";
       txHash?: string;
       blockNumber?: string;
       gasUsed?: string;
     };
   }> {
     const response = await fetch(`${this.serviceUrl}/verify-and-attest`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        ...(this.apiKey && { 'X-API-Key': this.apiKey })
+        "Content-Type": "application/json",
+        ...(this.apiKey && { "X-API-Key": this.apiKey }),
       },
-      body: JSON.stringify(proofData)
+      body: JSON.stringify(proofData),
     });
 
     if (!response.ok) {
@@ -1201,7 +1233,7 @@ export class VerifierClient {
     const data = await response.json();
     return {
       verification: data.result,
-      attestation: data.result.attestation
+      attestation: data.result.attestation,
     };
   }
 
@@ -1213,9 +1245,9 @@ export class VerifierClient {
     timestamp: number;
   }> {
     const response = await fetch(`${this.serviceUrl}/attestation/${proofHash}`);
-    
+
     if (!response.ok) {
-      throw new Error('Failed to check attestation');
+      throw new Error("Failed to check attestation");
     }
 
     return response.json();
@@ -1232,9 +1264,9 @@ export class VerifierClient {
     network: string;
   }> {
     const response = await fetch(`${this.serviceUrl}/stats`);
-    
+
     if (!response.ok) {
-      throw new Error('Failed to get stats');
+      throw new Error("Failed to get stats");
     }
 
     return response.json();
@@ -1243,12 +1275,23 @@ export class VerifierClient {
 ```
 
 5. `src/attestor.ts`:
+
 ```typescript
-import { createPublicClient, createWalletClient, http, type PublicClient, type WalletClient } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { arbitrumSepolia } from 'viem/chains';
-import type { AttestorConfig, AttestationResult } from './types';
-import { ATTESTOR_ABI, DEFAULT_ATTESTOR_ADDRESS, ARBITRUM_SEPOLIA_RPC } from './constants';
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  type PublicClient,
+  type WalletClient,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { arbitrumSepolia } from "viem/chains";
+import type { AttestorConfig, AttestationResult } from "./types";
+import {
+  ATTESTOR_ABI,
+  DEFAULT_ATTESTOR_ADDRESS,
+  ARBITRUM_SEPOLIA_RPC,
+} from "./constants";
 
 export class AttestorClient {
   private publicClient: PublicClient;
@@ -1257,10 +1300,10 @@ export class AttestorClient {
 
   constructor(config: Partial<AttestorConfig> = {}) {
     this.contractAddress = config.contractAddress || DEFAULT_ATTESTOR_ADDRESS;
-    
+
     this.publicClient = createPublicClient({
       chain: arbitrumSepolia,
-      transport: http(config.rpcUrl || ARBITRUM_SEPOLIA_RPC)
+      transport: http(config.rpcUrl || ARBITRUM_SEPOLIA_RPC),
     });
 
     if (config.privateKey) {
@@ -1268,7 +1311,7 @@ export class AttestorClient {
       this.walletClient = createWalletClient({
         account,
         chain: arbitrumSepolia,
-        transport: http(config.rpcUrl || ARBITRUM_SEPOLIA_RPC)
+        transport: http(config.rpcUrl || ARBITRUM_SEPOLIA_RPC),
       });
     }
   }
@@ -1280,8 +1323,8 @@ export class AttestorClient {
     return await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'is_attested',
-      args: [proofHash]
+      functionName: "is_attested",
+      args: [proofHash],
     });
   }
 
@@ -1292,7 +1335,7 @@ export class AttestorClient {
     return await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'get_attestation_count'
+      functionName: "get_attestation_count",
     });
   }
 
@@ -1300,22 +1343,22 @@ export class AttestorClient {
    * Get attestor address
    */
   async getAttestor(): Promise<`0x${string}`> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'get_attestor'
-    }) as `0x${string}`;
+      functionName: "get_attestor",
+    })) as `0x${string}`;
   }
 
   /**
    * Get owner address
    */
   async getOwner(): Promise<`0x${string}`> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'get_owner'
-    }) as `0x${string}`;
+      functionName: "get_owner",
+    })) as `0x${string}`;
   }
 
   /**
@@ -1323,14 +1366,14 @@ export class AttestorClient {
    */
   async attestProof(proofHash: `0x${string}`): Promise<AttestationResult> {
     if (!this.walletClient) {
-      throw new Error('Wallet client required for attestation');
+      throw new Error("Wallet client required for attestation");
     }
 
     const hash = await this.walletClient.writeContract({
       address: this.contractAddress,
       abi: ATTESTOR_ABI,
-      functionName: 'attest_proof',
-      args: [proofHash]
+      functionName: "attest_proof",
+      args: [proofHash],
     });
 
     const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
@@ -1339,25 +1382,27 @@ export class AttestorClient {
       txHash: hash,
       blockNumber: receipt.blockNumber,
       gasUsed: receipt.gasUsed,
-      proofHash
+      proofHash,
     };
   }
 }
 ```
 
 6. `src/index.ts`:
+
 ```typescript
-export { VerifierClient } from './verifier';
-export { AttestorClient } from './attestor';
-export * from './types';
-export * from './constants';
+export { VerifierClient } from "./verifier";
+export { AttestorClient } from "./attestor";
+export * from "./types";
+export * from "./constants";
 
 // Re-export for convenience
-export { arbitrumSepolia } from 'viem/chains';
+export { arbitrumSepolia } from "viem/chains";
 ```
 
 7. `README.md`:
-```markdown
+
+````markdown
 # @uzkv/sdk
 
 TypeScript SDK for UZKV ZK Proof Attestation Service
@@ -1366,7 +1411,9 @@ TypeScript SDK for UZKV ZK Proof Attestation Service
 
 \`\`\`bash
 npm install @uzkv/sdk viem
+
 # or
+
 pnpm add @uzkv/sdk viem
 \`\`\`
 
@@ -1378,13 +1425,13 @@ pnpm add @uzkv/sdk viem
 import { VerifierClient } from '@uzkv/sdk';
 
 const verifier = new VerifierClient({
-  serviceUrl: 'https://verifier.uzkv.io/api'
+serviceUrl: 'https://verifier.uzkv.io/api'
 });
 
 const result = await verifier.verify({
-  proof: '0x...',
-  publicInputs: '0x...',
-  vk: '0x...'
+proof: '0x...',
+publicInputs: '0x...',
+vk: '0x...'
 });
 
 console.log('Valid:', result.isValid);
@@ -1406,9 +1453,9 @@ console.log('Attested:', isAttested);
 
 \`\`\`typescript
 const result = await verifier.verifyAndAttest({
-  proof: '0x...',
-  publicInputs: '0x...',
-  vk: '0x...'
+proof: '0x...',
+publicInputs: '0x...',
+vk: '0x...'
 });
 
 console.log('Verification:', result.verification.isValid);
@@ -1421,15 +1468,17 @@ See [API.md](./API.md) for full documentation.
 \`\`\`
 
 **Testing**:
+
 ```bash
 pnpm build
 pnpm test
 ```
+````
 
 **Deliverable**: Working TypeScript SDK
 
 ---
 
-*[CONTINUED IN NEXT MESSAGE DUE TO LENGTH - THIS IS WEEKS 1-4 OF 10]*
+_[CONTINUED IN NEXT MESSAGE DUE TO LENGTH - THIS IS WEEKS 1-4 OF 10]_
 
 Would you like me to continue with Phases 3-5 (Integration Tests, Frontend, Documentation & Launch)?

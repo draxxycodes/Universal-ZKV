@@ -51,7 +51,7 @@ cast call 0x36e937ebcf56c5dec6ecb0695001becc87738177 \
 Create a service that:
 
 ```typescript
-import { verifyGroth16 } from '@uzkv/stylus';
+import { verifyGroth16 } from "@uzkv/stylus";
 
 // 1. Verify proof locally (free, 122KB verifier)
 const proofHash = keccak256(proof);

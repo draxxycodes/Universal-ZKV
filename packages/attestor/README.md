@@ -40,10 +40,12 @@
 ## Deployment Cost Estimate
 
 ### Arbitrum One (Mainnet)
+
 - **Contract deployment:** ~0.0002 ETH ($0.60 @ $3000/ETH)
 - **Per attestation:** ~0.00003 ETH ($0.09 @ $3000/ETH)
 
 ### Arbitrum Sepolia (Testnet)
+
 - **Contract deployment:** FREE (testnet ETH)
 - **Per attestation:** FREE (testnet ETH)
 
@@ -77,32 +79,32 @@ cargo stylus deploy --endpoint https://arb1.arbitrum.io/rpc
 
 ```typescript
 // packages/sdk/src/attestor.ts
-import { verifyGroth16 } from './stylus-wasm';
-import { ethers } from 'ethers';
+import { verifyGroth16 } from "./stylus-wasm";
+import { ethers } from "ethers";
 
 // Run 122KB WASM locally
 const isValid = await verifyGroth16(proof, publicInputs, vk);
 
 if (isValid) {
-    // Compute proof hash
-    const proofHash = ethers.keccak256(
-        ethers.concat([proofBytes, publicInputsBytes])
-    );
-    
-    // Sign with attestor key
-    const attestorWallet = new ethers.Wallet(ATTESTOR_PRIVATE_KEY);
-    const signature = await attestorWallet.signMessage(
-        ethers.getBytes(proofHash)
-    );
-    
-    // Submit on-chain
-    const attestorContract = new ethers.Contract(
-        ATTESTOR_ADDRESS,
-        ATTESTOR_ABI,
-        wallet
-    );
-    
-    await attestorContract.attest_proof(proofHash, signature);
+  // Compute proof hash
+  const proofHash = ethers.keccak256(
+    ethers.concat([proofBytes, publicInputsBytes]),
+  );
+
+  // Sign with attestor key
+  const attestorWallet = new ethers.Wallet(ATTESTOR_PRIVATE_KEY);
+  const signature = await attestorWallet.signMessage(
+    ethers.getBytes(proofHash),
+  );
+
+  // Submit on-chain
+  const attestorContract = new ethers.Contract(
+    ATTESTOR_ADDRESS,
+    ATTESTOR_ABI,
+    wallet,
+  );
+
+  await attestorContract.attest_proof(proofHash, signature);
 }
 ```
 
@@ -122,11 +124,13 @@ const count = await attestorContract.get_attestation_count();
 ## Trust Model
 
 **What you're trusting:**
+
 - The off-chain verifier correctly runs Groth16 verification
 - The attestor private key is kept secure
 - The attestor won't sign invalid proofs
 
 **What you're NOT trusting:**
+
 - The on-chain signature verification (cryptographically secure)
 - The attestation record storage (immutable on-chain)
 - The query results (anyone can verify independently)
@@ -148,16 +152,16 @@ pub struct MultiSigAttestor {
 
 ## Gas Comparison
 
-| Operation | Solidity | Stylus | Savings |
-|-----------|----------|--------|---------|
-| Deploy | ~200k gas | ~150k gas | 25% |
-| Attest | ~50k gas | ~35k gas | 30% |
-| Query | ~5k gas | ~3k gas | 40% |
+| Operation | Solidity  | Stylus    | Savings |
+| --------- | --------- | --------- | ------- |
+| Deploy    | ~200k gas | ~150k gas | 25%     |
+| Attest    | ~50k gas  | ~35k gas  | 30%     |
+| Query     | ~5k gas   | ~3k gas   | 40%     |
 
 ## Size Comparison
 
-| Component | Size | Limit | Status |
-|-----------|------|-------|--------|
-| Attestor WASM | ~8 KB | 24 KB | ✅ Fits |
-| Verifier WASM | 122 KB | 24 KB | ❌ Too large |
-| **Solution** | Off-chain verify + on-chain attest | | ✅ Works |
+| Component     | Size                               | Limit | Status       |
+| ------------- | ---------------------------------- | ----- | ------------ |
+| Attestor WASM | ~8 KB                              | 24 KB | ✅ Fits      |
+| Verifier WASM | 122 KB                             | 24 KB | ❌ Too large |
+| **Solution**  | Off-chain verify + on-chain attest |       | ✅ Works     |

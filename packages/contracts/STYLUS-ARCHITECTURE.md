@@ -47,6 +47,7 @@ User → Groth16VerifierProxy.sol → Stylus Groth16 WASM → Result
 ```
 
 **Files:**
+
 - `packages/stylus/src/lib.rs` - Main contract (80 lines)
 - `packages/stylus/src/groth16.rs` - Verification logic (600+ lines)
 - `packages/contracts/src/interfaces/IGroth16Verifier.sol` - ABI
@@ -66,6 +67,7 @@ User → Off-Chain Verifier (122KB) → Sign Proof → Attestor WASM (8KB) → O
 ```
 
 **Files:**
+
 - `packages/attestor/src/lib.rs` - Attestor contract (230 lines)
 - Off-chain service (to be built)
 
@@ -124,6 +126,7 @@ User → Off-Chain Verifier (122KB) → Sign Proof → Attestor WASM (8KB) → O
 ### 3. No Upgradeability Needed
 
 Stylus contracts can be upgraded via:
+
 - Redeployment (generate new WASM)
 - Storage layout preserved via ERC-7201
 
@@ -131,13 +134,14 @@ No complex UUPS/Transparent proxy patterns needed.
 
 ## Gas Savings
 
-| Operation | Solidity | Stylus | Savings |
-|-----------|----------|--------|---------|
-| Groth16 Verify | ~280k | ~61k | **78%** |
-| BN254 Pairing | ~180k | ~25k | **86%** |
-| Field Operations | ~5k | ~500 | **90%** |
+| Operation        | Solidity | Stylus | Savings |
+| ---------------- | -------- | ------ | ------- |
+| Groth16 Verify   | ~280k    | ~61k   | **78%** |
+| BN254 Pairing    | ~180k    | ~25k   | **86%** |
+| Field Operations | ~5k      | ~500   | **90%** |
 
 **Why Stylus is cheaper:**
+
 - Compiled WASM (vs interpreted EVM bytecode)
 - Direct memory access (vs expensive SSTORE/SLOAD)
 - Efficient curve operations (vs precompile overhead)
@@ -212,6 +216,7 @@ Tests full workflow: Generate proof → Verify on-chain → Check result
 ### Audit Surface
 
 **Only 3 Solidity files need audit:**
+
 - IGroth16Verifier.sol (interface - 50 lines)
 - Groth16VerifierProxy.sol (wrapper - 90 lines)
 - Storage.sol (library - 148 lines)
@@ -219,6 +224,7 @@ Tests full workflow: Generate proof → Verify on-chain → Check result
 **Total:** 288 lines of Solidity (vs 2000+ in pure Solidity implementation)
 
 **Stylus audit:**
+
 - lib.rs (80 lines)
 - groth16.rs (600 lines)
 
@@ -254,15 +260,15 @@ Verify a proof that itself verifies other proofs (10x compression).
 
 ## Comparison: Stylus vs Pure Solidity
 
-| Aspect | Pure Solidity | Stylus |
-|--------|---------------|--------|
-| **Gas Cost** | ~280k/proof | ~61k/proof ✅ |
-| **Code Size** | 2000+ lines | 680 lines ✅ |
-| **Audit Surface** | High | Low ✅ |
-| **Performance** | Slow | Fast ✅ |
-| **Library Support** | Limited | arkworks ✅ |
-| **Type Safety** | Weak | Strong ✅ |
-| **Memory Safety** | Manual | Automatic ✅ |
+| Aspect              | Pure Solidity | Stylus        |
+| ------------------- | ------------- | ------------- |
+| **Gas Cost**        | ~280k/proof   | ~61k/proof ✅ |
+| **Code Size**       | 2000+ lines   | 680 lines ✅  |
+| **Audit Surface**   | High          | Low ✅        |
+| **Performance**     | Slow          | Fast ✅       |
+| **Library Support** | Limited       | arkworks ✅   |
+| **Type Safety**     | Weak          | Strong ✅     |
+| **Memory Safety**   | Manual        | Automatic ✅  |
 
 **Stylus wins on ALL metrics!**
 

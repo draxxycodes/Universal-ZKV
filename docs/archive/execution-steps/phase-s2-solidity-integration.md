@@ -51,6 +51,7 @@ Successfully integrated Arbitrum Stylus WASM verifier with Solidity contracts, c
    - Supports all proof types (Groth16, PLONK, STARK)
 
 **Code Quality:**
+
 - Lines changed: +208 insertions, -14 deletions
 - New errors: `StylusVerificationFailed(string)`
 - New events: `StylusVerifierUpdated(address, address)`
@@ -83,6 +84,7 @@ Successfully integrated Arbitrum Stylus WASM verifier with Solidity contracts, c
    - `test_RevertWhen_BatchVerifyWithoutStylus()` - error handling
 
 **Test Coverage:**
+
 - Original tests: 32 (all passing)
 - New tests: 7 (all passing)
 - Total: 39 tests ✅
@@ -129,6 +131,7 @@ Successfully integrated Arbitrum Stylus WASM verifier with Solidity contracts, c
    - Full workflow: VK registration → single verify → batch verify
 
 **Test Results:**
+
 - Total tests: 18
 - Passing: 18 ✅
 - Failing: 0
@@ -139,13 +142,15 @@ Successfully integrated Arbitrum Stylus WASM verifier with Solidity contracts, c
 ### Architecture Changes
 
 **Before (Pure Solidity):**
+
 ```
-User → UniversalZKVerifier.verify() 
+User → UniversalZKVerifier.verify()
      → delegatecall to Solidity module
      → Solidity verification logic
 ```
 
 **After (Hybrid Stylus/Solidity):**
+
 ```
 User → UniversalZKVerifier.verify()
      ├─ Primary: Call Stylus WASM contract (gas-efficient)
@@ -160,11 +165,13 @@ User → UniversalZKVerifier.verify()
 #### 1. UniversalZKVerifier.sol
 
 **New State:**
+
 ```solidity
 address public stylusVerifier;  // Stylus WASM contract address
 ```
 
 **Primary Verification Path:**
+
 ```solidity
 function _verifyStylusWasm(
     ProofType proofType,
@@ -174,7 +181,7 @@ function _verifyStylusWasm(
 ) private returns (bool) {
     uint8 stylusProofType = uint8(proofType);
     bytes32 vkHash = keccak256(vk);
-    
+
     return IUniversalVerifier(stylusVerifier).verify(
         stylusProofType,
         proof,
@@ -185,6 +192,7 @@ function _verifyStylusWasm(
 ```
 
 **Fallback Verification Path:**
+
 ```solidity
 function _verifySolidityModule(
     ProofType proofType,
@@ -193,11 +201,11 @@ function _verifySolidityModule(
     bytes calldata vk
 ) private returns (bool) {
     address module = verifierModules[proofType];
-    
+
     (bool success, bytes memory result) = module.delegatecall(
         abi.encodeWithSignature("verify(bytes,bytes,bytes)", ...)
     );
-    
+
     return abi.decode(result, (bool));
 }
 ```
@@ -207,6 +215,7 @@ function _verifySolidityModule(
 **Purpose:** Simulate Stylus WASM contract behavior for testing
 
 **Features:**
+
 - Full `IUniversalVerifier` implementation
 - Configurable success/failure modes
 - VK registration tracking
@@ -215,6 +224,7 @@ function _verifySolidityModule(
 - Verification counter
 
 **Test Helpers:**
+
 ```solidity
 function setAlwaysSucceed(bool value) external;
 function setShouldRevert(bool value, string calldata message) external;
@@ -225,6 +235,7 @@ function setShouldRevert(bool value, string calldata message) external;
 **Purpose:** End-to-end integration testing
 
 **Test Infrastructure:**
+
 ```solidity
 UniversalZKVerifier public verifier;
 MockStylusVerifier public stylusVerifier;
@@ -240,6 +251,7 @@ function setUp() public {
 ## 📈 Metrics
 
 ### Code Changes
+
 - **Files Modified:** 2
 - **Files Created:** 2
 - **Lines Added:** +1,095
@@ -247,6 +259,7 @@ function setUp() public {
 - **Net Change:** +1,081 lines
 
 ### Test Coverage
+
 - **Original Tests:** 32 (UniversalZKVerifier.t.sol)
 - **New Tests (Updated):** +7 (Stylus management)
 - **New Tests (Integration):** +18 (StylusIntegration.t.sol)
@@ -254,14 +267,15 @@ function setUp() public {
 
 ### Gas Benchmarks
 
-| Operation | Gas Cost | Notes |
-|-----------|----------|-------|
-| Single Verification | ~50,116 | Stylus WASM call |
-| Batch Verification (10) | ~80,776 | 8k gas per proof |
-| VK Registration | ~41,544 | One-time cost |
-| Stylus Configuration | ~47,505 | Admin operation |
+| Operation               | Gas Cost | Notes            |
+| ----------------------- | -------- | ---------------- |
+| Single Verification     | ~50,116  | Stylus WASM call |
+| Batch Verification (10) | ~80,776  | 8k gas per proof |
+| VK Registration         | ~41,544  | One-time cost    |
+| Stylus Configuration    | ~47,505  | Admin operation  |
 
 **Batch Efficiency:**
+
 - Individual: 10 × 50k = 500k gas
 - Batch: 80k gas
 - **Savings: 84%** 🎉
@@ -269,12 +283,14 @@ function setUp() public {
 ## 🔒 Quality Gates
 
 ### Compilation ✅
+
 - [x] All contracts compile without errors
 - [x] Only minor warnings (unused parameters, view mutability)
 - [x] Solidity 0.8.23 compatible
 - [x] OpenZeppelin v5.0.0 compatible
 
 ### Testing ✅
+
 - [x] All 39 updated tests passing
 - [x] All 18 new integration tests passing
 - [x] All 119 total tests passing
@@ -282,6 +298,7 @@ function setUp() public {
 - [x] Error handling validated
 
 ### Code Quality ✅
+
 - [x] Follows OpenZeppelin patterns
 - [x] Comprehensive NatSpec documentation
 - [x] Proper error handling with try/catch
@@ -289,6 +306,7 @@ function setUp() public {
 - [x] Access control enforced
 
 ### Security ✅
+
 - [x] MODULE_MANAGER_ROLE required for Stylus configuration
 - [x] Zero address validation
 - [x] Pause functionality preserved
@@ -298,26 +316,31 @@ function setUp() public {
 ## 🚀 Key Features
 
 ### 1. Hybrid Architecture
+
 - **Primary:** Stylus WASM for gas efficiency
 - **Fallback:** Solidity modules for compatibility
 - **Automatic routing** based on configuration
 
 ### 2. Batch Verification
+
 - Process multiple proofs in single transaction
 - Reuse VK and precomputed pairings
 - 84% gas savings vs individual verifications
 
 ### 3. VK Registration
+
 - One-time VK registration with Stylus
 - Precompute optimizations (e.g., e(α, β) pairing)
 - Returns hash for future verifications
 
 ### 4. Backward Compatibility
+
 - Existing `verify()` interface unchanged
 - Solidity modules still functional
 - Gradual migration path
 
 ### 5. Upgrade Scenarios
+
 - **Upgrade:** Solidity → Stylus (call `setStylusVerifier`)
 - **Downgrade:** Stylus → Solidity (call `removeStylusVerifier`)
 - **Hot-swap:** Change Stylus address without proxy upgrade
@@ -325,9 +348,11 @@ function setUp() public {
 ## 📝 Files Modified
 
 ### 1. UniversalZKVerifier.sol
+
 **Location:** `packages/contracts/src/UniversalZKVerifier.sol`
 
 **Changes:**
+
 - Added `stylusVerifier` state variable
 - Added `setStylusVerifier()` / `removeStylusVerifier()`
 - Refactored `verify()` to route to Stylus or Solidity
@@ -342,9 +367,11 @@ function setUp() public {
 **Impact:** Core contract now supports hybrid Stylus/Solidity architecture
 
 ### 2. UniversalZKVerifier.t.sol
+
 **Location:** `packages/contracts/test/UniversalZKVerifier.t.sol`
 
 **Changes:**
+
 - Added `MockStylusVerifier` import and deployment
 - Added 7 new Stylus-related tests
 - Updated version assertion
@@ -353,11 +380,13 @@ function setUp() public {
 **Impact:** All existing tests pass + new Stylus tests
 
 ### 3. MockStylusVerifier.sol (NEW)
+
 **Location:** `packages/contracts/src/mocks/MockStylusVerifier.sol`
 
 **Purpose:** Mock Stylus WASM contract for testing
 
 **Features:**
+
 - Full `IUniversalVerifier` implementation
 - Configurable behavior for testing
 - 180+ lines of test infrastructure
@@ -365,11 +394,13 @@ function setUp() public {
 **Impact:** Enables comprehensive Stylus testing without WASM
 
 ### 4. StylusIntegration.t.sol (NEW)
+
 **Location:** `packages/contracts/test/StylusIntegration.t.sol`
 
 **Purpose:** End-to-end Stylus integration tests
 
 **Coverage:**
+
 - 18 comprehensive tests
 - Gas benchmarking
 - Upgrade scenarios
@@ -380,18 +411,21 @@ function setUp() public {
 ## 🔍 Verification
 
 ### Build Status
+
 ```bash
 $ forge build
 Compiler run successful with warnings
 ```
 
 ### Test Results
+
 ```bash
 $ forge test
 Ran 7 test suites: 119 tests passed, 0 failed ✅
 ```
 
 ### Specific Test Results
+
 ```bash
 # UniversalZKVerifier tests
 Ran 39 tests: 39 passed, 0 failed ✅
@@ -401,6 +435,7 @@ Ran 18 tests: 18 passed, 0 failed ✅
 ```
 
 ### Gas Benchmarks
+
 ```bash
 Gas used for single verification: 50116
 Gas used for batch verification (10 proofs): 80776
@@ -410,21 +445,25 @@ Gas used for VK registration: 41544
 ## 🎓 Lessons Learned
 
 ### 1. Error Handling
+
 - **Challenge:** Stylus errors arrive as low-level revert data
 - **Solution:** Wrap in `StylusVerificationFailed` with try/catch
 - **Benefit:** Clean error propagation to users
 
 ### 2. Interface Design
+
 - **Challenge:** Solidity uses full VK bytes, Stylus uses VK hash
 - **Solution:** Compute hash in Solidity before calling Stylus
 - **Benefit:** Transparent to callers
 
 ### 3. Testing Strategy
+
 - **Challenge:** Can't deploy real Stylus on Foundry
 - **Solution:** Created comprehensive mock implementation
 - **Benefit:** Full test coverage without WASM
 
 ### 4. Backward Compatibility
+
 - **Challenge:** Add Stylus without breaking existing code
 - **Solution:** Hybrid architecture with automatic routing
 - **Benefit:** Gradual migration path
@@ -432,18 +471,21 @@ Gas used for VK registration: 41544
 ## 🔮 Next Steps
 
 ### Phase S3: E2E Testing (Week 3)
+
 - [ ] Generate real Groth16 proofs with circom
 - [ ] Test with real PLONK/STARK proofs
 - [ ] Verify end-to-end flow
 - [ ] Test batch verification with real proofs
 
 ### Phase S4: Gas Benchmarking (Week 4)
+
 - [ ] Deploy to Arbitrum testnet
 - [ ] Measure Stylus vs Solidity gas costs
 - [ ] Generate comparison report
 - [ ] Optimize gas usage
 
 ### Phase S5: Testnet Deployment (Week 5)
+
 - [ ] Build WASM on Linux (build-wasm.sh)
 - [ ] Deploy to Arbitrum Sepolia
 - [ ] Register on Arbiscan
@@ -452,11 +494,13 @@ Gas used for VK registration: 41544
 ## 📚 Documentation
 
 ### User Guides
+
 - [x] Comprehensive NatSpec in UniversalZKVerifier.sol
 - [x] Test documentation in StylusIntegration.t.sol
 - [x] Gas benchmarking results
 
 ### Developer Guides
+
 - [x] Architecture diagram (this document)
 - [x] Integration examples (tests)
 - [x] Error handling patterns

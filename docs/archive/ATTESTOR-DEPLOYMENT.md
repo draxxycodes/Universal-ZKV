@@ -76,6 +76,7 @@ Instead of deploying the large verifier on-chain, we use the **attestor pattern*
 ```
 
 **Benefits**:
+
 - ✅ No size limits on verification logic
 - ✅ ~100x cheaper gas costs
 - ✅ Same security guarantees with trusted signer
@@ -89,35 +90,35 @@ Instead of deploying the large verifier on-chain, we use the **attestor pattern*
 
 ```solidity
 // Initialize contract with trusted signer
-function initialize(address attestor_address) 
+function initialize(address attestor_address)
     returns (Result<(), Vec<u8>>)
 
 // Attest a verified proof (only attestor)
-function attest_proof(bytes32 proof_hash) 
+function attest_proof(bytes32 proof_hash)
     returns (Result<(), Vec<u8>>)
 
 // Check if proof is attested
-function is_attested(bytes32 proof_hash) 
+function is_attested(bytes32 proof_hash)
     returns (Result<bool, Vec<u8>>)
 
 // Get total attestation count
-function get_attestation_count() 
+function get_attestation_count()
     returns (Result<uint256, Vec<u8>>)
 
 // Get current attestor address
-function get_attestor() 
+function get_attestor()
     returns (Result<address, Vec<u8>>)
 
 // Set new attestor (only owner)
-function set_attestor(address new_attestor) 
+function set_attestor(address new_attestor)
     returns (Result<(), Vec<u8>>)
 
 // Transfer ownership (only owner)
-function transfer_ownership(address new_owner) 
+function transfer_ownership(address new_owner)
     returns (Result<(), Vec<u8>>)
 
 // Get contract owner
-function get_owner() 
+function get_owner()
     returns (Result<address, Vec<u8>>)
 ```
 
@@ -316,20 +317,20 @@ These settings reduced the binary from 39KB to 7.2KB.
 
 ### Deployment Costs
 
-| Operation | Cost | Status |
-|-----------|------|--------|
-| Initial Deployment | 0.000085 ETH (~$0.30) | ✅ Paid |
-| Contract Activation | Gas fee | ✅ Paid |
-| **Total** | **~$0.50** | **Complete** |
+| Operation           | Cost                  | Status       |
+| ------------------- | --------------------- | ------------ |
+| Initial Deployment  | 0.000085 ETH (~$0.30) | ✅ Paid      |
+| Contract Activation | Gas fee               | ✅ Paid      |
+| **Total**           | **~$0.50**            | **Complete** |
 
 ### Operational Costs (Estimated)
 
-| Operation | Gas | Cost @ 0.5 gwei |
-|-----------|-----|-----------------|
-| `initialize()` | ~45,000 | $0.08 |
-| `attest_proof()` | ~55,000 | $0.10 |
-| `is_attested()` | ~25,000 | $0.04 |
-| **Per Proof** | **~55,000** | **~$0.10** |
+| Operation        | Gas         | Cost @ 0.5 gwei |
+| ---------------- | ----------- | --------------- |
+| `initialize()`   | ~45,000     | $0.08           |
+| `attest_proof()` | ~55,000     | $0.10           |
+| `is_attested()`  | ~25,000     | $0.04           |
+| **Per Proof**    | **~55,000** | **~$0.10**      |
 
 Compare to full on-chain verification: ~5-10M gas = **$900-$1,800 per proof**
 
@@ -370,6 +371,7 @@ Compare to full on-chain verification: ~5-10M gas = **$900-$1,800 per proof**
 ## Contact & Support
 
 For issues or questions:
+
 - Contract Address: `0x36e937ebcf56c5dec6ecb0695001becc87738177`
 - Network: Arbitrum Sepolia
 - Block Explorer: https://sepolia.arbiscan.io

@@ -3,7 +3,7 @@
  * This is a starting template - customize as needed!
  */
 
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -18,19 +18,20 @@ export default function HomePage() {
             One verifier. Three proof systems. Infinite possibilities.
           </p>
           <p className="text-lg text-slate-400 mb-12">
-            Production-ready zero-knowledge proof verification on Arbitrum Stylus.
+            Production-ready zero-knowledge proof verification on Arbitrum
+            Stylus.
             <br />
             Supporting Groth16, PLONK, and STARK proof systems.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
+            <Link
               href="/demo"
               className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition"
             >
               Try Live Demo
             </Link>
-            <Link 
+            <Link
               href="/benchmarks"
               className="px-8 py-4 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold text-lg transition"
             >
@@ -43,26 +44,18 @@ export default function HomePage() {
       {/* Stats Section */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-          <StatCard 
+          <StatCard
             label="Proof Systems"
             value="3"
             sublabel="Groth16, PLONK, STARK"
           />
-          <StatCard 
-            label="Gas Savings"
-            value="10x"
-            sublabel="vs Solidity"
-          />
-          <StatCard 
+          <StatCard label="Gas Savings" value="10x" sublabel="vs Solidity" />
+          <StatCard
             label="Avg Gas Cost"
             value="~295k"
             sublabel="Highly optimized"
           />
-          <StatCard 
-            label="Circuits"
-            value="270+"
-            sublabel="Test coverage"
-          />
+          <StatCard label="Circuits" value="270+" sublabel="Test coverage" />
         </div>
       </div>
 
@@ -71,7 +64,7 @@ export default function HomePage() {
         <h2 className="text-4xl font-bold text-center mb-12">
           Supported Proof Systems
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Groth16 */}
           <ProofSystemCard
@@ -82,10 +75,10 @@ export default function HomePage() {
               "Trusted setup required",
               "Smallest proof size",
               "Battle-tested",
-              "Fastest verification"
+              "Fastest verification",
             ]}
           />
-          
+
           {/* PLONK */}
           <ProofSystemCard
             name="PLONK"
@@ -95,10 +88,10 @@ export default function HomePage() {
               "Universal setup",
               "Flexible circuits",
               "Moderate gas cost",
-              "Modern standard"
+              "Modern standard",
             ]}
           />
-          
+
           {/* STARK */}
           <ProofSystemCard
             name="STARK"
@@ -108,7 +101,7 @@ export default function HomePage() {
               "Transparent setup",
               "Post-quantum secure",
               "Larger proofs",
-              "No trusted setup"
+              "No trusted setup",
             ]}
           />
         </div>
@@ -116,10 +109,8 @@ export default function HomePage() {
 
       {/* How It Works */}
       <div className="container mx-auto px-4 py-20 bg-slate-800/50">
-        <h2 className="text-4xl font-bold text-center mb-12">
-          How It Works
-        </h2>
-        
+        <h2 className="text-4xl font-bold text-center mb-12">How It Works</h2>
+
         <div className="max-w-4xl mx-auto">
           <div className="space-y-8">
             <WorkflowStep
@@ -146,10 +137,10 @@ export default function HomePage() {
         <h2 className="text-4xl font-bold text-center mb-12">
           Universal Verifier Architecture
         </h2>
-        
+
         <div className="max-w-3xl mx-auto bg-slate-800 rounded-lg p-8 font-mono text-sm">
           <pre className="text-slate-300 overflow-x-auto">
-{`┌─────────────────────────────────────┐
+            {`┌─────────────────────────────────────┐
 │      UniversalVKV (lib.rs)          │
 │         Entry Point                 │
 └────────────┬────────────────────────┘
@@ -174,7 +165,7 @@ export default function HomePage() {
           <p className="text-lg mb-8 text-blue-100">
             Try the complete workflow: Generate → Verify → Attest
           </p>
-          <Link 
+          <Link
             href="/demo"
             className="inline-block px-10 py-4 bg-white text-blue-600 hover:bg-slate-100 rounded-lg font-semibold text-lg transition"
           >
@@ -192,13 +183,22 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex gap-6">
-            <a href="https://github.com/draxxycodes/Universal-ZKV" className="text-slate-400 hover:text-white transition">
+            <a
+              href="https://github.com/draxxycodes/Universal-ZKV"
+              className="text-slate-400 hover:text-white transition"
+            >
               GitHub
             </a>
-            <Link href="/docs" className="text-slate-400 hover:text-white transition">
+            <Link
+              href="/docs"
+              className="text-slate-400 hover:text-white transition"
+            >
               Docs
             </Link>
-            <a href="https://sepolia.arbiscan.io/address/0x36e937ebcf56c5dec6ecb0695001becc87738177" className="text-slate-400 hover:text-white transition">
+            <a
+              href="https://sepolia.arbiscan.io/address/0x36e937ebcf56c5dec6ecb0695001becc87738177"
+              className="text-slate-400 hover:text-white transition"
+            >
               Contract
             </a>
           </div>
@@ -210,7 +210,15 @@ export default function HomePage() {
 
 // Helper Components
 
-function StatCard({ label, value, sublabel }: { label: string; value: string; sublabel: string }) {
+function StatCard({
+  label,
+  value,
+  sublabel,
+}: {
+  label: string;
+  value: string;
+  sublabel: string;
+}) {
   return (
     <div className="bg-slate-800 rounded-lg p-6 text-center">
       <div className="text-3xl font-bold text-blue-400 mb-2">{value}</div>
@@ -220,16 +228,16 @@ function StatCard({ label, value, sublabel }: { label: string; value: string; su
   );
 }
 
-function ProofSystemCard({ 
-  name, 
-  gas, 
-  color, 
-  features 
-}: { 
-  name: string; 
-  gas: string; 
-  color: string; 
-  features: string[] 
+function ProofSystemCard({
+  name,
+  gas,
+  color,
+  features,
+}: {
+  name: string;
+  gas: string;
+  color: string;
+  features: string[];
 }) {
   return (
     <div className="bg-slate-800 rounded-xl p-6 hover:scale-105 transition-transform">
@@ -237,7 +245,7 @@ function ProofSystemCard({
         <h3 className="text-2xl font-bold">{name}</h3>
         <p className="text-lg opacity-90">{gas} gas</p>
       </div>
-      
+
       <ul className="space-y-2">
         {features.map((feature, idx) => (
           <li key={idx} className="flex items-start gap-2">
@@ -250,14 +258,14 @@ function ProofSystemCard({
   );
 }
 
-function WorkflowStep({ 
-  number, 
-  title, 
-  description 
-}: { 
-  number: number; 
-  title: string; 
-  description: string 
+function WorkflowStep({
+  number,
+  title,
+  description,
+}: {
+  number: number;
+  title: string;
+  description: string;
 }) {
   return (
     <div className="flex gap-6 items-start">

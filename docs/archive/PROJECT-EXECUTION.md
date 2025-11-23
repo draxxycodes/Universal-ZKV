@@ -15,33 +15,33 @@ Documentation & SDK
 Post-Hack Sustainability
 
 1. Project Overview
-1.1 Problem Statement
-Current State:
-Every ZK application (privacy protocols, zkML, gaming) deploys duplicate verifier contracts
-Groth16 verification in Solidity: ~180,000 gas ($50-200 per verification)
-Over 100 duplicate verifiers on Arbitrum alone
-No standardization = wasted developer time + blockspace
-Market Pain Points:
-For Developers: Must audit/optimize verifier code for each project
-For Users: High gas costs make ZK features unaffordable
-For Ecosystem: Fragmented tooling, no network effects
-1.2 Solution Architecture
-Universal ZK Verifier (UZKV):
-┌─────────────────────────────────────────┐
-│   zkApp 1 (Privacy)                     │
-│   zkApp 2 (Gaming)        ──────┐       │
-│   zkApp 3 (ML Inference)  ──────┤       │
-│   zkApp N (Credentials)   ──────┤       │
-└─────────────────────────────────┼───────┘
-                                  │
-                    ┌─────────────▼──────────────┐
-                    │  Universal ZK Verifier     │
-                    │  (Rust/Wasm on Stylus)     │
-                    │                            │
-                    │  • Groth16 Module          │
-                    │  • PLONK Module            │
-                    │  • STARK Module            │
-                    └────────────────────────────┘
+   1.1 Problem Statement
+   Current State:
+   Every ZK application (privacy protocols, zkML, gaming) deploys duplicate verifier contracts
+   Groth16 verification in Solidity: ~180,000 gas ($50-200 per verification)
+   Over 100 duplicate verifiers on Arbitrum alone
+   No standardization = wasted developer time + blockspace
+   Market Pain Points:
+   For Developers: Must audit/optimize verifier code for each project
+   For Users: High gas costs make ZK features unaffordable
+   For Ecosystem: Fragmented tooling, no network effects
+   1.2 Solution Architecture
+   Universal ZK Verifier (UZKV):
+   ┌─────────────────────────────────────────┐
+   │ zkApp 1 (Privacy) │
+   │ zkApp 2 (Gaming) ──────┐ │
+   │ zkApp 3 (ML Inference) ──────┤ │
+   │ zkApp N (Credentials) ──────┤ │
+   └─────────────────────────────────┼───────┘
+   │
+   ┌─────────────▼──────────────┐
+   │ Universal ZK Verifier │
+   │ (Rust/Wasm on Stylus) │
+   │ │
+   │ • Groth16 Module │
+   │ • PLONK Module │
+   │ • STARK Module │
+   └────────────────────────────┘
 
 Key Features:
 Multi-Proof System Support: Groth16, PLONK, STARKs in one contract
@@ -62,56 +62,56 @@ Post-Hack Goals (Month 1-6):
 🎯 Arbitrum Foundation grant/fellowship
 
 2. Technical Architecture
-2.1 System Design
-┌───────────────────────────────────────────────────────────┐
-│                    FRONTEND LAYER                         │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Next.js Demo App + wagmi/viem                      │  │
-│  │  • Proof Generator UI                               │  │
-│  │  • Verification Visualizer                          │  │
-│  │  • Gas Comparison Dashboard                         │  │
-│  └─────────────────────────────────────────────────────┘  │
-└───────────────────────────────┬───────────────────────────┘
-                                │
-                    ┌───────────▼──────────┐
-                    │   RPC/Provider       │
-                    │ (Arbitrum Sepolia)   │
-                    └───────────┬──────────┘
-                                │
-┌───────────────────────────────▼───────────────────────────┐
-│                  SMART CONTRACT LAYER                     │
-│                                                            │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │  UniversalZKVerifier.sol (Solidity Wrapper)      │    │
-│  │  • Standard ERC interface                        │    │
-│  │  • Proof type routing                            │    │
-│  │  • Event emission                                │    │
-│  └──────────────────┬───────────────────────────────┘    │
-│                     │                                     │
-│  ┌──────────────────▼───────────────────────────────┐    │
-│  │  UZKV Core (Rust/Wasm via Stylus)               │    │
-│  │                                                   │    │
-│  │  ┌─────────────────────────────────────────┐    │    │
-│  │  │ Groth16 Verifier Module                 │    │    │
-│  │  │ • ark-groth16 (Rust)                    │    │    │
-│  │  │ • BN254 curve operations                │    │    │
-│  │  │ • Pairing checks                        │    │    │
-│  │  └─────────────────────────────────────────┘    │    │
-│  │                                                   │    │
-│  │  ┌─────────────────────────────────────────┐    │    │
-│  │  │ PLONK Verifier Module                   │    │    │
-│  │  │ • halo2_proofs (Rust)                   │    │    │
-│  │  │ • KZG commitments                       │    │    │
-│  │  │ • Universal setup params                │    │    │
-│  │  └─────────────────────────────────────────┘    │    │
-│  │                                                   │    │
-│  │  ┌─────────────────────────────────────────┐    │    │
-│  │  │ STARK Verifier Module (Future)          │    │    │
-│  │  │ • winterfell or starky                  │    │    │
-│  │  │ • FRI protocol                          │    │    │
-│  │  └─────────────────────────────────────────┘    │    │
-│  └───────────────────────────────────────────────────┘    │
-└────────────────────────────────────────────────────────────┘
+   2.1 System Design
+   ┌───────────────────────────────────────────────────────────┐
+   │ FRONTEND LAYER │
+   │ ┌─────────────────────────────────────────────────────┐ │
+   │ │ Next.js Demo App + wagmi/viem │ │
+   │ │ • Proof Generator UI │ │
+   │ │ • Verification Visualizer │ │
+   │ │ • Gas Comparison Dashboard │ │
+   │ └─────────────────────────────────────────────────────┘ │
+   └───────────────────────────────┬───────────────────────────┘
+   │
+   ┌───────────▼──────────┐
+   │ RPC/Provider │
+   │ (Arbitrum Sepolia) │
+   └───────────┬──────────┘
+   │
+   ┌───────────────────────────────▼───────────────────────────┐
+   │ SMART CONTRACT LAYER │
+   │ │
+   │ ┌──────────────────────────────────────────────────┐ │
+   │ │ UniversalZKVerifier.sol (Solidity Wrapper) │ │
+   │ │ • Standard ERC interface │ │
+   │ │ • Proof type routing │ │
+   │ │ • Event emission │ │
+   │ └──────────────────┬───────────────────────────────┘ │
+   │ │ │
+   │ ┌──────────────────▼───────────────────────────────┐ │
+   │ │ UZKV Core (Rust/Wasm via Stylus) │ │
+   │ │ │ │
+   │ │ ┌─────────────────────────────────────────┐ │ │
+   │ │ │ Groth16 Verifier Module │ │ │
+   │ │ │ • ark-groth16 (Rust) │ │ │
+   │ │ │ • BN254 curve operations │ │ │
+   │ │ │ • Pairing checks │ │ │
+   │ │ └─────────────────────────────────────────┘ │ │
+   │ │ │ │
+   │ │ ┌─────────────────────────────────────────┐ │ │
+   │ │ │ PLONK Verifier Module │ │ │
+   │ │ │ • halo2_proofs (Rust) │ │ │
+   │ │ │ • KZG commitments │ │ │
+   │ │ │ • Universal setup params │ │ │
+   │ │ └─────────────────────────────────────────┘ │ │
+   │ │ │ │
+   │ │ ┌─────────────────────────────────────────┐ │ │
+   │ │ │ STARK Verifier Module (Future) │ │ │
+   │ │ │ • winterfell or starky │ │ │
+   │ │ │ • FRI protocol │ │ │
+   │ │ └─────────────────────────────────────────┘ │ │
+   │ └───────────────────────────────────────────────────┘ │
+   └────────────────────────────────────────────────────────────┘
 
 2.2 Technology Stack
 Core Infrastructure:
@@ -145,24 +145,24 @@ Solidity Interface (External-Facing):
 pragma solidity ^0.8.24;
 
 interface IUniversalZKVerifier {
-    enum ProofType {
-        GROTH16,
-        PLONK,
-        STARK
-    }
-    
+enum ProofType {
+GROTH16,
+PLONK,
+STARK
+}
+
     struct VerificationKey {
         bytes32 vkHash;
         bytes data;
     }
-    
+
     event ProofVerified(
         ProofType indexed proofType,
         address indexed caller,
         bool success,
         uint256 gasUsed
     );
-    
+
     /// @notice Verify a zero-knowledge proof
     /// @param proofType Type of proof system (Groth16/PLONK/STARK)
     /// @param proof Encoded proof bytes
@@ -175,7 +175,7 @@ interface IUniversalZKVerifier {
         bytes calldata publicInputs,
         bytes calldata vk
     ) external returns (bool success);
-    
+
     /// @notice Register a verification key for reuse
     /// @param proofType Type of proof system
     /// @param vk Verification key bytes
@@ -184,7 +184,7 @@ interface IUniversalZKVerifier {
         ProofType proofType,
         bytes calldata vk
     ) external returns (bytes32 vkHash);
-    
+
     /// @notice Batch verify multiple proofs (gas optimization)
     /// @param proofType Type of proof system (must be same for all)
     /// @param proofs Array of proof bytes
@@ -197,30 +197,33 @@ interface IUniversalZKVerifier {
         bytes[] calldata publicInputs,
         bytes32 vkHash
     ) external returns (bool[] memory results);
+
 }
 
 Rust Internal Interface:
 // Core trait for all verifier modules
 pub trait ZKVerifier {
-    type Proof;
-    type PublicInputs;
-    type VerificationKey;
-    
+type Proof;
+type PublicInputs;
+type VerificationKey;
+
     fn verify(
         proof: &Self::Proof,
         public_inputs: &Self::PublicInputs,
         vk: &Self::VerificationKey,
     ) -> Result<bool, VerifierError>;
-    
+
     fn verify_batch(
         proofs: &[Self::Proof],
         public_inputs: &[Self::PublicInputs],
         vk: &Self::VerificationKey,
     ) -> Result<Vec<bool>, VerifierError>;
+
 }
 
 2.4 Data Flow
 Single Verification Flow:
+
 1. User calls zkApp.withdraw(proof, inputs)
 2. zkApp calls UZKV.verify(GROTH16, proof, inputs, vk)
 3. Solidity wrapper decodes proof type
@@ -229,7 +232,7 @@ Single Verification Flow:
    a. Deserialize proof bytes
    b. Parse public inputs
    c. Load verification key
-   d. Compute pairing check: e(A,B) = e(α,β) * e(C,δ) * e(L,γ)
+   d. Compute pairing check: e(A,B) = e(α,β) _ e(C,δ) _ e(L,γ)
    e. Return bool result
 6. Stylus returns to Solidity
 7. Event emitted: ProofVerified(...)
@@ -239,60 +242,60 @@ Gas Accounting:
 Total Gas = Base (Solidity) + Wasm Execution + Storage
 
 Groth16 Example:
+
 - Solidity overhead: ~21k gas
 - Wasm pairing ops: ~35k gas (vs 140k in Solidity)
 - Storage reads: ~5k gas
 - Total: ~61k gas (vs 180k pure Solidity)
 
-
 3. Development Roadmap
-Phase 0: Setup & Research 
-Goal: Environment ready, research complete
-Milestones:
-Development environment configured
-All dependencies installed
-Research papers reviewed
-Architecture finalized
-Phase 1: Core Verifier 
-Goal: Groth16 verifier working in Rust
-Milestones:
-Groth16 module compiles to Wasm
-Unit tests passing
-Gas benchmarks vs Solidity
-Deployment to Sepolia
-Phase 2: Solidity Wrapper 
-Goal: EVM-compatible interface
-Milestones:
-Solidity contract deployed
-Cross-contract calls working
-Event logging functional
-Integration tests passing
-Phase 3: Frontend Demo 
-Goal: User-facing proof verification app
-Milestones:
-Next.js app deployed
-Proof generation UI
-Live verification display
-Gas comparison charts
-Phase 4: PLONK Support 
-Goal: Second proof system integrated
-Milestones:
-halo2 verifier module
-Multi-proof routing logic
-Extended benchmarks
-Documentation updated
-Phase 5: Polish & Submit 
-Goal: Hackathon-ready deliverables
-Milestones:
-Video demo recorded
-README polished
-Code commented
-Submission complete
+   Phase 0: Setup & Research
+   Goal: Environment ready, research complete
+   Milestones:
+   Development environment configured
+   All dependencies installed
+   Research papers reviewed
+   Architecture finalized
+   Phase 1: Core Verifier
+   Goal: Groth16 verifier working in Rust
+   Milestones:
+   Groth16 module compiles to Wasm
+   Unit tests passing
+   Gas benchmarks vs Solidity
+   Deployment to Sepolia
+   Phase 2: Solidity Wrapper
+   Goal: EVM-compatible interface
+   Milestones:
+   Solidity contract deployed
+   Cross-contract calls working
+   Event logging functional
+   Integration tests passing
+   Phase 3: Frontend Demo
+   Goal: User-facing proof verification app
+   Milestones:
+   Next.js app deployed
+   Proof generation UI
+   Live verification display
+   Gas comparison charts
+   Phase 4: PLONK Support
+   Goal: Second proof system integrated
+   Milestones:
+   halo2 verifier module
+   Multi-proof routing logic
+   Extended benchmarks
+   Documentation updated
+   Phase 5: Polish & Submit
+   Goal: Hackathon-ready deliverables
+   Milestones:
+   Video demo recorded
+   README polished
+   Code commented
+   Submission complete
 
 4. Complete Task Roadmap
-Phase 0: Foundation (Days 1-2)
-├── Task 1: Environment Setup
-└── Task 2: Research & Architecture
+   Phase 0: Foundation (Days 1-2)
+   ├── Task 1: Environment Setup
+   └── Task 2: Research & Architecture
 
 Phase 1: Core Development (Days 3-10)
 ├── Task 3: Groth16 Verifier (Rust/Wasm)
@@ -316,7 +319,6 @@ Phase 5: Documentation & Deployment (Day 21)
 ├── Task 13: Production Deployment
 ├── Task 14: SDK & Documentation
 └── Task 15: Hackathon Submission
-
 
 TASK 1: Environment Setup & Development Infrastructure
 Duration: 4 hours
@@ -475,66 +477,67 @@ Time Estimate: 20 minutes (plus waiting for faucet cooldowns)
 Subtask 1.5: Initialize Project Repository Structure
 Objective: Create a well-organized monorepo with separate directories for Rust contracts, Solidity contracts, frontend, tests, scripts, and documentation.
 Directory Structure to Create:
-uzkv/                          # Root project directory
-├── .git/                      # Git repository
-├── .github/                   # GitHub configuration
-│   └── workflows/             # CI/CD pipelines
-├── contracts/                 # All smart contracts
-│   ├── stylus/                # Rust/Wasm contracts
-│   │   ├── groth16/           # Groth16 verifier module
-│   │   ├── plonk/             # PLONK verifier module
-│   │   └── core/              # Shared utilities
-│   └── solidity/              # Solidity wrapper contracts
-│       ├── src/               # Contract source code
-│       ├── test/              # Foundry tests
-│       └── script/            # Deployment scripts
-├── frontend/                  # Next.js demo application
-│   ├── src/                   # React components
-│   ├── public/                # Static assets
-│   └── package.json           # Frontend dependencies
-├── sdk/                       # JavaScript/TypeScript SDK
-│   ├── src/                   # SDK source code
-│   └── package.json           # SDK dependencies
-├── scripts/                   # Automation scripts
-│   ├── deploy.sh              # Deployment automation
-│   ├── benchmark.js           # Gas benchmarking
-│   └── verify.sh              # Contract verification
-├── test/                      # Integration tests
-│   ├── integration/           # Cross-contract tests
-│   └── e2e/                   # End-to-end tests
-├── benchmarks/                # Performance benchmarks
-│   ├── groth16_gas.json       # Groth16 gas measurements
-│   └── comparison.md          # Solidity vs Stylus comparison
-├── docs/                      # Documentation
-│   ├── architecture.md        # System architecture
-│   ├── api.md                 # API reference
-│   └── integration.md         # Integration guide
-├── .env.example               # Example environment variables
-├── .gitignore                 # Git ignore patterns
-├── Cargo.toml                 # Rust workspace configuration
-├── package.json               # Root package.json (monorepo)
-└── README.md                  # Project overview
+uzkv/ # Root project directory
+├── .git/ # Git repository
+├── .github/ # GitHub configuration
+│ └── workflows/ # CI/CD pipelines
+├── contracts/ # All smart contracts
+│ ├── stylus/ # Rust/Wasm contracts
+│ │ ├── groth16/ # Groth16 verifier module
+│ │ ├── plonk/ # PLONK verifier module
+│ │ └── core/ # Shared utilities
+│ └── solidity/ # Solidity wrapper contracts
+│ ├── src/ # Contract source code
+│ ├── test/ # Foundry tests
+│ └── script/ # Deployment scripts
+├── frontend/ # Next.js demo application
+│ ├── src/ # React components
+│ ├── public/ # Static assets
+│ └── package.json # Frontend dependencies
+├── sdk/ # JavaScript/TypeScript SDK
+│ ├── src/ # SDK source code
+│ └── package.json # SDK dependencies
+├── scripts/ # Automation scripts
+│ ├── deploy.sh # Deployment automation
+│ ├── benchmark.js # Gas benchmarking
+│ └── verify.sh # Contract verification
+├── test/ # Integration tests
+│ ├── integration/ # Cross-contract tests
+│ └── e2e/ # End-to-end tests
+├── benchmarks/ # Performance benchmarks
+│ ├── groth16_gas.json # Groth16 gas measurements
+│ └── comparison.md # Solidity vs Stylus comparison
+├── docs/ # Documentation
+│ ├── architecture.md # System architecture
+│ ├── api.md # API reference
+│ └── integration.md # Integration guide
+├── .env.example # Example environment variables
+├── .gitignore # Git ignore patterns
+├── Cargo.toml # Rust workspace configuration
+├── package.json # Root package.json (monorepo)
+└── README.md # Project overview
 
 Key Files to Create:
+
 1. Root .gitignore:
-Purpose: Prevent committing sensitive or generated files
-Include: target/, node_modules/, .env, *.wasm, out/, cache/, dist/, build/
+   Purpose: Prevent committing sensitive or generated files
+   Include: target/, node_modules/, .env, \*.wasm, out/, cache/, dist/, build/
 
 2. Cargo.toml (Workspace):
-Purpose: Configure Rust workspace for multiple Stylus contracts
-Defines: Workspace members, shared dependencies, build profiles
+   Purpose: Configure Rust workspace for multiple Stylus contracts
+   Defines: Workspace members, shared dependencies, build profiles
 
 3. package.json (Root):
-Purpose: Monorepo tooling configuration
-Contains: Workspace definitions, common scripts, shared dev dependencies
+   Purpose: Monorepo tooling configuration
+   Contains: Workspace definitions, common scripts, shared dev dependencies
 
 4. README.md (Root):
-Purpose: Project overview for judges and developers
-Includes: One-line description, problem statement, quick start, architecture diagram
+   Purpose: Project overview for judges and developers
+   Includes: One-line description, problem statement, quick start, architecture diagram
 
 5. .env.example:
-Purpose: Template for environment variables (safe to commit)
-Shows: Required variables without actual values
+   Purpose: Template for environment variables (safe to commit)
+   Shows: Required variables without actual values
 
 Why This Structure:
 Separation of concerns: Rust, Solidity, and frontend in separate directories
@@ -669,228 +672,231 @@ Goal: Thoroughly understand ZK proof systems, analyze existing implementations, 
 Subtask 2.1: Zero-Knowledge Proof Systems Research
 Objective: Gain deep understanding of Groth16, PLONK, and STARK proof systems including their mathematical foundations, verification algorithms, and implementation requirements.
 Research Areas:
+
 1. Groth16 Deep Dive:
-What to Understand:
-History and purpose (2016 Jens Groth paper)
-Why it's the most widely used zkSNARK
-Trusted setup requirement and its implications
-Proof size: 2 G1 points + 1 G2 point (very small)
-Verification time: 3 pairings (fast on-chain)
-Circuit-specific setup (new setup per circuit)
-Mathematical Components:
-Elliptic curve pairings (what they are, why needed)
-BN254 curve (why Ethereum uses it)
-Quadratic Arithmetic Programs (QAP)
-How verification equation works: e(A,B) = e(α,β) · e(L,γ) · e(C,δ)
-Implementation Details:
-Arkworks library structure (ark-groth16, ark-bn254)
-Proof serialization format
-Public input encoding
-Verification key components
-Common Use Cases:
-Tornado Cash (privacy transfers)
-zkSync 1.0 (rollup proofs)
-Semaphore (anonymous signaling)
-PolygonID (identity credentials)
+   What to Understand:
+   History and purpose (2016 Jens Groth paper)
+   Why it's the most widely used zkSNARK
+   Trusted setup requirement and its implications
+   Proof size: 2 G1 points + 1 G2 point (very small)
+   Verification time: 3 pairings (fast on-chain)
+   Circuit-specific setup (new setup per circuit)
+   Mathematical Components:
+   Elliptic curve pairings (what they are, why needed)
+   BN254 curve (why Ethereum uses it)
+   Quadratic Arithmetic Programs (QAP)
+   How verification equation works: e(A,B) = e(α,β) · e(L,γ) · e(C,δ)
+   Implementation Details:
+   Arkworks library structure (ark-groth16, ark-bn254)
+   Proof serialization format
+   Public input encoding
+   Verification key components
+   Common Use Cases:
+   Tornado Cash (privacy transfers)
+   zkSync 1.0 (rollup proofs)
+   Semaphore (anonymous signaling)
+   PolygonID (identity credentials)
 2. PLONK Deep Dive:
-What to Understand:
-Universal and updateable trusted setup
-Single setup can be reused for all circuits
-Larger proof size than Groth16 but more flexible
-Kate-Zaverucha-Goldberg (KZG) polynomial commitments
-Copy constraints and permutation arguments
-Advantages Over Groth16:
-No circuit-specific setup
-Easier to deploy new circuits
-Better for rapidly iterating protocols
-More developer-friendly
-Implementation Details:
-halo2_proofs library (used by Zcash)
-Proof structure and serialization
-SRS (Structured Reference String) requirements
-Verification algorithm differences
-Common Use Cases:
-Aztec Network (privacy L2)
-Mina Protocol (recursive proofs)
-Polygon zkEVM (EVM verification)
+   What to Understand:
+   Universal and updateable trusted setup
+   Single setup can be reused for all circuits
+   Larger proof size than Groth16 but more flexible
+   Kate-Zaverucha-Goldberg (KZG) polynomial commitments
+   Copy constraints and permutation arguments
+   Advantages Over Groth16:
+   No circuit-specific setup
+   Easier to deploy new circuits
+   Better for rapidly iterating protocols
+   More developer-friendly
+   Implementation Details:
+   halo2_proofs library (used by Zcash)
+   Proof structure and serialization
+   SRS (Structured Reference String) requirements
+   Verification algorithm differences
+   Common Use Cases:
+   Aztec Network (privacy L2)
+   Mina Protocol (recursive proofs)
+   Polygon zkEVM (EVM verification)
 3. STARK Overview:
-What to Understand:
-No trusted setup (transparent)
-Post-quantum secure
-Much larger proof size (tens of kilobytes)
-Faster proving time for large computations
-FRI (Fast Reed-Solomon Interactive Oracle Proof)
-Trade-offs:
-Larger proofs = higher calldata costs
-No pairing = different verification algorithm
-Better for computation-heavy circuits
-Worse for proof transmission/storage
-Implementation Options:
-winterfell (Facebook's library)
-starky (Plonky2 framework)
-RISC Zero (zkVM using STARKs)
-When to Use STARKs:
-Very large computations
-Post-quantum security needed
-Can afford larger proof size
-Don't want trusted setup
-Research Deliverables:
-Document comparing all three systems (table format)
-List of pros/cons for each
-Gas cost estimates for verification
-Recommended use cases for each type
-Resources to Study:
-Original Groth16 paper (skim for intuition)
-Vitalik's blog posts on SNARKs/STARKs
-Arkworks documentation
-halo2 book
-Zero Knowledge Podcast episodes
-Verification Steps:
-Can explain verification algorithm to non-expert
-Understand why each system makes different trade-offs
-Know which libraries to use for each system
-Can estimate gas costs for each verifier
-Time Estimate: 3 hours
+   What to Understand:
+   No trusted setup (transparent)
+   Post-quantum secure
+   Much larger proof size (tens of kilobytes)
+   Faster proving time for large computations
+   FRI (Fast Reed-Solomon Interactive Oracle Proof)
+   Trade-offs:
+   Larger proofs = higher calldata costs
+   No pairing = different verification algorithm
+   Better for computation-heavy circuits
+   Worse for proof transmission/storage
+   Implementation Options:
+   winterfell (Facebook's library)
+   starky (Plonky2 framework)
+   RISC Zero (zkVM using STARKs)
+   When to Use STARKs:
+   Very large computations
+   Post-quantum security needed
+   Can afford larger proof size
+   Don't want trusted setup
+   Research Deliverables:
+   Document comparing all three systems (table format)
+   List of pros/cons for each
+   Gas cost estimates for verification
+   Recommended use cases for each type
+   Resources to Study:
+   Original Groth16 paper (skim for intuition)
+   Vitalik's blog posts on SNARKs/STARKs
+   Arkworks documentation
+   halo2 book
+   Zero Knowledge Podcast episodes
+   Verification Steps:
+   Can explain verification algorithm to non-expert
+   Understand why each system makes different trade-offs
+   Know which libraries to use for each system
+   Can estimate gas costs for each verifier
+   Time Estimate: 3 hours
 
 Subtask 2.2: Analyze Existing Verifier Implementations
 Objective: Study production verifier code from major projects to understand implementation patterns, optimization techniques, security considerations, and common pitfalls.
 Projects to Analyze:
+
 1. Tornado Cash (Groth16 Verifier):
-What to Study:
-Solidity verifier contract structure
-How proof bytes are decoded
-Public input handling
-Gas optimization techniques used
-Security assumptions and checks
-Key Files:
-Verifier.sol (generated by circom/snarkjs)
-Tornado.sol (integration with verifier)
-Gas Costs to Document:
-Typical verification: ~280k gas
-Where gas is spent (pairings vs other operations)
-Lessons to Extract:
-Input validation importance
-How to handle verification key storage
-Event logging patterns
-Error handling approaches
+   What to Study:
+   Solidity verifier contract structure
+   How proof bytes are decoded
+   Public input handling
+   Gas optimization techniques used
+   Security assumptions and checks
+   Key Files:
+   Verifier.sol (generated by circom/snarkjs)
+   Tornado.sol (integration with verifier)
+   Gas Costs to Document:
+   Typical verification: ~280k gas
+   Where gas is spent (pairings vs other operations)
+   Lessons to Extract:
+   Input validation importance
+   How to handle verification key storage
+   Event logging patterns
+   Error handling approaches
 2. Semaphore (Groth16 for Anonymous Signaling):
-What to Study:
-How nullifiers are handled
-Integration with Merkle tree verification
-Batch verification patterns
-Off-chain proof generation flow
-Key Insights:
-Proof + application logic separation
-Verification key management strategies
-How to extend verifier with app logic
+   What to Study:
+   How nullifiers are handled
+   Integration with Merkle tree verification
+   Batch verification patterns
+   Off-chain proof generation flow
+   Key Insights:
+   Proof + application logic separation
+   Verification key management strategies
+   How to extend verifier with app logic
 3. zkSync Era (PLONK-based):
-What to Study:
-Recursive proof verification
-How they batch proofs
-Proof compression techniques
-Verification key handling at scale
-Technical Details:
-Aggregated proof structure
-How they achieve constant verification cost
-Storage optimization strategies
+   What to Study:
+   Recursive proof verification
+   How they batch proofs
+   Proof compression techniques
+   Verification key handling at scale
+   Technical Details:
+   Aggregated proof structure
+   How they achieve constant verification cost
+   Storage optimization strategies
 4. StarkWare (STARK Verifiers):
-What to Study:
-Cairo language integration
-How FRI verification works on-chain
-Calldata optimization for large proofs
-Proof-of-work mechanism integration
-Architectural Patterns:
-Modular verifier design
-Upgradability patterns
-Emergency pause mechanisms
-Analysis Framework:
-For Each Project, Document:
-Architecture:
-Contract structure
-Module separation
-Storage patterns
-Upgradability approach
-Gas Optimization:
-Main gas costs
-Optimization techniques used
-Trade-offs made
-Potential improvements
-Security:
-Input validation
-Reentrancy protection
-Access control
-Known vulnerabilities and fixes
-Developer Experience:
-How easy to integrate
-Documentation quality
-SDK structure
-Testing approaches
-Solidity vs Stylus Opportunities:
-Identify Operations That Would Benefit from Stylus:
-Memory-heavy operations (Wasm memory is cheaper)
-Cryptographic primitives (native u64/u128 arithmetic)
-Loops and iterations (no stack depth limits)
-Complex data structures (better memory layout)
-Estimate Potential Gas Savings:
-Pairing operations: 70-80% reduction expected
-Field arithmetic: 50-60% reduction
-Proof deserialization: 40-50% reduction
-Overall verification: 50-80% savings target
-Common Pitfalls to Avoid:
-Not validating curve point membership
-Improper public input encoding
-Missing zero-knowledge soundness checks
-Gas griefing vulnerabilities
-Reentrancy in verification callbacks
-Research Deliverables:
-Comparison spreadsheet of all projects
-Gas cost breakdown for each verifier
-Best practices document
-Anti-patterns to avoid list
-Estimated Stylus improvements table
-Verification Steps:
-Documented at least 4 production verifiers
-Created gas comparison table
-Listed optimization opportunities
-Identified security patterns
-Time Estimate: 2 hours
+   What to Study:
+   Cairo language integration
+   How FRI verification works on-chain
+   Calldata optimization for large proofs
+   Proof-of-work mechanism integration
+   Architectural Patterns:
+   Modular verifier design
+   Upgradability patterns
+   Emergency pause mechanisms
+   Analysis Framework:
+   For Each Project, Document:
+   Architecture:
+   Contract structure
+   Module separation
+   Storage patterns
+   Upgradability approach
+   Gas Optimization:
+   Main gas costs
+   Optimization techniques used
+   Trade-offs made
+   Potential improvements
+   Security:
+   Input validation
+   Reentrancy protection
+   Access control
+   Known vulnerabilities and fixes
+   Developer Experience:
+   How easy to integrate
+   Documentation quality
+   SDK structure
+   Testing approaches
+   Solidity vs Stylus Opportunities:
+   Identify Operations That Would Benefit from Stylus:
+   Memory-heavy operations (Wasm memory is cheaper)
+   Cryptographic primitives (native u64/u128 arithmetic)
+   Loops and iterations (no stack depth limits)
+   Complex data structures (better memory layout)
+   Estimate Potential Gas Savings:
+   Pairing operations: 70-80% reduction expected
+   Field arithmetic: 50-60% reduction
+   Proof deserialization: 40-50% reduction
+   Overall verification: 50-80% savings target
+   Common Pitfalls to Avoid:
+   Not validating curve point membership
+   Improper public input encoding
+   Missing zero-knowledge soundness checks
+   Gas griefing vulnerabilities
+   Reentrancy in verification callbacks
+   Research Deliverables:
+   Comparison spreadsheet of all projects
+   Gas cost breakdown for each verifier
+   Best practices document
+   Anti-patterns to avoid list
+   Estimated Stylus improvements table
+   Verification Steps:
+   Documented at least 4 production verifiers
+   Created gas comparison table
+   Listed optimization opportunities
+   Identified security patterns
+   Time Estimate: 2 hours
 
 Subtask 2.3: Design System Architecture
 Objective: Create comprehensive technical architecture for Universal ZK Verifier including module structure, data flows, interface specifications, storage patterns, and deployment strategy.
 Architecture Components to Design:
+
 1. Module Hierarchy:
-Core Layer (Rust/Wasm):
-Define what goes in each Stylus module
-Identify shared utilities
-Plan module dependencies
-Design trait abstractions
-Modules to Design:
-groth16_verifier: Groth16-specific logic
-plonk_verifier: PLONK-specific logic
-stark_verifier: STARK logic (Phase 2)
-common: Shared crypto primitives
-storage: Verification key storage
-abi: Solidity ABI encoding/decoding
-Interface Layer (Solidity):
-Design wrapper contract structure
-Define public-facing API
-Plan event emissions
-Design access control
-SDK Layer (TypeScript):
-Client library structure
-Proof generation helpers
-Network interaction utilities
-Type definitions
+   Core Layer (Rust/Wasm):
+   Define what goes in each Stylus module
+   Identify shared utilities
+   Plan module dependencies
+   Design trait abstractions
+   Modules to Design:
+   groth16_verifier: Groth16-specific logic
+   plonk_verifier: PLONK-specific logic
+   stark_verifier: STARK logic (Phase 2)
+   common: Shared crypto primitives
+   storage: Verification key storage
+   abi: Solidity ABI encoding/decoding
+   Interface Layer (Solidity):
+   Design wrapper contract structure
+   Define public-facing API
+   Plan event emissions
+   Design access control
+   SDK Layer (TypeScript):
+   Client library structure
+   Proof generation helpers
+   Network interaction utilities
+   Type definitions
 2. Data Flow Design:
-Verification Flow:
-Step 1: User calls zkApp contract
-Step 2: zkApp calls UniversalVerifier.verify()
-Step 3: Solidity wrapper routes to correct Stylus module
-Step 4: Stylus module deserializes proof
-Step 5: Cryptographic verification in Wasm
-Step 6: Result returned to Solidity
-Step 7: Event emitted
-Step 8: zkApp continues logic
+   Verification Flow:
+   Step 1: User calls zkApp contract
+   Step 2: zkApp calls UniversalVerifier.verify()
+   Step 3: Solidity wrapper routes to correct Stylus module
+   Step 4: Stylus module deserializes proof
+   Step 5: Cryptographic verification in Wasm
+   Step 6: Result returned to Solidity
+   Step 7: Event emitted
+   Step 8: zkApp continues logic
 
 Proof Preparation Flow:
 Step 1: User generates proof off-chain (circom/snarkjs)
@@ -907,29 +913,30 @@ Option C: Hybrid (allow both)
 Recommendation: Option C for flexibility
 
 3. Storage Architecture:
-What to Store On-Chain:
-Registered verification keys (optional optimization)
-Verification statistics (for analytics)
-Contract metadata
-Storage Optimization Strategies:
-Compress verification keys
-Use merkle trees for large VK sets
-Store frequently-used VKs on-chain
-Keep rarely-used VKs off-chain (pass in calldata)
-Stylus Storage Patterns:
-StorageMap for VK registry
-StorageVec for large data
-Avoid expensive storage when possible
+   What to Store On-Chain:
+   Registered verification keys (optional optimization)
+   Verification statistics (for analytics)
+   Contract metadata
+   Storage Optimization Strategies:
+   Compress verification keys
+   Use merkle trees for large VK sets
+   Store frequently-used VKs on-chain
+   Keep rarely-used VKs off-chain (pass in calldata)
+   Stylus Storage Patterns:
+   StorageMap for VK registry
+   StorageVec for large data
+   Avoid expensive storage when possible
 4. Interface Specification:
-Primary Interface:
-Function: verify()
-Inputs: 
-  - proofType: enum (Groth16/PLONK/STARK)
-  - proof: bytes
-  - publicInputs: bytes
-  - vk: bytes or vkId
-Output: bool (valid/invalid)
-Gas: 50k-150k depending on type
+   Primary Interface:
+   Function: verify()
+   Inputs:
+
+- proofType: enum (Groth16/PLONK/STARK)
+- proof: bytes
+- publicInputs: bytes
+- vk: bytes or vkId
+  Output: bool (valid/invalid)
+  Gas: 50k-150k depending on type
 
 Secondary Interfaces:
 Function: registerVK()
@@ -954,44 +961,46 @@ Fields: proofType, vkId, registrar
 Purpose: Track VK registrations
 
 5. Security Architecture:
-Access Control:
-No special permissions needed (public verifier)
-Optional: Whitelist for VK registration (prevent spam)
-Admin functions: Pause (emergency), Upgrade (if proxy pattern)
-Input Validation:
-Check proof length bounds
-Validate curve points are on curve
-Verify public input lengths
-Reject malformed data early
-Reentrancy Protection:
-Use checks-effects-interactions pattern
-Consider reentrancy guard if doing callbacks
-Mark view functions appropriately
-Gas Griefing Prevention:
-Set maximum proof size limits
-Limit batch verification array sizes
-Add gas stipends for cross-contract calls
-Upgrade Strategy:
-Decide: Immutable vs Upgradeable
-Recommendation: Start immutable for security
-Phase 2: Add proxy if needed (UUPS pattern)
+   Access Control:
+   No special permissions needed (public verifier)
+   Optional: Whitelist for VK registration (prevent spam)
+   Admin functions: Pause (emergency), Upgrade (if proxy pattern)
+   Input Validation:
+   Check proof length bounds
+   Validate curve points are on curve
+   Verify public input lengths
+   Reject malformed data early
+   Reentrancy Protection:
+   Use checks-effects-interactions pattern
+   Consider reentrancy guard if doing callbacks
+   Mark view functions appropriately
+   Gas Griefing Prevention:
+   Set maximum proof size limits
+   Limit batch verification array sizes
+   Add gas stipends for cross-contract calls
+   Upgrade Strategy:
+   Decide: Immutable vs Upgradeable
+   Recommendation: Start immutable for security
+   Phase 2: Add proxy if needed (UUPS pattern)
 6. Deployment Architecture:
-Deployment Sequence:
-1. Deploy Groth16 Stylus module
-2. Deploy PLONK Stylus module
-3. Deploy Solidity wrapper with module addresses
-4. Verify all contracts on Arbiscan
-5. Register initial verification keys (if any)
-6. Transfer ownership (if applicable)
+   Deployment Sequence:
+7. Deploy Groth16 Stylus module
+8. Deploy PLONK Stylus module
+9. Deploy Solidity wrapper with module addresses
+10. Verify all contracts on Arbiscan
+11. Register initial verification keys (if any)
+12. Transfer ownership (if applicable)
 
 Network Strategy:
 Testnet (Sepolia):
+
 - Deploy early and often
 - Test all features
 - Get gas benchmarks
 - Iterate quickly
 
 Mainnet (Arbitrum One):
+
 - Deploy after audit (post-hack)
 - Use multi-sig for admin
 - Monitor first 24h closely
@@ -999,59 +1008,60 @@ Mainnet (Arbitrum One):
 
 Address Management:
 Store deployed addresses in:
+
 - .env file (for scripts)
 - Constants file (for SDK)
 - Documentation (for users)
 - GitHub repo (for reference)
 
 7. Performance Optimization Strategy:
-Gas Optimization Priorities:
-Pairing operations (biggest impact)
-Field arithmetic (medium impact)
-Memory operations (small impact)
-Storage access (only if storing VKs)
-Wasm Optimization Flags:
-Optimize for size (smaller = cheaper deployment)
-Enable LTO (link-time optimization)
-Strip debug symbols
-Use wasm-opt tool
-Rust Optimization Techniques:
-Use #[inline] for small functions
-Avoid heap allocations where possible
-Use const generics for size-known arrays
-Profile with cargo-flamegraph
+   Gas Optimization Priorities:
+   Pairing operations (biggest impact)
+   Field arithmetic (medium impact)
+   Memory operations (small impact)
+   Storage access (only if storing VKs)
+   Wasm Optimization Flags:
+   Optimize for size (smaller = cheaper deployment)
+   Enable LTO (link-time optimization)
+   Strip debug symbols
+   Use wasm-opt tool
+   Rust Optimization Techniques:
+   Use #[inline] for small functions
+   Avoid heap allocations where possible
+   Use const generics for size-known arrays
+   Profile with cargo-flamegraph
 8. Scalability Design:
-Batch Verification:
-Support verifying N proofs in one transaction
-Amortize fixed costs across batch
-Target 30-50% gas savings for batches of 10+
-Future Extensions:
-Recursive proof verification
-Proof aggregation support
-Cross-chain verification
-zk-rollup integration
-Architecture Documentation Deliverables:
-Required Documents:
-System architecture diagram (visual)
-Data flow diagrams for each operation
-Interface specification (detailed)
-Storage layout documentation
-Security assumptions and threat model
-Gas estimation tables
-Deployment checklist
-Diagram Requirements:
-Use standard notation (UML or similar)
-Include all components
-Show all data flows
-Annotate gas costs
-Highlight optimization opportunities
-Verification Steps:
-Architecture reviewed by all team members
-All interfaces clearly defined
-Storage patterns decided
-Security considerations documented
-Deployment strategy agreed upon
-Time Estimate: 1 hour
+   Batch Verification:
+   Support verifying N proofs in one transaction
+   Amortize fixed costs across batch
+   Target 30-50% gas savings for batches of 10+
+   Future Extensions:
+   Recursive proof verification
+   Proof aggregation support
+   Cross-chain verification
+   zk-rollup integration
+   Architecture Documentation Deliverables:
+   Required Documents:
+   System architecture diagram (visual)
+   Data flow diagrams for each operation
+   Interface specification (detailed)
+   Storage layout documentation
+   Security assumptions and threat model
+   Gas estimation tables
+   Deployment checklist
+   Diagram Requirements:
+   Use standard notation (UML or similar)
+   Include all components
+   Show all data flows
+   Annotate gas costs
+   Highlight optimization opportunities
+   Verification Steps:
+   Architecture reviewed by all team members
+   All interfaces clearly defined
+   Storage patterns decided
+   Security considerations documented
+   Deployment strategy agreed upon
+   Time Estimate: 1 hour
 
 TASK 3: Groth16 Verifier Implementation (Rust/Wasm)
 Duration: 12 hours
@@ -1130,6 +1140,7 @@ Groth16 Verification Equation:
 e(A, B) = e(α, β) · e(L, γ) · e(C, δ)
 
 Where:
+
 - e() is a pairing function (bilinear map)
 - A, C, L are G1 curve points
 - B is a G2 curve point
@@ -1258,16 +1269,13 @@ Time Estimate: 4 hours
 Subtask 3.3: Add Stylus Integration Layer
 Objective: Integrate the pure Rust verification logic with Stylus SDK to create a deployable smart contract with proper ABI, storage, and external function interfaces.
 Stylus SDK Concepts:
-Storage Macros:
-#[solidity_storage]: Marks struct as contract storage
+Storage Macros: #[solidity_storage]: Marks struct as contract storage
 Generates storage layout compatible with EVM
 Allows persistent state across transactions
-Entrypoint Macro:
-#[entrypoint]: Marks main contract struct
+Entrypoint Macro: #[entrypoint]: Marks main contract struct
 Generates deployment bytecode
 Sets up contract initialization
-External Functions:
-#[external]: Exposes functions to Solidity/EVM
+External Functions: #[external]: Exposes functions to Solidity/EVM
 Handles ABI encoding/decoding automatically
 Manages gas accounting
 Implementation Steps:
@@ -1278,14 +1286,13 @@ Metadata (contract version, statistics)
 Access control (if needed)
 Storage Structure:
 Contract Struct:
+
 - vk_registry: StorageMap<U256, StorageVec<u8>>
   Purpose: Store registered VKs by ID
   Trade-off: Gas cost to register vs gas saved on repeated use
-  
 - vk_counter: StorageU256
   Purpose: Track next available VK ID
   Increments: On each registration
-  
 - verification_count: StorageU256 (optional)
   Purpose: Analytics - total verifications
   Use case: Demonstrate usage for governance
@@ -1304,11 +1311,13 @@ Step 2: Create External Interface Functions
 Primary Function: verify()
 Function Signature:
 Input Parameters:
+
 - proof_bytes: Vec<u8> (serialized proof)
 - public_inputs: Vec<u8> (serialized field elements)
 - vk_identifier: Either Vec<u8> (full VK) or U256 (registered ID)
 
 Return Value:
+
 - Result<bool, Vec<u8>>
 - Ok(true): Proof valid
 - Ok(false): Proof invalid
@@ -1379,6 +1388,7 @@ Step 5: Event Emission
 Events to Define:
 ProofVerified Event:
 Fields:
+
 - proof_type: string ("Groth16")
 - caller: Address
 - success: bool
@@ -1389,6 +1399,7 @@ Purpose: Analytics and debugging
 
 VKRegistered Event:
 Fields:
+
 - vk_id: U256
 - registrar: Address
 - vk_size: U256
@@ -1551,7 +1562,7 @@ Run identical verification
 Record gas used
 Comparison Metrics:
 Absolute gas (Stylus vs Solidity)
-Percentage savings ((Solidity - Stylus) / Solidity * 100)
+Percentage savings ((Solidity - Stylus) / Solidity \* 100)
 Cost in USD (using current gas price and ARB price)
 Break-even point (when savings offset deployment cost)
 Test Cases for Benchmarking:
@@ -1575,14 +1586,14 @@ Average gas savings: X%
 Cost per verification: Stylus vs Solidity
 Break-even analysis: After N verifications
 Detailed Breakdown:
-Operation          | Stylus Gas | Solidity Gas | Savings
+Operation | Stylus Gas | Solidity Gas | Savings
 -------------------|------------|--------------|--------
-Proof decode       | 5,000      | 15,000       | 67%
-Pairing checks     | 35,000     | 120,000      | 71%
-Public input proc  | 8,000      | 20,000       | 60%
-Storage/Events     | 5,000      | 8,000        | 38%
+Proof decode | 5,000 | 15,000 | 67%
+Pairing checks | 35,000 | 120,000 | 71%
+Public input proc | 8,000 | 20,000 | 60%
+Storage/Events | 5,000 | 8,000 | 38%
 -------------------|------------|--------------|--------
-TOTAL              | 53,000     | 163,000      | 67%
+TOTAL | 53,000 | 163,000 | 67%
 
 Visualization:
 Bar chart comparing gas costs
@@ -1698,8 +1709,8 @@ Free to experiment
 Step 2: Execute Deployment
 Deployment Command:
 cargo stylus deploy \
-    --private-key-path=.env \
-    --endpoint=$ARB_SEPOLIA_RPC
+ --private-key-path=.env \
+ --endpoint=$ARB_SEPOLIA_RPC
 
 What Happens During Deployment:
 Compilation: Contract compiled to optimized Wasm
@@ -1739,18 +1750,18 @@ Create Deployment Record:
 File: deployments/sepolia-groth16.json
 Content:
 {
-  "network": "arbitrum-sepolia",
-  "chainId": 421614,
-  "contractName": "Groth16Verifier",
-  "address": "0x...",
-  "deployer": "0x...",
-  "deploymentTx": "0x...",
-  "blockNumber": 12345678,
-  "timestamp": "2025-01-15T10:30:00Z",
-  "deploymentCost": "0.023 ETH",
-  "wasmSize": "72KB",
-  "compiler": "rustc 1.75.0",
-  "optimization": "wasm-opt -Oz"
+"network": "arbitrum-sepolia",
+"chainId": 421614,
+"contractName": "Groth16Verifier",
+"address": "0x...",
+"deployer": "0x...",
+"deploymentTx": "0x...",
+"blockNumber": 12345678,
+"timestamp": "2025-01-15T10:30:00Z",
+"deploymentCost": "0.023 ETH",
+"wasmSize": "72KB",
+"compiler": "rustc 1.75.0",
+"optimization": "wasm-opt -Oz"
 }
 
 Step 4: Verify Contract on Arbiscan
@@ -1789,6 +1800,7 @@ Register a verification key
 Retrieve registered VK
 Check events emitted
 Test Transaction Example:
+
 1. Generate test proof off-chain (using circom/snarkjs)
 2. Serialize proof, inputs, VK to bytes
 3. Call contract.verify(proofBytes, inputs, vkBytes)
@@ -1971,65 +1983,65 @@ Gas efficient check before operations
 Enum and Struct Definitions:
 ProofType Enum:
 Values:
+
 - GROTH16 = 0
 - PLONK = 1
 - STARK = 2
 - (Future: NOVA = 3, HALO2 = 4)
 
-
 Why enum: Type-safe, gas-efficient, clear in code
 
 VerificationResult Struct:
 Fields:
+
 - success: bool (verification result)
 - gasUsed: uint256 (gas consumed)
 - timestamp: uint256 (block timestamp)
 - verifier: address (caller address)
-
 
 Purpose: Rich return data for analytics
 
 Event Definitions:
 ProofVerified Event:
 Parameters (indexed):
+
 - proofType: ProofType
 - verifier: address (caller)
 - vkId: uint256 (if using registered VK)
 
-
 Parameters (non-indexed):
+
 - success: bool
 - gasUsed: uint256
 - timestamp: uint256
 - publicInputsHash: bytes32
 
-
 Purpose: Track all verifications for analytics and auditing
 
 VerificationKeyRegistered Event:
 Parameters (indexed):
+
 - proofType: ProofType
 - registrar: address
 - vkId: uint256
 
-
 Parameters (non-indexed):
+
 - vkHash: bytes32
 - vkSize: uint256
-
 
 Purpose: Track VK registrations, verify integrity
 
 BatchVerificationCompleted Event:
 Parameters (indexed):
+
 - proofType: ProofType
 - batchSize: uint256
 
-
 Parameters (non-indexed):
+
 - successCount: uint256
 - totalGasUsed: uint256
-
 
 Purpose: Track batch operations efficiency
 
@@ -2144,54 +2156,57 @@ Inherits ReentrancyGuard (if doing callbacks)
 State Variables:
 Verifier Addresses:
 Groth16 Stylus Address:
+
 - immutable address groth16Verifier
 - Set in constructor
 - Cannot be changed (trust anchor)
 
-
 PLONK Stylus Address:
+
 - immutable address plonkVerifier
 - Set when PLONK deployed
 - Immutable for security
 
-
 STARK Stylus Address (future):
+
 - immutable address starkVerifier
 - Initially address(0)
 - Can upgrade via new deployment
 
 Storage Maps:
 VK Registry:
+
 - mapping(uint256 => bytes) private verificationKeys
 - Stores registered VKs by ID
 - Private: Access via getter functions
 
-
 VK Metadata:
+
 - mapping(uint256 => VKMetadata) private vkMetadata
 - Tracks: proofType, registrar, timestamp, size
 - Useful for analytics and auditing
 
-
 Verification Statistics:
+
 - mapping(ProofType => uint256) public verificationCount
 - Tracks total verifications per proof type
 - Public for transparency
 
 Constants:
 Version:
+
 - string public constant VERSION = "1.0.0"
 - Semantic versioning
 - Useful for upgrade tracking
 
-
 Max Batch Size:
+
 - uint256 public constant MAX_BATCH_SIZE = 50
 - Prevents gas limit issues
 - Can be adjusted based on testing
 
-
 Min VK Size / Max VK Size:
+
 - uint256 public constant MIN_VK_SIZE = 100
 - uint256 public constant MAX_VK_SIZE = 10000
 - Prevents spam and errors
@@ -2219,23 +2234,24 @@ Early return if obvious errors
 Step 2: Route to Correct Verifier
 Routing Logic:
 if (proofType == GROTH16) {
-    verifierAddress = groth16Verifier
+verifierAddress = groth16Verifier
 } else if (proofType == PLONK) {
-    verifierAddress = plonkVerifier
-    require(verifierAddress != address(0), "PLONK not deployed")
+verifierAddress = plonkVerifier
+require(verifierAddress != address(0), "PLONK not deployed")
 } else {
-    revert InvalidProofType(proofType)
+revert InvalidProofType(proofType)
 }
 
 Step 3: Call Stylus Verifier
 Low-level call strategy:
+
 - Use address.call() for flexibility
 - Encode function selector + parameters
 - Handle return data carefully
 - Check success boolean
 
-
 Alternative: Cast to interface
+
 - Define IStylusVerifier interface
 - Cast address to interface
 - Call function directly
@@ -2280,15 +2296,15 @@ Ensure not duplicate (check hash)
 Step 3: Generate VK ID
 ID Generation Strategy:
 Option A: Incremental counter
+
 - Simple, predictable
 - Easy to track
 
-
 Option B: Hash-based
+
 - vkId = uint256(keccak256(vk))
 - Content-addressed
 - Prevents duplicates automatically
-
 
 Recommendation: Option A for simplicity
 
@@ -2313,6 +2329,7 @@ Reuse for all verifications in batch
 Saves gas vs multiple loads
 Step 4: Loop Through Proofs
 For each proof:
+
 - Call verify() with proof[i], inputs[i], loaded VK
 - Store result in results[i]
 - Continue even if one fails (depends on design)
@@ -2332,18 +2349,21 @@ Caller decides how to handle failures
 Helper Functions:
 getVerificationKey()
 Implementation:
+
 - Load from storage
 - Return bytes
 - View function (no gas except read)
 
 isVerificationKeyRegistered()
 Implementation:
+
 - Check if vkMetadata[vkId].size > 0
 - Return boolean
 - Cheap check
 
 getVerificationKeyHash()
 Implementation:
+
 - Load VK
 - Compute keccak256(vk)
 - Return bytes32
@@ -2364,31 +2384,36 @@ verify(): Return false (more flexible)
 requireValidProof(): Revert (strict helper)
 Provide both options for developers
 Gas Optimization Techniques:
+
 1. Use Custom Errors (Not String Reverts)
-Why: Custom errors are much cheaper
-Savings: ~50% vs string messages
-Example: revert InvalidProofType(type) vs require(false, "Invalid type")
+   Why: Custom errors are much cheaper
+   Savings: ~50% vs string messages
+   Example: revert InvalidProofType(type) vs require(false, "Invalid type")
 
 2. Minimize Storage Reads
-Strategy:
+   Strategy:
+
 - Load once, use multiple times
 - Cache in memory during function
 - Use immutable where possible
 
 3. Efficient Data Structures
-Prefer:
+   Prefer:
+
 - Mappings over arrays (for lookup)
 - Immutable over storage
 - Calldata over memory for inputs
 
 4. Short-Circuit Logic
-Order checks:
+   Order checks:
+
 - Cheapest first (enum check)
 - Most likely to fail first
 - Expensive checks last
 
 5. Batch Operations
-Amortize:
+   Amortize:
+
 - Storage reads across batch
 - Fixed overhead costs
 - VK loading
@@ -2414,12 +2439,13 @@ Verify enum values in range
 Testing Hooks:
 Add Functions for Testing (Separate Contract):
 Test-only functions:
+
 - directCallVerifier() - bypass routing
 - mockVerification() - return hardcoded results
 - getInternalState() - expose private variables
 
-
 Keep separate:
+
 - Don't deploy to production
 - Use inheritance for test contract
 - Conditional compilation
@@ -2459,6 +2485,7 @@ Real-world usage patterns
 Test Setup:
 setUp() Function:
 Tasks:
+
 1. Deploy mock Stylus verifiers (or use actual if available)
 2. Deploy UniversalZKVerifier contract
 3. Fund test accounts with ETH
@@ -2468,6 +2495,7 @@ Tasks:
 
 Test Fixtures:
 Create reusable test data:
+
 - validGroth16Proof: bytes (known valid proof)
 - invalidGroth16Proof: bytes (known invalid)
 - testPublicInputs: bytes (matching proof)
@@ -2484,6 +2512,7 @@ Happy Path Tests:
 Test 1: testVerifyValidProof()
 Objective: Verify valid proof returns true
 Steps:
+
 1. Call verify() with valid test proof
 2. Assert result is true
 3. Check ProofVerified event emitted
@@ -2492,6 +2521,7 @@ Steps:
 Test 2: testVerifyInvalidProof()
 Objective: Invalid proof returns false
 Steps:
+
 1. Call verify() with invalid proof
 2. Assert result is false
 3. Check event still emitted (with success=false)
@@ -2499,6 +2529,7 @@ Steps:
 Test 3: testRegisterVerificationKey()
 Objective: VK registration works
 Steps:
+
 1. Call registerVerificationKey() with test VK
 2. Capture returned vkId
 3. Verify VK stored correctly
@@ -2508,6 +2539,7 @@ Steps:
 Test 4: testVerifyWithRegisteredVK()
 Objective: Verification using stored VK works
 Steps:
+
 1. Register VK, get ID
 2. Call verifyWithVKId() using that ID
 3. Assert verification succeeds
@@ -2517,6 +2549,7 @@ Steps:
 Test 5: testBatchVerify()
 Objective: Batch verification works correctly
 Steps:
+
 1. Create array of 10 valid proofs
 2. Create matching inputs array
 3. Register VK
@@ -2529,6 +2562,7 @@ Edge Case Tests:
 Test 6: testInvalidProofType()
 Objective: Reject invalid proof type enum
 Steps:
+
 1. Call verify() with type = 99 (invalid)
 2. Expect revert with InvalidProofType
 3. Verify no state changed
@@ -2536,6 +2570,7 @@ Steps:
 Test 7: testEmptyProofBytes()
 Objective: Reject empty proof
 Steps:
+
 1. Call verify() with proof = ""
 2. Expect revert or false
 3. Check error message helpful
@@ -2543,6 +2578,7 @@ Steps:
 Test 8: testMismatchedPublicInputs()
 Objective: Wrong input count fails
 Steps:
+
 1. Use proof expecting 5 inputs
 2. Provide only 3 inputs
 3. Expect verification false or revert
@@ -2551,6 +2587,7 @@ Steps:
 Test 9: testNonExistentVKId()
 Objective: Using unregistered VK fails
 Steps:
+
 1. Call verifyWithVKId() with vkId = 999 (not registered)
 2. Expect revert with VerificationKeyNotFound
 3. Validate vkId included in error
@@ -2558,6 +2595,7 @@ Steps:
 Test 10: testBatchSizeMismatch()
 Objective: Mismatched array lengths fail
 Steps:
+
 1. Create proofs array of length 5
 2. Create inputs array of length 3
 3. Call batchVerify()
@@ -2566,6 +2604,7 @@ Steps:
 Test 11: testBatchSizeLimit()
 Objective: Enforce maximum batch size
 Steps:
+
 1. Create proofs array of length MAX_BATCH_SIZE + 1
 2. Call batchVerify()
 3. Expect revert
@@ -2578,13 +2617,13 @@ A. Allow duplicates (each gets new ID)
 B. Reject duplicates (check hash)
 C. Return existing ID
 
-
 Test chosen behavior
 
 Security Tests:
 Test 13: testReentrancy()
 Objective: No reentrancy vulnerabilities
 Steps:
+
 1. Create malicious contract that reenters
 2. Call verify() from malicious contract
 3. Malicious contract tries to reenter
@@ -2594,6 +2633,7 @@ Steps:
 Test 14: testAccessControl()
 Objective: Access control enforced (if applicable)
 Steps:
+
 1. If VK registration restricted:
 2. Try to register as unauthorized user
 3. Expect revert
@@ -2603,6 +2643,7 @@ Steps:
 Test 15: testIntegerOverflow()
 Objective: No overflow vulnerabilities
 Steps:
+
 1. Try to overflow VK counter
 2. Try extreme array sizes
 3. Verify proper handling
@@ -2612,6 +2653,7 @@ Gas Benchmark Tests:
 Test 16: testGroth16GasCost()
 Objective: Measure Groth16 verification gas
 Steps:
+
 1. Record gas before verify()
 2. Call verify() with Groth16 proof
 3. Record gas after
@@ -2623,6 +2665,7 @@ Test 17: testCompareWithSolidity()
 Objective: Compare to Solidity baseline
 Prerequisites: Deploy equivalent Solidity verifier
 Steps:
+
 1. Measure Stylus verifier gas
 2. Measure Solidity verifier gas with same proof
 3. Calculate savings percentage
@@ -2632,6 +2675,7 @@ Steps:
 Test 18: testBatchVerifyGasSavings()
 Objective: Validate batch verification efficiency
 Steps:
+
 1. Verify 10 proofs individually (measure total gas)
 2. Verify same 10 proofs in batch (measure gas)
 3. Calculate savings
@@ -2641,6 +2685,7 @@ Steps:
 Test 19: testVKStorageTradeoff()
 Objective: Measure storage vs calldata tradeoff
 Steps:
+
 1. Verify with VK in calldata (measure gas)
 2. Register VK (measure storage cost)
 3. Verify with stored VK (measure gas)
@@ -2651,6 +2696,7 @@ Integration Tests:
 Test 20: testZkAppIntegration()
 Objective: Real zkApp usage pattern
 Steps:
+
 1. Deploy sample privacy token contract
 2. Contract calls verifier in transfer function
 3. Simulate transfer with valid proof
@@ -2661,6 +2707,7 @@ Steps:
 Test 21: testCrossContractCall()
 Objective: Verify cross-contract compatibility
 Steps:
+
 1. Deploy caller contract
 2. Caller calls verifier
 3. Verify data encoding correct
@@ -2670,6 +2717,7 @@ Steps:
 Test 22: testEventIndexing()
 Objective: Events properly structured for indexing
 Steps:
+
 1. Perform verification
 2. Check emitted events
 3. Verify indexed parameters correct
@@ -2681,18 +2729,19 @@ Test 23: testFuzzProofBytes()
 Objective: Random inputs don't break contract
 Using Foundry's fuzzing:
 function testFuzz_ProofBytes(bytes calldata randomProof) public {
-    // Should never revert
-    // May return false but must not panic
-    try verifier.verify(ProofType.GROTH16, randomProof, testInputs, testVK) {
-        // Success or false - both OK
-    } catch {
-        // Should have specific error
-    }
+// Should never revert
+// May return false but must not panic
+try verifier.verify(ProofType.GROTH16, randomProof, testInputs, testVK) {
+// Success or false - both OK
+} catch {
+// Should have specific error
+}
 }
 
 Test 24: testFuzzPublicInputs()
 Objective: Random inputs handled gracefully
 Steps:
+
 1. Fuzz input array
 2. Call verify()
 3. Assert no unexpected behavior
@@ -2707,13 +2756,14 @@ assertWithinPercent(): For gas comparisons
 
 Mock Contracts:
 MockStylusVerifier.sol:
+
 - Simulates Stylus verifier behavior
 - Configurable return values
 - Gas usage simulation
 - Useful when Stylus not available
 
-
 MaliciousContract.sol:
+
 - Tests security properties
 - Attempts reentrancy
 - Tries edge case exploits
@@ -2734,18 +2784,14 @@ Test Commands:
 Run all tests:
 forge test
 
-
 Run with verbosity:
 forge test -vvv
-
 
 Run specific test:
 forge test --match-test testVerifyValidProof
 
-
 Run gas report:
 forge test --gas-report
-
 
 Run with coverage:
 forge coverage
@@ -2765,6 +2811,7 @@ Why it matters (security/functionality)
 Test Summary Report:
 Create: test-summary.md
 Include:
+
 - Total tests
 - Coverage metrics
 - Gas benchmarks
@@ -2797,6 +2844,7 @@ Decode data:
 cast abi-decode "verify(uint8,bytes,bytes,bytes)" 0x...
 
 Compare:
+
 - Encode in Solidity
 - Decode in cast
 - Verify match
@@ -2804,11 +2852,13 @@ Compare:
 Cross-Contract Call Validation:
 Direct Call Test:
 Test Setup:
+
 1. Deploy Stylus verifier at addressA
 2. Deploy Solidity wrapper at addressB
 3. Wrapper configured to call addressA
 
 Test Execution:
+
 1. Call wrapper.verify()
 2. Wrapper encodes and calls Stylus
 3. Stylus processes and returns
@@ -2817,6 +2867,7 @@ Test Execution:
 
 Low-Level Call Validation:
 If using address.call():
+
 1. Manually encode function call
 2. Send via low-level call
 3. Check success boolean
@@ -2824,23 +2875,27 @@ If using address.call():
 5. Handle errors appropriately
 
 Validation:
+
 - Success = true for valid calls
 - Return data decodes correctly
 - Gas accounting accurate
 
 Interface Cast Validation:
 If using interface casting:
+
 1. Define IStylusVerifier interface
 2. Cast address to interface
 3. Call functions directly
 4. Compiler handles encoding
 
 Benefits:
+
 - Type safety
 - Cleaner code
 - Compiler catches errors
 
 Requirements:
+
 - Interface must match exactly
 - Function selectors must align
 
@@ -2858,6 +2913,7 @@ Validation: Test various lengths
 
 Struct Return Values:
 Complex return types:
+
 - Each field encoded separately
 - Solidity decodes automatically
 - Stylus SDK handles encoding
@@ -2867,23 +2923,27 @@ Test: Return complex struct, verify all fields
 Error Propagation:
 Revert Handling:
 When Stylus reverts:
+
 1. Solidity call returns false
 2. Return data contains error message
 3. Wrapper can decode error
 4. Re-throw or handle gracefully
 
 Test scenarios:
+
 - Stylus reverts with string
 - Stylus reverts with custom error
 - Solidity decodes correctly
 
 Gas Limit Issues:
 Cross-contract calls need gas:
+
 - Specify gas limit in call
 - Ensure sufficient for Stylus execution
 - Test with various gas limits
 
 Validation:
+
 - Call with excess gas (succeeds)
 - Call with insufficient gas (reverts)
 - Document minimum gas requirements
@@ -2891,11 +2951,13 @@ Validation:
 Event Compatibility:
 Event Emission Across VMs:
 Stylus emits events:
+
 - Uses Solidity-compatible format
 - Same topics structure
 - Same data encoding
 
 Validation:
+
 1. Emit event from Stylus
 2. Listen in Solidity test
 3. Decode event parameters
@@ -2903,6 +2965,7 @@ Validation:
 
 Event Ordering:
 When Solidity calls Stylus:
+
 1. Solidity may emit before call
 2. Stylus emits during execution
 3. Solidity may emit after call
@@ -2913,6 +2976,7 @@ Test: Verify event order preserved
 Performance Testing:
 Call Overhead Measurement:
 Measure:
+
 - Direct Stylus call gas
 - Solidity wrapper call gas
 - Overhead = Wrapper - Direct
@@ -2921,6 +2985,7 @@ Target: <5k gas overhead
 Sources: ABI encoding, forwarding, decoding
 
 Optimization Opportunities:
+
 1. Minimize wrapper logic
 2. Use calldata not memory where possible
 3. Cache computed values
@@ -2930,6 +2995,7 @@ Documentation Requirements:
 ABI Specification Document:
 Create: docs/abi-spec.md
 Include:
+
 - All function signatures
 - Parameter types and encoding
 - Return value formats
@@ -2939,6 +3005,7 @@ Include:
 
 Integration Guide:
 For zkApp developers:
+
 - How to call verifier
 - Required imports
 - Example code
@@ -2961,17 +3028,20 @@ Objective: Build comprehensive integration tests that simulate real zkApp usage 
 Test Environment Setup:
 Local Test Network:
 Use Foundry's Anvil:
+
 1. Start local node: anvil
 2. Deploys fast and free
 3. Full Ethereum compatibility
 4. Easy to reset state
 
 Configure:
+
 - Fork Arbitrum Sepolia (optional)
 - Or use fresh local chain
 - Fund test accounts
 
 Contract Deployment Order:
+
 1. Deploy Groth16 Stylus verifier
 2. Deploy PLONK Stylus verifier (if ready)
 3. Deploy Solidity wrapper (pointing to verifiers)
@@ -2981,7 +3051,8 @@ Contract Deployment Order:
 Test Data Preparation:
 Generate Real Proofs:
 Use circom/snarkjs:
-1. Create simple test circuit (x * x = y)
+
+1. Create simple test circuit (x \* x = y)
 2. Compile circuit to r1cs
 3. Generate proving key and VK
 4. Create witness with test values
@@ -2989,6 +3060,7 @@ Use circom/snarkjs:
 6. Serialize to bytes
 
 Why real proofs:
+
 - Validates actual verification logic
 - Tests real data formats
 - Catches encoding issues
@@ -2996,6 +3068,7 @@ Why real proofs:
 
 Proof Library:
 Create test-data/ directory:
+
 - valid_proof_1.json (proof + inputs + VK)
 - valid_proof_2.json (different circuit)
 - invalid_proof_1.json (wrong inputs)
@@ -3008,6 +3081,7 @@ Test 1: Complete Verification Flow
 Scenario: User calls zkApp which verifies proof
 
 Steps:
+
 1. User has: proof, inputs, VK
 2. User calls zkApp.action(proof, inputs)
 3. zkApp calls verifier.verify()
@@ -3019,6 +3093,7 @@ Steps:
 9. zkApp completes action
 
 Assertions:
+
 - Transaction succeeds
 - Correct return value
 - Events emitted at each layer
@@ -3029,12 +3104,14 @@ Test 2: Verification with Registered VK
 Scenario: Optimize gas with stored VK
 
 Steps:
+
 1. Register VK once (one-time cost)
 2. User verifies with vkId reference
 3. Verifier loads VK from storage
 4. Verification proceeds
 
 Assertions:
+
 - Registration successful
 - Subsequent verifications cheaper
 - Same verification result
@@ -3044,12 +3121,14 @@ Test 3: Batch Verification Flow
 Scenario: Process multiple proofs efficiently
 
 Steps:
+
 1. Generate 10 valid proofs
 2. zkApp batches verification request
 3. Verifier processes all in one call
 4. Returns array of results
 
 Assertions:
+
 - All individual results correct
 - Gas less than 10x single verification
 - Events show batch info
@@ -3059,11 +3138,13 @@ Test 4: Invalid Proof Handling
 Scenario: zkApp rejects invalid proofs
 
 Steps:
+
 1. User submits invalid proof
 2. Verification returns false
 3. zkApp reverts transaction
 
 Assertions:
+
 - Verification completes without error
 - Returns false not revert
 - zkApp handles appropriately
@@ -3074,11 +3155,13 @@ Privacy Transfer zkApp:
 Contract: PrivacyToken
 Function: transfer(proof, inputs)
 Logic:
+
 1. Verify proof of ownership
 2. If valid: update balances
 3. If invalid: revert
 
 Tests:
+
 - Valid proof → transfer succeeds
 - Invalid proof → transfer fails
 - Gas costs documented
@@ -3087,11 +3170,13 @@ Anonymous Voting zkApp:
 Contract: PrivateVote
 Function: castVote(proof, vote)
 Logic:
+
 1. Verify proof of eligibility
 2. Verify vote not double-counted (nullifier)
 3. Record vote
 
 Tests:
+
 - Eligible voter succeeds
 - Double vote prevented
 - Vote privacy maintained
@@ -3100,11 +3185,13 @@ Credential System zkApp:
 Contract: CredentialRegistry
 Function: verify Credential(proof, credentialHash)
 Logic:
+
 1. Verify proof of credential possession
 2. Check credential not revoked
 3. Grant access
 
 Tests:
+
 - Valid credential → access granted
 - Revoked credential → access denied
 - Privacy preserved
@@ -3114,11 +3201,13 @@ Test 5: Multi-Contract Workflow
 Scenario: Verification in complex DeFi operation
 
 Setup:
+
 1. Lending protocol contract
 2. Privacy layer contract
 3. Verifier contract
 
 Flow:
+
 1. User wants private collateral deposit
 2. Calls privacy layer
 3. Privacy layer verifies proof
@@ -3126,6 +3215,7 @@ Flow:
 5. Deposit recorded privately
 
 Assertions:
+
 - All contracts interact correctly
 - Events from all contracts
 - Gas reasonable for complexity
@@ -3135,11 +3225,13 @@ Test 6: Composability Verification
 Scenario: Multiple zkApps using same verifier
 
 Setup:
+
 1. Deploy verifier once
 2. Deploy 3 different zkApps
 3. All reference same verifier
 
 Tests:
+
 - Each zkApp can verify independently
 - No interference between apps
 - Verifier state not corrupted
@@ -3150,11 +3242,13 @@ Test 7: Gas Limit Exhaustion
 Scenario: Insufficient gas for verification
 
 Steps:
+
 1. Call verify() with low gas limit
 2. Verification runs out of gas
 3. Transaction reverts
 
 Assertions:
+
 - Graceful failure
 - No state corruption
 - Appropriate error message
@@ -3164,11 +3258,13 @@ Test 8: Network Congestion Simulation
 Scenario: High gas price environment
 
 Steps:
+
 1. Simulate high network usage
 2. Verification still works
 3. Measure cost increase
 
 Assertions:
+
 - Functionality maintained
 - Cost proportional to gas price
 - No logic failures
@@ -3178,6 +3274,7 @@ Test 9: Malicious Input Handling
 Scenario: Attacker tries to break verifier
 
 Attempts:
+
 1. Extremely long proof bytes
 2. Invalid curve points
 3. Malformed public inputs
@@ -3185,6 +3282,7 @@ Attempts:
 5. Reentrancy attempts
 
 Assertions:
+
 - All attacks fail safely
 - No DOS vector
 - No fund loss
@@ -3195,12 +3293,14 @@ Test 10: Throughput Testing
 Scenario: High verification volume
 
 Steps:
+
 1. Send 100 verification requests rapidly
 2. Measure: Transactions per block
 3. Measure: Average confirmation time
 4. Measure: Gas per verification
 
 Targets:
+
 - All verifications succeed
 - No degradation in accuracy
 - Predictable gas costs
@@ -3210,10 +3310,12 @@ Test 11: Large Public Input Testing
 Scenario: Circuit with many public inputs
 
 Setup:
+
 1. Circuit with 50 public inputs
 2. Generate valid proof
 
 Tests:
+
 - Verification still succeeds
 - Gas scales linearly
 - No overflow or truncation
@@ -3224,11 +3326,13 @@ Test 12: VK Registry Under Load
 Scenario: Many VKs registered
 
 Steps:
+
 1. Register 100 different VKs
 2. Verify proofs using various VKs
 3. Retrieve VKs by ID
 
 Assertions:
+
 - All registrations succeed
 - No ID collisions
 - Retrieval always correct
@@ -3238,11 +3342,13 @@ Test 13: Storage Growth Management
 Scenario: Long-term storage implications
 
 Simulation:
+
 1. Register VKs over time
 2. Monitor storage costs
 3. Project future costs
 
 Analysis:
+
 - Storage cost per VK
 - Scalability limitations
 - Potential optimizations
@@ -3253,6 +3359,7 @@ Test 14: Verifier Upgrade Scenario
 Scenario: Deploy new verifier version
 
 Steps:
+
 1. Deploy V1 verifier
 2. zkApps use V1
 3. Deploy V2 verifier
@@ -3260,6 +3367,7 @@ Steps:
 5. Existing zkApps still work
 
 Tests:
+
 - Backward compatibility
 - Migration path clear
 - No downtime
@@ -3270,6 +3378,7 @@ Test 15: Sepolia Deployment Validation
 After deploying to Sepolia:
 
 Tests to run:
+
 1. Verify from EOA (externally owned account)
 2. Verify from contract
 3. Check explorer shows correct data
@@ -3277,6 +3386,7 @@ Tests to run:
 5. Gas matches local testing
 
 Validation:
+
 - Public testnet behavior
 - Real network conditions
 - Block explorer integration
@@ -3287,12 +3397,14 @@ Test 16: Frontend Integration
 Scenario: User workflow through UI
 
 Components:
+
 1. Web3 wallet connection
 2. Proof generation (client-side)
 3. Transaction submission
 4. Result display
 
 Tests:
+
 - Wallet connects correctly
 - Proofs format properly
 - Transactions submit successfully
@@ -3304,11 +3416,13 @@ Test 17: Event Listening
 Scenario: Off-chain indexing
 
 Setup:
+
 1. Deploy contracts
 2. Set up event listener
 3. Perform verifications
 
 Tests:
+
 - All events captured
 - Event data correct
 - Indexing works
@@ -3318,11 +3432,13 @@ Test 18: Gas Analytics
 Scenario: Track verification costs over time
 
 Data collection:
+
 1. Log gas per verification
 2. Track by proof type
 3. Monitor trends
 
 Analysis:
+
 - Average gas costs
 - Variability
 - Optimization opportunities
@@ -3333,6 +3449,7 @@ Integration Test Report:
 Create: docs/integration-test-report.md
 
 Include:
+
 - All test scenarios
 - Pass/fail status
 - Gas measurements
@@ -3344,6 +3461,7 @@ User Integration Guide:
 For zkApp developers:
 
 Sections:
+
 - Setup instructions
 - Code examples
 - Best practices
@@ -3373,22 +3491,26 @@ Objective: Understand PLONK proof system specifics, study halo2 library implemen
 PLONK Overview:
 Key Differences from Groth16:
 Universal Setup:
+
 - Groth16: Circuit-specific trusted setup
 - PLONK: Universal ceremony, reusable for all circuits
 - Benefit: Deploy new circuits without new ceremony
 
 Proof Structure:
+
 - PLONK proofs larger (~512 bytes vs Groth16's ~128 bytes)
 - More field elements
 - Multiple polynomial commitments
 
 Verification:
+
 - Uses KZG (Kate-Zaverucha-Goldberg) polynomial commitments
 - Requires SRS (Structured Reference String)
 - Different pairing checks than Groth16
 
 PLONK Verification Algorithm:
 High-level steps:
+
 1. Parse proof (multiple commitments + evaluations)
 2. Load verification key (includes SRS elements)
 3. Reconstruct challenges (via Fiat-Shamir)
@@ -3401,6 +3523,7 @@ Complexity: More steps than Groth16 but still efficient
 halo2_proofs Library:
 Library Structure:
 Key modules:
+
 - poly: Polynomial operations
 - plonk: PLONK-specific logic
 - transcript: Fiat-Shamir transform
@@ -3410,22 +3533,26 @@ Verifier entry: plonk::verify_proof()
 
 Curve Support:
 halo2 uses:
+
 - Pasta curves (Pallas/Vesta) by default
 - Can use BN254 for Ethereum compatibility
 
 For Arbitrum:
+
 - Must use BN254 (Ethereum standard)
 - Ensures Solidity interoperability
 - Matches Groth16 curve choice
 
 SRS Requirements:
 Universal SRS:
+
 - Large trusted setup ceremony
 - One-time per curve
 - Size depends on max circuit size
 - Can be downloaded (don't regenerate)
 
 Perpetual Powers of Tau:
+
 - Community ceremony for BN254
 - Available for download
 - Used by many projects
@@ -3434,6 +3561,7 @@ Perpetual Powers of Tau:
 Implementation Planning:
 Code Reuse from Groth16:
 Can reuse:
+
 - Project structure
 - Storage patterns
 - ABI encoding helpers
@@ -3441,6 +3569,7 @@ Can reuse:
 - Testing framework
 
 Must rewrite:
+
 - Core verification logic
 - Proof deserialization
 - VK format handling
@@ -3449,6 +3578,7 @@ Must rewrite:
 Data Structures:
 PLONK Proof Structure:
 Components (typical):
+
 - Commitments (multiple G1 points)
 - Evaluations (field elements)
 - Opening proof (G1 point)
@@ -3457,6 +3587,7 @@ Total size: ~512 bytes (varies by circuit)
 
 PLONK Verification Key:
 Components:
+
 - SRS elements (subset needed for verification)
 - Circuit-specific constants
 - Domain size
@@ -3468,12 +3599,14 @@ Strategy: Store hash on-chain, full VK off-chain or in storage
 Gas Estimation:
 Expected Gas Costs:
 PLONK verification operations:
+
 - Multiple pairings: ~80k gas
 - Field arithmetic: ~20k gas
 - Transcript operations: ~10k gas
 - Total estimate: 110-150k gas
 
 Compared to:
+
 - Groth16 Stylus: ~60k gas
 - Groth16 Solidity: ~180k gas
 - PLONK Solidity: ~240k+ gas
@@ -3502,6 +3635,7 @@ Technical Specification:
 Document: docs/plonk-spec.md
 
 Contents:
+
 - PLONK algorithm overview
 - halo2 library analysis
 - Data structure definitions
@@ -3513,6 +3647,7 @@ Proof-of-Concept:
 Goal: Verify halo2 works in no_std
 
 Steps:
+
 1. Create minimal halo2 project
 2. Disable std features
 3. Compile to Wasm
@@ -3539,12 +3674,14 @@ Location: contracts/stylus/plonk/
 Structure: Similar to groth16 crate
 
 Cargo.toml differences:
+
 - halo2_proofs dependency (not ark-groth16)
 - halo2_curves for BN254
 - poseidon or other transcript hash
 
 Dependencies Configuration:
 Required crates:
+
 - halo2_proofs: Core PLONK implementation
 - halo2_curves: Curve arithmetic (BN254)
 - group: Generic group operations
@@ -3553,6 +3690,7 @@ Required crates:
 - alloy-primitives: Ethereum types
 
 Features:
+
 - default-features = false (no_std)
 - Enable only needed features
 - Minimize binary size
@@ -3561,6 +3699,7 @@ Core Implementation:
 Type Definitions:
 PLONKProof Struct:
 Fields (example - varies by scheme):
+
 - advice_commitments: Vec<G1Affine>
 - permutation_product_commitment: G1Affine
 - vanishing_argument_commitment: G1Affine
@@ -3571,12 +3710,14 @@ Serialization: Custom format or use halo2's
 
 PLONKVerificationKey:
 Components:
+
 - fixed_commitments: Vec<G1Affine>
 - permutation_commitments: Vec<G1Affine>
 - cs: ConstraintSystem (circuit structure)
 - params: Params (SRS subset)
 
 Storage strategy:
+
 - Option A: Store full VK (expensive)
 - Option B: Store hash, pass VK in calldata
 - Option C: Hybrid (small VKs stored, large passed)
@@ -3586,6 +3727,7 @@ Step 1: Proof Deserialization:
 Function: deserialize_proof(bytes: &[u8])
 
 Process:
+
 1. Read commitment points (parse as G1)
 2. Read evaluation field elements (parse as Fr)
 3. Read opening proof
@@ -3593,6 +3735,7 @@ Process:
 5. Validate all elements in field
 
 Error handling:
+
 - InvalidProofLength
 - PointNotOnCurve
 - FieldElementInvalid
@@ -3601,6 +3744,7 @@ Step 2: VK Deserialization:
 Function: deserialize_vk(bytes: &[u8])
 
 Process:
+
 1. Parse fixed commitments
 2. Parse permutation commitments
 3. Reconstruct constraint system
@@ -3608,17 +3752,20 @@ Process:
 5. Prepare for verification
 
 Caching:
+
 - Consider caching prepared VK
 - Trade memory for computation
 - Benchmark to decide
 
 Step 3: Transcript Setup:
 Fiat-Shamir Transform:
+
 - Deterministic challenge generation
 - Hash proof components
 - Generate verifier challenges
 
 Implementation:
+
 - Use Blake2b or Poseidon hash
 - Follow halo2 transcript protocol
 - Must match prover's transcript exactly
@@ -3627,12 +3774,14 @@ Importance: Challenges must be unpredictable and verifiable
 
 Step 4: Challenge Computation:
 Challenges needed:
+
 - beta, gamma: For permutation argument
 - alpha: For linearization
 - x: For opening proof
 - v: For multipoint opening (if applicable)
 
 Process:
+
 1. Initialize transcript with VK
 2. Absorb proof commitments
 3. Squeeze challenges
@@ -3640,22 +3789,25 @@ Process:
 
 Step 5: Verification Equation:
 Simplified verification steps:
+
 1. Reconstruct linearization polynomial commitment
 2. Compute expected commitment from evaluations
 3. Verify KZG opening proof via pairing
 4. Check all evaluations consistent
 
 Pairing check:
-e(commitment, [1]_2) ?= e(opening, [x]_2) * e(evaluation, [1]_2)
+e(commitment, [1]\_2) ?= e(opening, [x]\_2) \* e(evaluation, [1]\_2)
 
 Where:
-- [1]_2, [x]_2 from SRS
+
+- [1]\_2, [x]\_2 from SRS
 - commitment from proof
 - opening is proof of polynomial opening
 - evaluation claimed by prover
 
 Step 6: Result Return:
 Return:
+
 - Ok(true) if all checks pass
 - Ok(false) if verification fails
 - Err(...) if malformed input
@@ -3663,21 +3815,18 @@ Return:
 Important: Distinguish invalid proof from error
 
 Stylus Integration:
-Contract Structure:
-#[solidity_storage]
-#[entrypoint]
+Contract Structure: #[solidity_storage] #[entrypoint]
 pub struct PLONKVerifier {
-    vk_registry: StorageMap<U256, StorageVec<u8>>,
-    vk_counter: StorageU256,
-    srs_elements: StorageVec<u8>, // Subset of SRS
+vk_registry: StorageMap<U256, StorageVec<u8>>,
+vk_counter: StorageU256,
+srs_elements: StorageVec<u8>, // Subset of SRS
 }
 
-External Functions:
-#[external]
+External Functions: #[external]
 impl PLONKVerifier {
-    pub fn verify(...) -> Result<bool, Vec<u8>>
-    pub fn register_vk(...) -> Result<U256, Vec<u8>>
-    pub fn get_vk(...) -> Result<Vec<u8>, Vec<u8>>
+pub fn verify(...) -> Result<bool, Vec<u8>>
+pub fn register_vk(...) -> Result<U256, Vec<u8>>
+pub fn get_vk(...) -> Result<Vec<u8>, Vec<u8>>
 }
 
 SRS Management:
@@ -3694,14 +3843,16 @@ Best for: Infrequent verifications
 
 Approach 3: Hybrid:
 Strategy:
+
 - Store common SRS elements on-chain (one-time)
 - Pass circuit-specific elements in calldata
-Pros: Balance storage vs transaction cost
-Best for: Multiple circuits, frequent use
+  Pros: Balance storage vs transaction cost
+  Best for: Multiple circuits, frequent use
 
 Recommended for Hackathon:
 Use Approach 2: SRS in calldata
 Reason:
+
 - Simpler implementation
 - No upfront storage cost
 - Easier to test
@@ -3710,6 +3861,7 @@ Reason:
 Optimization Techniques:
 Binary Size Optimization:
 Techniques:
+
 - Use wasm-opt aggressively
 - Strip unused halo2 features
 - Minimize dependencies
@@ -3720,6 +3872,7 @@ Challenge: halo2 is larger than arkworks
 
 Computation Optimization:
 Techniques:
+
 - Batch scalar multiplications
 - Precompute where possible
 - Use halo2's optimized functions
@@ -3729,6 +3882,7 @@ Profile: Use cargo-flamegraph
 
 Memory Optimization:
 Strategies:
+
 - Reuse buffers
 - Avoid cloning large structures
 - Use references where possible
@@ -3739,6 +3893,7 @@ Limit: Wasm memory constraints
 Testing:
 Unit Tests:
 Test cases:
+
 1. Valid PLONK proof verifies
 2. Invalid proof rejected
 3. Malformed proof errors appropriately
@@ -3748,6 +3903,7 @@ Test cases:
 
 Test Data Generation:
 Use halo2_proofs to generate test data:
+
 1. Create simple test circuit
 2. Generate proving key
 3. Create witness
@@ -3757,6 +3913,7 @@ Use halo2_proofs to generate test data:
 
 Integration with Wrapper:
 Ensure:
+
 - ABI matches Groth16 pattern
 - Function selectors consistent
 - Error handling aligned
@@ -3775,29 +3932,30 @@ Time Estimate: 5 hours
 Subtask 6.3: Multi-Proof Type Routing (continued)
 Mixed-Type Batching (Advanced - continued):
 function batchVerifyMixed(
-    ProofType[] calldata proofTypes,
-    bytes[] calldata proofs,
-    bytes[] calldata publicInputs,
-    uint256[] calldata vkIds
+ProofType[] calldata proofTypes,
+bytes[] calldata proofs,
+bytes[] calldata publicInputs,
+uint256[] calldata vkIds
 ) external view returns (bool[] memory results) {
-    require(
-        proofTypes.length == proofs.length && 
-        proofs.length == publicInputs.length &&
-        publicInputs.length == vkIds.length,
-        "Array length mismatch"
-    );
-    
+require(
+proofTypes.length == proofs.length &&
+proofs.length == publicInputs.length &&
+publicInputs.length == vkIds.length,
+"Array length mismatch"
+);
+
     results = new bool[](proofs.length);
-    
+
     for (uint256 i = 0; i < proofs.length; i++) {
         // Route each to appropriate verifier
         address verifier = verifiers[proofTypes[i]];
         bytes memory vk = vks[proofTypes[i]][vkIds[i]];
-        
+
         results[i] = _verifyInternal(verifier, proofs[i], publicInputs[i], vk);
     }
-    
+
     return results;
+
 }
 
 Note: Less gas efficient than homogeneous batch but more flexible
@@ -3805,6 +3963,7 @@ Note: Less gas efficient than homogeneous batch but more flexible
 Error Handling Improvements:
 Type-Specific Errors:
 Custom errors:
+
 - error Groth16VerificationFailed(string reason);
 - error PLONKVerificationFailed(string reason);
 - error STARKVerificationFailed(string reason);
@@ -3817,14 +3976,15 @@ Strategy: If one verifier type unavailable, continue with others
 
 Example:
 function verify(...) external view returns (bool) {
-    address verifier = verifiers[proofType];
-    
+address verifier = verifiers[proofType];
+
     if (verifier == address(0)) {
         emit VerifierNotAvailable(proofType);
         revert VerifierNotDeployed(proofType);
     }
-    
+
     // Proceed with verification
+
 }
 
 Gas Optimization for Routing:
@@ -3832,6 +3992,7 @@ Minimize Routing Overhead:
 Goal: Keep routing cost under 2k gas
 
 Techniques:
+
 1. Use immutable for verifier addresses (cheaper reads)
 2. Skip unnecessary checks (trust enum)
 3. Inline routing logic (no external calls)
@@ -3840,17 +4001,18 @@ Techniques:
 Gas Comparison Table:
 Document expected gas per proof type:
 
-ProofType | Solidity | Stylus | Savings
-----------|----------|--------|--------
-Groth16   | 180k     | 60k    | 67%
-PLONK     | 240k     | 110k   | 54%
-STARK     | 450k     | 100k   | 78% (future)
+| ProofType | Solidity | Stylus | Savings      |
+| --------- | -------- | ------ | ------------ |
+| Groth16   | 180k     | 60k    | 67%          |
+| PLONK     | 240k     | 110k   | 54%          |
+| STARK     | 450k     | 100k   | 78% (future) |
 
 Include in documentation for users
 
 Analytics and Monitoring:
 Usage Tracking:
 Add counters:
+
 - mapping(ProofType => uint256) public verificationCountByType
 - mapping(ProofType => uint256) public totalGasUsedByType
 
@@ -3863,12 +4025,12 @@ Benefit: Understand usage patterns, optimize popular types
 Events Enhancement:
 Update ProofVerified event:
 event ProofVerified(
-    ProofType indexed proofType,  // Can filter by type
-    address indexed verifier,      // Which Stylus contract
-    address indexed caller,        // Who requested verification
-    bool success,
-    uint256 gasUsed,
-    uint256 timestamp
+ProofType indexed proofType, // Can filter by type
+address indexed verifier, // Which Stylus contract
+address indexed caller, // Who requested verification
+bool success,
+uint256 gasUsed,
+uint256 timestamp
 );
 
 Benefit: Rich analytics data for off-chain indexing
@@ -3876,74 +4038,76 @@ Benefit: Rich analytics data for off-chain indexing
 Testing Multi-Proof Routing:
 Test 1: Route to Groth16:
 function testRouteToGroth16() public {
-    bool result = wrapper.verify(
-        ProofType.GROTH16,
-        groth16Proof,
-        groth16Inputs,
-        groth16VK
-    );
-    assertTrue(result);
-    assertEq(lastVerifierCalled, groth16Address);
+bool result = wrapper.verify(
+ProofType.GROTH16,
+groth16Proof,
+groth16Inputs,
+groth16VK
+);
+assertTrue(result);
+assertEq(lastVerifierCalled, groth16Address);
 }
 
 Test 2: Route to PLONK:
 function testRouteToPLONK() public {
-    bool result = wrapper.verify(
-        ProofType.PLONK,
-        plonkProof,
-        plonkInputs,
-        plonkVK
-    );
-    assertTrue(result);
-    assertEq(lastVerifierCalled, plonkAddress);
+bool result = wrapper.verify(
+ProofType.PLONK,
+plonkProof,
+plonkInputs,
+plonkVK
+);
+assertTrue(result);
+assertEq(lastVerifierCalled, plonkAddress);
 }
 
 Test 3: Unsupported Type:
 function testUnsupportedType() public {
-    vm.expectRevert(VerifierNotDeployed.selector);
-    wrapper.verify(
-        ProofType.STARK,  // Not yet deployed
-        bytes(""),
-        bytes(""),
-        bytes("")
-    );
+vm.expectRevert(VerifierNotDeployed.selector);
+wrapper.verify(
+ProofType.STARK, // Not yet deployed
+bytes(""),
+bytes(""),
+bytes("")
+);
 }
 
 Test 4: Mixed Batch:
 function testMixedBatch() public {
-    ProofType[] memory types = new ProofType[](3);
-    types[0] = ProofType.GROTH16;
-    types[1] = ProofType.PLONK;
-    types[2] = ProofType.GROTH16;
-    
+ProofType[] memory types = new ProofType[](3);
+types[0] = ProofType.GROTH16;
+types[1] = ProofType.PLONK;
+types[2] = ProofType.GROTH16;
+
     // ... prepare proofs and inputs ...
-    
+
     bool[] memory results = wrapper.batchVerifyMixed(
         types, proofs, inputs, vkIds
     );
-    
+
     assertEq(results.length, 3);
     assertTrue(results[0]);
     assertTrue(results[1]);
     assertTrue(results[2]);
+
 }
 
 Test 5: Gas Comparison:
 function testGasComparisonByType() public {
-    uint256 gasBefore = gasleft();
-    wrapper.verify(ProofType.GROTH16, ...);
-    uint256 groth16Gas = gasBefore - gasleft();
-    
+uint256 gasBefore = gasleft();
+wrapper.verify(ProofType.GROTH16, ...);
+uint256 groth16Gas = gasBefore - gasleft();
+
     gasBefore = gasleft();
     wrapper.verify(ProofType.PLONK, ...);
     uint256 plonkGas = gasBefore - gasleft();
-    
+
     // PLONK should use more gas than Groth16
     assertGt(plonkGas, groth16Gas);
-    
+
     // But both should be under target
     assertLt(groth16Gas, 100_000);
     assertLt(plonkGas, 150_000);
+
 }
 
 Documentation Updates:
@@ -3951,6 +4115,7 @@ Developer Guide:
 Create: docs/multi-proof-usage.md
 
 Sections:
+
 1. Supported Proof Types
 2. When to Use Each Type
 3. Gas Cost Comparison
@@ -3962,6 +4127,7 @@ API Reference:
 Update: docs/api-reference.md
 
 Add:
+
 - ProofType enum documentation
 - Routing behavior explanation
 - Type-specific considerations
@@ -3971,17 +4137,18 @@ Integration Examples:
 Example: Choosing proof type
 
 // For many verifications of same circuit
-ProofType type = ProofType.GROTH16;  // Smaller proofs, faster
+ProofType type = ProofType.GROTH16; // Smaller proofs, faster
 
 // For frequently changing circuits
-ProofType type = ProofType.PLONK;    // Universal setup, easier updates
+ProofType type = ProofType.PLONK; // Universal setup, easier updates
 
 // For quantum resistance (future)
-ProofType type = ProofType.STARK;    // No trusted setup, post-quantum
+ProofType type = ProofType.STARK; // No trusted setup, post-quantum
 
 Upgrade Strategy:
 Adding New Proof Types:
 Process:
+
 1. Deploy new Stylus verifier
 2. Add enum value to ProofType
 3. Update verifiers mapping in wrapper
@@ -3989,6 +4156,7 @@ Process:
 5. Update documentation
 
 Backward compatibility:
+
 - Existing proofs continue working
 - No migration needed for users
 - Just new option available
@@ -3996,9 +4164,10 @@ Backward compatibility:
 Version Management:
 Strategy: Track wrapper version
 
-string public constant VERSION = "2.0.0";  // Added PLONK support
+string public constant VERSION = "2.0.0"; // Added PLONK support
 
 Benefit:
+
 - Users know capabilities
 - Can check compatibility
 - Easier support and debugging
@@ -4019,12 +4188,14 @@ Objective: Comprehensively measure PLONK verifier gas consumption, compare to Gr
 Benchmark Setup:
 Comparison Matrix:
 Need to measure:
+
 1. PLONK Stylus (our implementation)
 2. PLONK Solidity (baseline)
 3. Groth16 Stylus (comparison)
 4. Groth16 Solidity (reference)
 
 Across various conditions:
+
 - Different public input counts
 - Different circuit sizes
 - Valid vs invalid proofs
@@ -4032,7 +4203,7 @@ Across various conditions:
 
 Test Circuits:
 Small Circuit (Baseline):
-Circuit: x * x = y (simple square)
+Circuit: x \* x = y (simple square)
 Public inputs: 1
 Constraints: ~10
 Purpose: Minimal overhead measurement
@@ -4055,12 +4226,12 @@ Create: test/gas/PLONKGasBenchmark.t.sol
 
 Structure:
 contract PLONKGasBenchmark is Test {
-    UniversalZKVerifier verifier;
-    
+UniversalZKVerifier verifier;
+
     function setUp() public {
         // Deploy all verifiers
     }
-    
+
     function testPLONKSmallCircuit() public {
         uint256 gasBefore = gasleft();
         bool result = verifier.verify(
@@ -4070,12 +4241,13 @@ contract PLONKGasBenchmark is Test {
             smallCircuitVK
         );
         uint256 gasUsed = gasBefore - gasleft();
-        
+
         assertTrue(result);
         emit log_named_uint("PLONK Small Circuit Gas", gasUsed);
     }
-    
+
     // Similar tests for medium, large circuits
+
 }
 
 Automated Gas Reports:
@@ -4083,15 +4255,16 @@ Use Foundry's gas reporting:
 forge test --gas-report
 
 Output:
-| Function              | Gas    |
+| Function | Gas |
 |-----------------------|--------|
-| verify (Groth16)      | 58,234 |
-| verify (PLONK)        | 112,567|
-| batchVerify (PLONK)   | 94,123 | (per proof)
+| verify (Groth16) | 58,234 |
+| verify (PLONK) | 112,567|
+| batchVerify (PLONK) | 94,123 | (per proof)
 
 Detailed Measurements:
 Break Down Gas by Operation:
 PLONK Verification Phases:
+
 1. Proof deserialization: Measure separately
 2. VK loading: Measure separately
 3. Challenge generation: Measure separately
@@ -4117,8 +4290,9 @@ Log all measurements for analysis
 Input Size Scaling:
 Public Input Count Test:
 Test matrix:
-- 1 input:   ~110k gas
-- 5 inputs:  ~115k gas
+
+- 1 input: ~110k gas
+- 5 inputs: ~115k gas
 - 10 inputs: ~120k gas
 - 50 inputs: ~145k gas
 
@@ -4128,9 +4302,10 @@ Document: ~1k gas per input
 
 Circuit Size Scaling:
 Test matrix:
-- 10 constraints:    ~110k gas
-- 100 constraints:   ~112k gas
-- 1000 constraints:  ~120k gas
+
+- 10 constraints: ~110k gas
+- 100 constraints: ~112k gas
+- 1000 constraints: ~120k gas
 - 10000 constraints: ~135k gas
 
 Analysis: Sub-linear growth (good)
@@ -4138,22 +4313,22 @@ Reason: Fixed cost dominates
 
 Comparison Analysis:
 PLONK vs Groth16:
-Metric              | PLONK    | Groth16  | Difference
+Metric | PLONK | Groth16 | Difference
 --------------------|----------|----------|------------
-Base gas            | 110k     | 58k      | +52k (+90%)
-Per input           | ~1k      | ~1.5k    | -0.5k
-Proof size (bytes)  | 512      | 128      | +384 (+300%)
-Calldata cost       | ~32k     | ~8k      | +24k
-Total (small)       | 142k     | 66k      | +76k (+115%)
+Base gas | 110k | 58k | +52k (+90%)
+Per input | ~1k | ~1.5k | -0.5k
+Proof size (bytes) | 512 | 128 | +384 (+300%)
+Calldata cost | ~32k | ~8k | +24k
+Total (small) | 142k | 66k | +76k (+115%)
 
 Conclusion: PLONK more expensive but universal setup advantage
 
 Stylus vs Solidity (PLONK):
-Metric              | Stylus   | Solidity | Savings
+Metric | Stylus | Solidity | Savings
 --------------------|----------|----------|--------
-Verification        | 110k     | 240k     | 54%
-With calldata       | 142k     | 272k     | 48%
-Batch (10 proofs)   | 94k/ea   | 220k/ea  | 57%
+Verification | 110k | 240k | 54%
+With calldata | 142k | 272k | 48%
+Batch (10 proofs) | 94k/ea | 220k/ea | 57%
 
 Conclusion: Stylus provides consistent 50%+ savings
 
@@ -4172,12 +4347,14 @@ Conclusion: Storage beneficial after 2+ verifications
 Real Network Testing:
 Sepolia Deployment Measurements:
 Deploy contracts to Sepolia:
+
 1. Measure actual transaction costs
 2. Record block confirmations
 3. Note network conditions (gas price)
 4. Validate matches local estimates
 
 Differences from local:
+
 - Network gas overhead (~21k base)
 - Real gas price fluctuations
 - Block congestion effects
@@ -4189,16 +4366,18 @@ Proof type: PLONK (flexible circuit updates)
 VK strategy: Stored (one-time cost amortized)
 
 Cost calculation:
+
 - One-time VK storage: 40k gas × $2 = $0.08
 - Per verification: 94k gas × $0.50 = $0.047
 - Daily: $47
 - Monthly: ~$1,400
 
 vs Solidity:
+
 - Per verification: 220k gas × $0.50 = $0.11
 - Daily: $110
 - Monthly: ~$3,300
-Savings: ~$1,900/month (57%)
+  Savings: ~$1,900/month (57%)
 
 Scenario 2: Infrequent Verification:
 Use case: Credential system, 10 verifications/day
@@ -4206,11 +4385,13 @@ Proof type: Either PLONK or Groth16
 VK strategy: Calldata (avoid storage cost)
 
 PLONK cost:
+
 - Per verification: 142k gas × $0.50 = $0.071
 - Daily: $0.71
 - Monthly: ~$21
 
 Groth16 cost:
+
 - Per verification: 66k gas × $0.50 = $0.033
 - Daily: $0.33
 - Monthly: ~$10
@@ -4220,6 +4401,7 @@ Recommendation: Use Groth16 for cost optimization
 Performance Characteristics:
 Best Case (PLONK):
 Conditions:
+
 - Small circuit
 - Few public inputs
 - VK stored (not in calldata)
@@ -4230,6 +4412,7 @@ Use case: Established protocol with fixed circuits
 
 Worst Case (PLONK):
 Conditions:
+
 - Large circuit
 - Many public inputs (50+)
 - VK in calldata
@@ -4241,12 +4424,14 @@ Still better than Solidity: ~270k
 
 Optimization Opportunities:
 Identified Optimizations:
+
 1. Batch verification: 15% savings per proof in batch
 2. VK caching: 22% savings after break-even
 3. Proof compression: Potential 10% calldata savings
 4. Custom transcript hash: Potential 5% gas savings
 
 Future Improvements:
+
 1. Recursive proof aggregation: Constant verification cost
 2. KZG optimization: Better pairing implementations
 3. Precompile integration: If Arbitrum adds ZK precompiles
@@ -4255,6 +4440,7 @@ Future Improvements:
 Benchmark Documentation:
 Create: docs/gas-benchmarks.md
 Contents:
+
 1. Methodology
 2. Test environment details
 3. Complete results tables
@@ -4266,6 +4452,7 @@ Contents:
 
 Visualizations:
 Create charts:
+
 1. Bar chart: Groth16 vs PLONK vs Solidity
 2. Line chart: Gas vs public input count
 3. Scatter plot: Circuit size vs gas
@@ -4278,6 +4465,7 @@ Add to .github/workflows/benchmarks.yml
 
 Trigger: On push to main
 Actions:
+
 1. Deploy contracts to Anvil
 2. Run all gas tests
 3. Generate report
@@ -4307,6 +4495,7 @@ Objective: Initialize Next.js project with proper structure, install all depende
 Technology Stack:
 Framework:
 Next.js 14:
+
 - App Router (not pages router)
 - Server components where applicable
 - API routes for backend logic
@@ -4314,35 +4503,41 @@ Next.js 14:
 
 Web3 Libraries:
 wagmi v2:
+
 - React hooks for Ethereum
 - Wallet connection management
 - Contract interactions
 - Type-safe contract calls
 
 viem:
+
 - Low-level Ethereum utilities
 - ABI encoding/decoding
 - Transaction formatting
 - Replacement for ethers.js
 
 RainbowKit (optional):
+
 - Beautiful wallet connection UI
 - Or use wagmi's connect directly
 
 UI Framework:
 Tailwind CSS:
+
 - Utility-first styling
 - Responsive design
 - Fast development
 - Small bundle size
 
 shadcn/ui (recommended):
+
 - High-quality components
 - Built on Radix UI
 - Tailwind styled
 - Accessible by default
 
 Additional Libraries:
+
 - @tanstack/react-query: Data fetching
 - zustand: State management (lightweight)
 - recharts: Gas comparison charts
@@ -4352,66 +4547,71 @@ Additional Libraries:
 Project Initialization:
 Create Next.js App:
 npx create-next-app@latest uzkv-demo \
-  --typescript \
-  --tailwind \
-  --app \
-  --src-dir \
-  --import-alias "@/*"
+ --typescript \
+ --tailwind \
+ --app \
+ --src-dir \
+ --import-alias "@/\*"
 
 cd uzkv-demo
 
 Install Dependencies:
+
 # Web3
+
 npm install wagmi viem @tanstack/react-query
 
 # UI
-npm install @radix-ui/react-* # Various components
+
+npm install @radix-ui/react-\* # Various components
 npm install lucide-react react-hot-toast
 npm install recharts
 
 # State management
+
 npm install zustand
 
 # Development
+
 npm install -D @types/node
 
 Project Structure:
 uzkv-demo/
 ├── src/
-│   ├── app/
-│   │   ├── layout.tsx           # Root layout
-│   │   ├── page.tsx             # Home page
-│   │   ├── verify/
-│   │   │   └── page.tsx         # Verification interface
-│   │   ├── generate/
-│   │   │   └── page.tsx         # Proof generation
-│   │   ├── compare/
-│   │   │   └── page.tsx         # Gas comparison
-│   │   └── api/
-│   │       └── generate-proof/
-│   │           └── route.ts     # Server-side proof gen
-│   ├── components/
-│   │   ├── ui/                  # shadcn/ui components
-│   │   ├── WalletConnect.tsx
-│   │   ├── ProofGenerator.tsx
-│   │   ├── ProofVerifier.tsx
-│   │   ├── GasChart.tsx
-│   │   └── NetworkStatus.tsx
-│   ├── lib/
-│   │   ├── wagmi.ts             # wagmi configuration
-│   │   ├── contracts.ts         # Contract ABIs & addresses
-│   │   ├── proof-utils.ts       # Proof generation helpers
-│   │   └── constants.ts         # App constants
-│   ├── hooks/
-│   │   ├── useVerifier.ts       # Contract interaction hook
-│   │   ├── useProofGeneration.ts
-│   │   └── useGasEstimation.ts
-│   └── types/
-│       └── index.ts             # TypeScript types
+│ ├── app/
+│ │ ├── layout.tsx # Root layout
+│ │ ├── page.tsx # Home page
+│ │ ├── verify/
+│ │ │ └── page.tsx # Verification interface
+│ │ ├── generate/
+│ │ │ └── page.tsx # Proof generation
+│ │ ├── compare/
+│ │ │ └── page.tsx # Gas comparison
+│ │ └── api/
+│ │ └── generate-proof/
+│ │ └── route.ts # Server-side proof gen
+│ ├── components/
+│ │ ├── ui/ # shadcn/ui components
+│ │ ├── WalletConnect.tsx
+│ │ ├── ProofGenerator.tsx
+│ │ ├── ProofVerifier.tsx
+│ │ ├── GasChart.tsx
+│ │ └── NetworkStatus.tsx
+│ ├── lib/
+│ │ ├── wagmi.ts # wagmi configuration
+│ │ ├── contracts.ts # Contract ABIs & addresses
+│ │ ├── proof-utils.ts # Proof generation helpers
+│ │ └── constants.ts # App constants
+│ ├── hooks/
+│ │ ├── useVerifier.ts # Contract interaction hook
+│ │ ├── useProofGeneration.ts
+│ │ └── useGasEstimation.ts
+│ └── types/
+│ └── index.ts # TypeScript types
 ├── public/
-│   ├── circuits/                # Circuit files
-│   └── sample-proofs/           # Example proofs
-├── .env.local                   # Environment variables
+│ ├── circuits/ # Circuit files
+│ └── sample-proofs/ # Example proofs
+├── .env.local # Environment variables
 └── package.json
 
 Configuration Files:
@@ -4421,48 +4621,50 @@ import { arbitrumSepolia, arbitrum } from 'wagmi/chains'
 import { injected, metaMask, walletConnect } from 'wagmi/connectors'
 
 export const config = createConfig({
-  chains: [arbitrumSepolia, arbitrum],
-  connectors: [
-    injected(),
-    metaMask(),
-    walletConnect({ projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID! }),
-  ],
-  transports: {
-    [arbitrumSepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC),
-    [arbitrum.id]: http(process.env.NEXT_PUBLIC_ARB_RPC),
-  },
+chains: [arbitrumSepolia, arbitrum],
+connectors: [
+injected(),
+metaMask(),
+walletConnect({ projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID! }),
+],
+transports: {
+[arbitrumSepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC),
+[arbitrum.id]: http(process.env.NEXT_PUBLIC_ARB_RPC),
+},
 })
 
 contracts.ts - ABI and Addresses:
 export const VERIFIER_ADDRESS = {
-  sepolia: '0x...' as `0x${string}`,
-  mainnet: '0x...' as `0x${string}`,
+sepolia: '0x...' as `0x${string}`,
+mainnet: '0x...' as `0x${string}`,
 }
 
 export const VERIFIER_ABI = [
-  {
-    name: 'verify',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [
-      { name: 'proofType', type: 'uint8' },
-      { name: 'proof', type: 'bytes' },
-      { name: 'publicInputs', type: 'bytes' },
-      { name: 'vk', type: 'bytes' },
-    ],
-    outputs: [{ name: 'success', type: 'bool' }],
-  },
-  // ... rest of ABI
+{
+name: 'verify',
+type: 'function',
+stateMutability: 'view',
+inputs: [
+{ name: 'proofType', type: 'uint8' },
+{ name: 'proof', type: 'bytes' },
+{ name: 'publicInputs', type: 'bytes' },
+{ name: 'vk', type: 'bytes' },
+],
+outputs: [{ name: 'success', type: 'bool' }],
+},
+// ... rest of ABI
 ] as const
 
 export enum ProofType {
-  GROTH16 = 0,
-  PLONK = 1,
-  STARK = 2,
+GROTH16 = 0,
+PLONK = 1,
+STARK = 2,
 }
 
 Environment Variables:
+
 # .env.local
+
 NEXT_PUBLIC_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
 NEXT_PUBLIC_ARB_RPC=https://arb1.arbitrum.io/rpc
 NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
@@ -4473,26 +4675,26 @@ TypeScript Types:
 // src/types/index.ts
 
 export type ProofData = {
-  proof: `0x${string}`
-  publicInputs: `0x${string}`
-  verificationKey: `0x${string}`
+proof: `0x${string}`
+publicInputs: `0x${string}`
+verificationKey: `0x${string}`
 }
 
 export type ProofType = 'groth16' | 'plonk' | 'stark'
 
 export type VerificationResult = {
-  success: boolean
-  gasUsed: bigint
-  transactionHash: `0x${string}`
-  timestamp: number
+success: boolean
+gasUsed: bigint
+transactionHash: `0x${string}`
+timestamp: number
 }
 
 export type CircuitInfo = {
-  name: string
-  description: string
-  publicInputCount: number
-  constraintCount: number
-  proofType: ProofType
+name: string
+description: string
+publicInputCount: number
+constraintCount: number
+proofType: ProofType
 }
 
 Theme Configuration:
@@ -4500,21 +4702,21 @@ Theme Configuration:
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  darkMode: 'class',
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        arbitrum: {
-          blue: '#28a0f0',
-          dark: '#0a2540',
-        },
-      },
-    },
-  },
-  plugins: [],
+darkMode: 'class',
+content: [
+'./src/**/*.{js,ts,jsx,tsx,mdx}',
+],
+theme: {
+extend: {
+colors: {
+arbitrum: {
+blue: '#28a0f0',
+dark: '#0a2540',
+},
+},
+},
+},
+plugins: [],
 }
 
 Root Layout:
@@ -4523,19 +4725,19 @@ import { Providers } from './providers'
 import './globals.css'
 
 export default function RootLayout({
-  children,
+children,
 }: {
-  children: React.Node
+children: React.Node
 }) {
-  return (
-    <html lang="en">
-      <body>
-        <Providers>
-          {children}
-        </Providers>
-      </body>
-    </html>
-  )
+return (
+<html lang="en">
+<body>
+<Providers>
+{children}
+</Providers>
+</body>
+</html>
+)
 }
 
 Providers Setup:
@@ -4549,25 +4751,25 @@ import { config } from '@/lib/wagmi'
 const queryClient = new QueryClient()
 
 export function Providers({ children }: { children: React.Node }) {
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    </WagmiProvider>
-  )
+return (
+<WagmiProvider config={config}>
+<QueryClientProvider client={queryClient}>
+{children}
+</QueryClientProvider>
+</WagmiProvider>
+)
 }
 
 Development Scripts:
 // package.json
 {
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit"
-  }
+"scripts": {
+"dev": "next dev",
+"build": "next build",
+"start": "next start",
+"lint": "next lint",
+"type-check": "tsc --noEmit"
+}
 }
 
 Verification Steps:
@@ -4586,6 +4788,7 @@ Objective: Implement robust wallet connection functionality, handle network swit
 Wallet Connection Component:
 WalletConnect.tsx:
 Component responsibilities:
+
 1. Display connection button when disconnected
 2. Show wallet info when connected (address, balance, network)
 3. Handle multiple wallet types (MetaMask, WalletConnect, etc.)
@@ -4594,6 +4797,7 @@ Component responsibilities:
 6. Error handling for connection failures
 
 Features:
+
 - ENS name resolution (if available)
 - Address truncation (0x1234...5678)
 - Copy address to clipboard
@@ -4602,6 +4806,7 @@ Features:
 
 Implementation Approach:
 Use wagmi hooks:
+
 - useAccount(): Get connected account info
 - useConnect(): Trigger wallet connection
 - useDisconnect(): Disconnect wallet
@@ -4610,6 +4815,7 @@ Use wagmi hooks:
 - useChainId(): Get current chain ID
 
 Connection Flow:
+
 1. User clicks "Connect Wallet"
 2. Show wallet selector modal
 3. User chooses wallet (MetaMask, WalletConnect, etc.)
@@ -4625,6 +4831,7 @@ Network Validation:
 Expected network: Arbitrum Sepolia (421614)
 
 Validation logic:
+
 - On mount: Check current chain
 - On chain change: Re-validate
 - If wrong: Show prominent warning
@@ -4632,6 +4839,7 @@ Validation logic:
 - Disable verification features until correct
 
 User experience:
+
 - Clear messaging: "Please switch to Arbitrum Sepolia"
 - Single button: "Switch Network"
 - Automatic switch via wallet API
@@ -4639,6 +4847,7 @@ User experience:
 
 Error Handling:
 Common errors:
+
 1. User rejects connection → Show friendly message
 2. Wallet not installed → Suggest installation
 3. Network switch rejected → Explain importance
@@ -4646,12 +4855,14 @@ Common errors:
 5. Insufficient balance → Warning but allow viewing
 
 Error UI:
+
 - Toast notifications for transient errors
 - Persistent banner for critical issues (wrong network)
 - Helpful error messages with actions
 
 Network Status Component:
 NetworkStatus.tsx displays:
+
 - Current network name and chain ID
 - Network health indicator (RPC responsive)
 - Gas price (current, for cost estimation)
@@ -4659,6 +4870,7 @@ NetworkStatus.tsx displays:
 - Network congestion indicator
 
 Visual design:
+
 - Green dot: Correct network, healthy RPC
 - Yellow dot: Correct network, slow RPC
 - Red dot: Wrong network or RPC down
@@ -4666,6 +4878,7 @@ Visual design:
 
 Wallet Display:
 Connected state shows:
+
 - Truncated address: 0x1234...5678
 - ENS name (if resolved)
 - Network badge: "Arbitrum Sepolia"
@@ -4674,6 +4887,7 @@ Connected state shows:
 - Disconnect button
 
 Design:
+
 - Compact header component
 - Dropdown for additional options
 - Mobile-friendly
@@ -4681,24 +4895,28 @@ Design:
 
 Auto-Connect:
 On page load:
+
 1. Check if wallet was previously connected
 2. If yes, attempt auto-reconnect
 3. If successful, restore session
 4. If fails, show connect button
 
 Implementation:
+
 - wagmi handles persistence automatically
 - Respects user's previous choice
 - Fast reconnection (cached)
 
 Multi-Wallet Support:
 Supported wallets:
+
 1. MetaMask (most common)
 2. WalletConnect (mobile wallets)
 3. Coinbase Wallet
 4. Injected wallets (Brave, etc.)
 
 Selection UI:
+
 - Modal with wallet options
 - Icons for each wallet
 - "Install" link if not detected
@@ -4706,6 +4924,7 @@ Selection UI:
 
 Mobile Considerations:
 Mobile wallet flow:
+
 1. Detect mobile browser
 2. Prioritize WalletConnect
 3. Deep link to mobile wallets
@@ -4713,6 +4932,7 @@ Mobile wallet flow:
 5. Session restoration
 
 UX improvements:
+
 - Larger touch targets
 - Simplified UI on small screens
 - Bottom sheet modals
@@ -4720,6 +4940,7 @@ UX improvements:
 
 Testing Scenarios:
 Test cases:
+
 1. Connect with MetaMask
 2. Connect with WalletConnect
 3. Switch from mainnet to Sepolia
@@ -4743,12 +4964,14 @@ Time Estimate: 1.5 hours
 Subtask 7.3: Proof Generation Interface (continued)
 Approach 1: Client-Side Generation (continued):
 Cons:
+
 - Requires WASM in browser
 - Limited by browser performance
 - Large circuit files to download
 - May timeout on complex circuits
 
 Implementation:
+
 - Use snarkjs library (compiled to WASM)
 - Load circuit artifacts in browser
 - Generate witness client-side
@@ -4756,29 +4979,34 @@ Implementation:
 
 Approach 2: Server-Side Generation:
 Pros:
+
 - Powerful server for complex circuits
 - No client performance issues
 - Can handle large circuits
 - Centralized circuit management
 
 Cons:
+
 - Privacy concerns (inputs sent to server)
 - Server costs
 - Latency (network round-trip)
 - Requires backend infrastructure
 
 Implementation:
+
 - Next.js API route
 - Run snarkjs on server
 - Return generated proof
 
 Approach 3: Hybrid (Recommended for Production):
 Strategy:
+
 - Simple circuits: Client-side
 - Complex circuits: Server-side
 - User chooses based on privacy needs
 
 Benefits:
+
 - Best of both worlds
 - Flexibility
 - Progressive enhancement
@@ -4786,6 +5014,7 @@ Benefits:
 For Hackathon Demo: Use Approach 1 (Client-Side)
 Circuit Selection Interface:
 Available Circuits:
+
 1. Square Circuit (Demo)
    - Input: x (private)
    - Output: y = x² (public)
@@ -4809,6 +5038,7 @@ Available Circuits:
 
 Circuit Selector Component:
 Features:
+
 - Dropdown or card selection
 - Circuit description and stats
 - Estimated generation time
@@ -4817,6 +5047,7 @@ Features:
 - Complexity indicator (beginner/intermediate/advanced)
 
 Design:
+
 - Visual cards with icons
 - Hover for more details
 - Selected state highlighted
@@ -4825,6 +5056,7 @@ Design:
 Input Form:
 Dynamic Input Generation:
 Based on selected circuit:
+
 1. Load circuit metadata (public input schema)
 2. Generate form fields dynamically
 3. Validate input types (number, bytes, etc.)
@@ -4832,6 +5064,7 @@ Based on selected circuit:
 5. Show tooltips explaining each input
 
 Example for Square Circuit:
+
 - Label: "Enter a number (x)"
 - Type: Number input
 - Validation: Must be positive integer
@@ -4840,12 +5073,14 @@ Example for Square Circuit:
 
 Input Validation:
 Client-side validation:
+
 - Required fields filled
 - Correct data types
 - Range validation (if applicable)
 - Format validation (hex strings, etc.)
 
 Error messages:
+
 - Inline, next to field
 - Clear explanation
 - Suggest fix
@@ -4854,6 +5089,7 @@ Error messages:
 Proof Generation Flow:
 Step 1: Prepare Inputs:
 Process:
+
 1. Collect form values
 2. Validate all inputs
 3. Format for circuit (convert to field elements)
@@ -4863,28 +5099,33 @@ Process:
 
 Step 2: Load Circuit Artifacts:
 Required files:
+
 - circuit.wasm (compiled circuit)
 - circuit.zkey (proving key)
 - verification_key.json
 
 Loading strategy:
+
 - Lazy load on demand (not on page load)
 - Cache in browser storage
 - Show loading progress
 - Fallback if files fail to load
 
 File sizes:
+
 - Square circuit: ~50KB total
 - Merkle proof: ~500KB total
 - Hash circuit: ~2MB total
 
 Optimization:
+
 - Compress files (gzip)
 - CDN hosting
 - Parallel download
 
 Step 3: Generate Witness:
 Witness generation:
+
 1. Load WASM circuit
 2. Pass inputs to circuit
 3. Circuit computes witness
@@ -4892,12 +5133,14 @@ Witness generation:
 5. Time: Usually fast (<1 second)
 
 Progress indication:
+
 - Show "Computing witness..."
 - Progress spinner
 - Cannot be interrupted
 
 Step 4: Generate Proof:
 Proof generation:
+
 1. Load proving key (zkey)
 2. Use witness + zkey → generate proof
 3. Uses Groth16 or PLONK algorithm
@@ -4905,6 +5148,7 @@ Proof generation:
 5. Time: Varies by circuit size
 
 Progress indication:
+
 - Show percentage if possible
 - Estimated time remaining
 - Allow cancellation (Web Worker)
@@ -4912,6 +5156,7 @@ Progress indication:
 
 Step 5: Format and Display:
 Output formatting:
+
 1. Extract proof points
 2. Extract public inputs
 3. Format as hex bytes
@@ -4926,6 +5171,7 @@ Problem: Proof generation blocks UI thread
 Solution: Run in Web Worker (separate thread)
 
 Benefits:
+
 - UI remains responsive
 - Can show progress updates
 - User can cancel
@@ -4935,38 +5181,39 @@ Worker Implementation:
 // proof-worker.ts
 
 self.addEventListener('message', async (e) => {
-  const { circuitWasm, zkey, inputs } = e.data
-  
-  try {
-    // Import snarkjs in worker
-    const snarkjs = await import('snarkjs')
-    
+const { circuitWasm, zkey, inputs } = e.data
+
+try {
+// Import snarkjs in worker
+const snarkjs = await import('snarkjs')
+
     // Generate witness
     const { witness } = await snarkjs.groth16.fullProve(
       inputs,
       circuitWasm,
       zkey
     )
-    
+
     // Format proof
     const proof = formatProofForContract(witness.proof)
-    
+
     // Send back to main thread
     self.postMessage({ success: true, proof })
-  } catch (error) {
-    self.postMessage({ success: false, error: error.message })
-  }
+
+} catch (error) {
+self.postMessage({ success: false, error: error.message })
+}
 })
 
 Main Thread Integration:
 // In component
 
 const generateProof = async (inputs) => {
-  const worker = new Worker('/proof-worker.js')
-  
-  return new Promise((resolve, reject) => {
-    worker.postMessage({ circuitWasm, zkey, inputs })
-    
+const worker = new Worker('/proof-worker.js')
+
+return new Promise((resolve, reject) => {
+worker.postMessage({ circuitWasm, zkey, inputs })
+
     worker.onmessage = (e) => {
       if (e.data.success) {
         resolve(e.data.proof)
@@ -4975,17 +5222,19 @@ const generateProof = async (inputs) => {
       }
       worker.terminate()
     }
-    
+
     // Timeout after 60 seconds
     setTimeout(() => {
       worker.terminate()
       reject(new Error('Proof generation timeout'))
     }, 60000)
-  })
+
+})
 }
 
 Progress Indication:
 UI States:
+
 1. Idle: "Generate Proof" button enabled
 2. Loading circuits: "Loading circuit files... 45%"
 3. Computing witness: "Computing witness..." (spinner)
@@ -4995,6 +5244,7 @@ UI States:
 
 Progress Bar Component:
 Features:
+
 - Indeterminate for unknown duration
 - Determinate when progress measurable
 - Time estimate (if known)
@@ -5003,6 +5253,7 @@ Features:
 - Visual feedback (animations)
 
 Design:
+
 - Progress bar or circular spinner
 - Step indicators (1/3, 2/3, 3/3)
 - Colors: Blue for progress, Green for complete
@@ -5011,6 +5262,7 @@ Design:
 Result Display:
 Proof Preview Component:
 Display sections:
+
 1. Proof Data (hex, truncated with "Show More")
 2. Public Inputs (formatted, labeled)
 3. Verification Key ID (if stored)
@@ -5019,6 +5271,7 @@ Display sections:
 6. File Size (for reference)
 
 Actions:
+
 - Copy to clipboard (each section)
 - Download as JSON
 - Verify now (pre-fill verification form)
@@ -5026,23 +5279,24 @@ Actions:
 
 JSON Export Format:
 {
-  "proof": {
-    "pi_a": ["0x...", "0x..."],
-    "pi_b": [["0x...", "0x..."], ["0x...", "0x..."]],
-    "pi_c": ["0x...", "0x..."],
-    "protocol": "groth16",
-    "curve": "bn128"
-  },
-  "publicSignals": ["0x..."],
-  "metadata": {
-    "circuit": "square",
-    "generatedAt": "2025-01-15T10:30:00Z",
-    "generationTime": 1234
-  }
+"proof": {
+"pi_a": ["0x...", "0x..."],
+"pi_b": [["0x...", "0x..."], ["0x...", "0x..."]],
+"pi_c": ["0x...", "0x..."],
+"protocol": "groth16",
+"curve": "bn128"
+},
+"publicSignals": ["0x..."],
+"metadata": {
+"circuit": "square",
+"generatedAt": "2025-01-15T10:30:00Z",
+"generationTime": 1234
+}
 }
 
 Error Handling:
 Common Errors:
+
 1. Circuit file load failed
    - Retry mechanism
    - Check network connection
@@ -5071,18 +5325,21 @@ Common Errors:
 User Experience Enhancements:
 Pre-filled Examples:
 Feature: "Try Example" button
+
 - Loads known working inputs
 - Demonstrates circuit functionality
 - One-click proof generation
 - Helps users understand circuit
 
 Example for Square Circuit:
+
 - Input x = 5
 - Expected output y = 25
 - Generate and verify in <5 seconds
 
 Tooltips and Help:
 Throughout interface:
+
 - Question mark icons
 - Hover for explanations
 - Links to documentation
@@ -5091,6 +5348,7 @@ Throughout interface:
 
 Mobile Optimization:
 Considerations:
+
 - Proof generation may be slow on mobile
 - Smaller circuit files preferred
 - Touch-friendly UI
@@ -5098,6 +5356,7 @@ Considerations:
 - Warning if circuit too complex
 
 Fallback:
+
 - Offer pre-generated proof
 - Or redirect to desktop
 - Or use server-side generation
@@ -5105,29 +5364,34 @@ Fallback:
 Performance Optimization:
 Circuit File Caching:
 Strategy:
+
 - Cache circuit files in browser
 - IndexedDB for large files
 - Check version on load
 - Update if new version available
 
 Benefits:
+
 - Faster subsequent generations
 - Offline capability
 - Reduced bandwidth
 
 Lazy Loading:
 Don't load until needed:
+
 - Circuit files loaded when circuit selected
 - snarkjs library loaded on demand
 - Worker script loaded when generating
 
 Benefits:
+
 - Faster initial page load
 - Smaller bundle
 - Better core web vitals
 
 Testing Checklist:
 Test scenarios:
+
 1. Generate proof with each circuit type
 2. Invalid input handling
 3. Cancel generation mid-process
@@ -5156,12 +5420,14 @@ Verification Form:
 Input Methods:
 Method 1: Manual Entry:
 Fields:
+
 1. Proof Type: Dropdown (Groth16/PLONK)
 2. Proof Data: Textarea (hex bytes)
 3. Public Inputs: Textarea (hex bytes)
 4. Verification Key: Textarea or file upload
 
 Validation:
+
 - Hex format (0x prefix)
 - Correct length
 - Valid structure
@@ -5175,6 +5441,7 @@ Prefill: Populate form fields
 
 Method 3: Pre-filled (from Generator):
 Flow:
+
 1. User generates proof
 2. Clicks "Verify This Proof"
 3. Navigates to verification page
@@ -5223,6 +5490,7 @@ ProofVerifier.tsx sections:
 Smart Contract Interaction:
 Contract Call Preparation:
 Steps:
+
 1. Connect to wallet (ensure connected)
 2. Check network (must be correct chain)
 3. Encode proof data properly
@@ -5233,6 +5501,7 @@ Steps:
 
 Transaction Handling:
 Flow:
+
 1. User clicks "Verify"
 2. Validate all inputs
 3. Estimate gas cost
@@ -5247,27 +5516,27 @@ wagmi Hook Usage:
 // useVerifier.ts hook
 
 const useVerifier = () => {
-  const { data: hash, writeContract } = useWriteContract()
-  
-  const verify = async (proofData: ProofData) => {
-    return writeContract({
-      address: VERIFIER_ADDRESS,
-      abi: VERIFIER_ABI,
-      functionName: 'verify',
-      args: [
-        ProofType.GROTH16,
-        proofData.proof,
-        proofData.publicInputs,
-        proofData.vk
-      ],
-    })
-  }
-  
-  const { isLoading, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  })
-  
-  return { verify, isLoading, isSuccess, hash }
+const { data: hash, writeContract } = useWriteContract()
+
+const verify = async (proofData: ProofData) => {
+return writeContract({
+address: VERIFIER_ADDRESS,
+abi: VERIFIER_ABI,
+functionName: 'verify',
+args: [
+ProofType.GROTH16,
+proofData.proof,
+proofData.publicInputs,
+proofData.vk
+],
+})
+}
+
+const { isLoading, isSuccess } = useWaitForTransactionReceipt({
+hash,
+})
+
+return { verify, isLoading, isSuccess, hash }
 }
 
 Gas Estimation:
@@ -5275,6 +5544,7 @@ Pre-Verification Estimate:
 Feature: "Estimate Gas" button
 
 Process:
+
 1. Call contract.verify.estimateGas()
 2. Add 20% buffer
 3. Calculate cost in ETH and USD
@@ -5282,6 +5552,7 @@ Process:
 5. Update if inputs change
 
 Display:
+
 - Estimated gas: 65,000
 - Gas price: 0.1 gwei
 - Total cost: 0.0000065 ETH (~$0.02)
@@ -5289,6 +5560,7 @@ Display:
 
 Actual Gas Measurement:
 After verification:
+
 1. Get transaction receipt
 2. Extract gasUsed
 3. Calculate actual cost
@@ -5296,6 +5568,7 @@ After verification:
 5. Display in results
 
 Useful for:
+
 - Validating estimates
 - Benchmarking
 - User education
@@ -5307,6 +5580,7 @@ Green success card showing:
 Header: "✓ Proof Verified Successfully!"
 
 Details:
+
 - Result: Valid ✓
 - Gas Used: 65,234 gas
 - Transaction: 0xabc...def (link to explorer)
@@ -5316,11 +5590,13 @@ Details:
 - Cost: 0.0000065 ETH ($0.02)
 
 Comparison:
+
 - Solidity equivalent: 180,000 gas
 - Savings: 114,766 gas (64%)
 - Cost saved: $0.03
 
 Actions:
+
 - View on Explorer
 - Share Result
 - Verify Another
@@ -5332,18 +5608,21 @@ Red error card showing:
 Header: "✗ Proof Verification Failed"
 
 Details:
+
 - Result: Invalid ✗
 - Reason: "Proof does not satisfy verification equation"
 - Transaction: 0xabc...def (still recorded)
 - Gas Used: 63,000 (still consumed)
 
 Possible Causes:
+
 - Incorrect proof data
 - Wrong public inputs
 - Mismatched verification key
 - Tampered proof
 
 Actions:
+
 - Check Inputs
 - Try Again
 - View Transaction
@@ -5355,16 +5634,19 @@ Yellow warning card showing:
 Header: "⚠ Verification Error"
 
 Details:
+
 - Error: [specific error message]
 - Type: Contract error / Network error / User rejected
 
 Common Errors:
+
 - User rejected transaction
 - Insufficient gas
 - Network congestion
 - Contract reverted
 
 Actions:
+
 - Retry
 - Increase Gas Limit
 - Check Network
@@ -5373,6 +5655,7 @@ Actions:
 Real-Time Updates:
 Transaction Status Tracking:
 States:
+
 1. Idle: Form ready
 2. Validating: Checking inputs
 3. Estimating: Getting gas estimate
@@ -5383,6 +5666,7 @@ States:
 8. Failed: Transaction failed or reverted
 
 Progress indicator:
+
 - Step progress bar (1/5, 2/5, etc.)
 - Current action description
 - Estimated time to completion
@@ -5390,11 +5674,13 @@ Progress indicator:
 
 Block Confirmation:
 Confirmation tracking:
+
 - 0 confirmations: Pending
 - 1 confirmation: Likely final (Arbitrum)
 - Multiple confirmations: Highly secure
 
 Display:
+
 - Confirmation count
 - Time since submission
 - "Waiting for confirmation..." message
@@ -5404,6 +5690,7 @@ Event Listening:
 Listen for contract events:
 
 ProofVerified event contains:
+
 - Proof type
 - Caller address
 - Success boolean
@@ -5411,6 +5698,7 @@ ProofVerified event contains:
 - Timestamp
 
 Use to:
+
 - Confirm verification happened
 - Validate result
 - Get additional data
@@ -5421,12 +5709,14 @@ Comparison Chart:
 Component: GasComparisonChart.tsx
 
 Data to visualize:
+
 - Current verification gas
 - Historical average
 - Solidity baseline
 - Different proof types
 
 Chart types:
+
 - Bar chart: Proof type comparison
 - Line chart: Gas over time
 - Pie chart: Gas breakdown by operation
@@ -5439,11 +5729,13 @@ Savings Calculator:
 Feature: Interactive savings calculator
 
 Inputs:
+
 - Number of verifications per day/month
 - Current gas price (dynamic)
 - Proof type selection
 
 Outputs:
+
 - Total gas cost
 - Cost in ETH and USD
 - Savings vs Solidity
@@ -5451,12 +5743,14 @@ Outputs:
 - Annual cost projection
 
 Purpose:
+
 - Demonstrate value proposition
 - Help users understand benefits
 - Justify adoption
 
 Historical Data:
 Track and display:
+
 - All user verifications (local storage)
 - Average gas used
 - Success rate
@@ -5464,11 +5758,13 @@ Track and display:
 - Cost over time
 
 Visualization:
+
 - Timeline of verifications
 - Cumulative savings
 - Trend analysis
 
 Privacy:
+
 - Stored locally only
 - No server tracking
 - User can clear
@@ -5476,6 +5772,7 @@ Privacy:
 Mobile Responsiveness:
 Mobile-Optimized Layout:
 Adjustments:
+
 - Single column layout
 - Larger touch targets
 - Simplified form (fewer fields visible)
@@ -5485,6 +5782,7 @@ Adjustments:
 
 Progressive Disclosure:
 Mobile strategy:
+
 - Show essential info first
 - "Show More" for details
 - Collapsible sections
@@ -5494,6 +5792,7 @@ Mobile strategy:
 Accessibility:
 Keyboard Navigation:
 Features:
+
 - Tab through all inputs
 - Enter to submit
 - Escape to close modals
@@ -5502,6 +5801,7 @@ Features:
 
 Screen Reader Support:
 Implementations:
+
 - ARIA labels on all inputs
 - Role attributes
 - Live regions for updates
@@ -5510,6 +5810,7 @@ Implementations:
 
 Color Contrast:
 Standards:
+
 - WCAG AA compliance
 - Sufficient contrast ratios
 - Don't rely on color alone
@@ -5517,6 +5818,7 @@ Standards:
 
 Testing Scenarios:
 Manual tests:
+
 1. Verify valid Groth16 proof
 2. Verify valid PLONK proof
 3. Submit invalid proof
@@ -5530,6 +5832,7 @@ Manual tests:
 
 Performance Optimization:
 Optimizations:
+
 - Debounce validation
 - Lazy load chart library
 - Cache verification results
@@ -5554,6 +5857,7 @@ Objective: Finalize UI/UX, add comprehensive documentation, create demo video, d
 UI/UX Polish:
 Visual Design Refinement:
 Elements to polish:
+
 1. Color scheme consistency
    - Primary: Arbitrum blue (#28a0f0)
    - Success: Green
@@ -5582,6 +5886,7 @@ Elements to polish:
 
 Component Polish:
 Refinements:
+
 - Rounded corners consistent
 - Shadow depths appropriate
 - Hover states on all interactive elements
@@ -5592,6 +5897,7 @@ Refinements:
 
 Loading States:
 Add skeletons for:
+
 - Wallet connection
 - Contract data loading
 - Proof generation
@@ -5599,24 +5905,28 @@ Add skeletons for:
 - Chart data loading
 
 Design:
+
 - Pulse animation
 - Match actual component size
 - Smooth transition to loaded state
 
 Empty States:
 When no data:
+
 - Friendly illustration
 - Clear explanation
 - Call to action
 - Example or tutorial link
 
 Examples:
+
 - "No proofs generated yet. Try generating one!"
 - "Connect wallet to see your verifications"
 - "No historical data. Verify a proof to start tracking"
 
 Error Boundaries:
 Catch unexpected errors:
+
 - Display friendly error page
 - Log error for debugging
 - Offer recovery action
@@ -5625,11 +5935,13 @@ Catch unexpected errors:
 
 Responsive Design Check:
 Test breakpoints:
+
 - Mobile: 320px - 768px
 - Tablet: 768px - 1024px
 - Desktop: 1024px+
 
 Verify:
+
 - All content visible
 - No horizontal scroll
 - Touch targets adequate
@@ -5638,6 +5950,7 @@ Verify:
 
 Cross-Browser Testing:
 Test browsers:
+
 - Chrome (primary)
 - Firefox
 - Safari
@@ -5646,6 +5959,7 @@ Test browsers:
 - Mobile Chrome
 
 Check:
+
 - WASM support
 - Web3 injection
 - Layout consistency
@@ -5658,18 +5972,22 @@ Contents:
 # Universal ZK Verifier - Demo App
 
 ## Overview
+
 Brief description and value proposition
 
 ## Features
+
 - Proof generation (Groth16/PLONK)
 - On-chain verification
 - Gas analytics
 - Interactive comparisons
 
 ## Live Demo
+
 [Link to deployed app]
 
 ## Quick Start
+
 1. Connect wallet (Arbitrum Sepolia)
 2. Select circuit
 3. Generate proof
@@ -5677,13 +5995,15 @@ Brief description and value proposition
 5. View results
 
 ## Technology Stack
+
 - Next.js 14
 - wagmi/viem
 - Stylus contracts
 - Tailwind CSS
 
 ## Local Development
-```bash
+
+````bash
 npm install
 npm run dev
 Environment Variables
@@ -5771,7 +6091,7 @@ Example:
  * @param circuitType - Type of circuit (groth16/plonk)
  * @returns Promise<ProofData> - Generated proof data
  * @throws Error if proof generation fails
- * 
+ *
  * Note: Runs in Web Worker to avoid blocking UI thread
  * Performance: ~2-10s depending on circuit complexity
  */
@@ -6252,7 +6572,7 @@ Use proptest for fuzzing:
 #[cfg(test)]
 mod prop_tests {
     use proptest::prelude::*;
-    
+
     proptest! {
         #[test]
         fn test_deserialize_never_panics(
@@ -6263,7 +6583,7 @@ mod prop_tests {
             // Assert either Ok or Err, never panic
             assert!(result.is_ok() || result.is_err());
         }
-        
+
         #[test]
         fn test_verify_deterministic(
             proof in any_valid_proof(),
@@ -6343,12 +6663,12 @@ Use criterion for benchmarks:
 #[cfg(test)]
 mod benches {
     use criterion::{black_box, criterion_group, criterion_main, Criterion};
-    
+
     fn benchmark_verification(c: &mut Criterion) {
         let proof = load_test_proof();
         let inputs = load_test_inputs();
         let vk = load_test_vk();
-        
+
         c.bench_function("groth16_verify", |b| {
             b.iter(|| {
                 verify(
@@ -6359,7 +6679,7 @@ mod benches {
             })
         });
     }
-    
+
     criterion_group!(benches, benchmark_verification);
     criterion_main!(benches);
 }
@@ -6381,7 +6701,7 @@ Doc Tests:
 Test code examples in documentation:
 
 /// Verifies a Groth16 proof
-/// 
+///
 /// # Example
 /// ```
 /// use uzkv_groth16::*;
@@ -6432,12 +6752,12 @@ Tests to write:
    Setup:
    - Deploy all contracts
    - Prepare valid Groth16 proof
-   
+
    Actions:
    - Call wrapper.verify()
    - Wrapper routes to Groth16 Stylus
    - Stylus verifies and returns
-   
+
    Assertions:
    - Transaction succeeds
    - Returns true for valid proof
@@ -6524,7 +6844,7 @@ Tests to write:
    - zkApp calls verifier
    - Verifier routes to Stylus
    - End-to-end flow succeeds
-   
+
    Mock zkApp:
    contract PrivacyToken {
        function transfer(proof, inputs) external {
@@ -6888,11 +7208,11 @@ test('connects wallet', async () => {
       </WagmiProvider>
     ),
   })
-  
+
   await act(async () => {
     result.current.connect({ connector: result.current.connectors[0] })
   })
-  
+
   expect(result.current.isConnected).toBe(true)
 })
 
@@ -6992,58 +7312,58 @@ import { test, expect } from '@playwright/test'
 test('complete verification journey', async ({ page }) => {
   // Navigate to app
   await page.goto('http://localhost:3000')
-  
+
   // Connect wallet (mock)
   await page.click('button:has-text("Connect Wallet")')
   await page.click('button:has-text("MetaMask")')
-  
+
   // Verify connected
   await expect(page.locator('text=0x')).toBeVisible()
-  
+
   // Navigate to generator
   await page.click('a:has-text("Generate Proof")')
-  
+
   // Select circuit
   await page.selectOption('select[name="circuit"]', 'square')
-  
+
   // Enter input
   await page.fill('input[name="x"]', '5')
-  
+
   // Generate proof
   await page.click('button:has-text("Generate Proof")')
-  
+
   // Wait for completion
   await expect(page.locator('text=Proof Generated')).toBeVisible({
     timeout: 30000
   })
-  
+
   // Verify proof
   await page.click('button:has-text("Verify This Proof")')
-  
+
   // Submit verification
   await page.click('button:has-text("Verify on Chain")')
-  
+
   // Wait for transaction
   await expect(page.locator('text=Verification Successful')).toBeVisible({
     timeout: 60000
   })
-  
+
   // Check gas data displayed
   await expect(page.locator('text=Gas Used:')).toBeVisible()
 })
 
 test('handles invalid proof', async ({ page }) => {
   // ... setup ...
-  
+
   // Enter invalid proof
   await page.fill('textarea[name="proof"]', '0xinvalid')
-  
+
   // Submit
   await page.click('button:has-text("Verify")')
-  
+
   // See error
   await expect(page.locator('text=Invalid proof format')).toBeVisible()
-  
+
   // Can retry
   await expect(page.locator('button:has-text("Verify")')).toBeEnabled()
 })
@@ -7076,14 +7396,14 @@ test('has no accessibility violations', async () => {
 
 test('keyboard navigation works', async () => {
   render(<VerificationForm />)
-  
+
   // Tab through elements
   await userEvent.tab()
   expect(screen.getByLabelText('Proof Type')).toHaveFocus()
-  
+
   await userEvent.tab()
   expect(screen.getByLabelText('Proof Data')).toHaveFocus()
-  
+
   // Can submit with Enter
   await userEvent.keyboard('{Enter}')
   // ... verify submit triggered
@@ -7096,18 +7416,18 @@ test('page loads within 3 seconds', async ({ page }) => {
   await page.goto('http://localhost:3000')
   await page.waitForLoadState('networkidle')
   const loadTime = Date.now() - startTime
-  
+
   expect(loadTime).toBeLessThan(3000)
 })
 
 test('proof generation doesn't block UI', async ({ page }) => {
   // Start proof generation
   await page.click('button:has-text("Generate")')
-  
+
   // UI should still be responsive
   const button = page.locator('button:has-text("Cancel")')
   await expect(button).toBeEnabled()
-  
+
   // Can click other elements
   await page.click('a:has-text("Home")')
   // Should navigate
@@ -7139,15 +7459,15 @@ Mobile Testing:
 Device Emulation:
 test('works on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 }) // iPhone SE
-  
+
   await page.goto('http://localhost:3000')
-  
+
   // Test mobile-specific features
   await expect(page.locator('.mobile-menu')).toBeVisible()
-  
+
   // Touch interactions
   await page.tap('button:has-text("Connect")')
-  
+
   // Verify responsive layout
   const width = await page.locator('main').evaluate(el => el.clientWidth)
   expect(width).toBeLessThanOrEqual(375)
@@ -7158,13 +7478,13 @@ test('error boundary catches errors', () => {
   const ThrowError = () => {
     throw new Error('Test error')
   }
-  
+
   render(
     <ErrorBoundary>
       <ThrowError />
     </ErrorBoundary>
   )
-  
+
   expect(screen.getByText(/something went wrong/i)).toBeInTheDocument()
 })
 
@@ -7246,7 +7566,7 @@ export const handlers = [
       publicInputs: mockValidProof.publicInputs
     })
   }),
-  
+
   // Mock RPC calls (if needed)
   http.post('https://sepolia-rollup.arbitrum.io/rpc', async () => {
     return HttpResponse.json({
@@ -7292,30 +7612,30 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run unit tests
         run: npm test -- --coverage
-      
+
       - name: Run E2E tests
         run: npx playwright test
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
           files: ./coverage/lcov.info
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
@@ -7892,7 +8212,7 @@ import "./IUniversalZKVerifier.sol";
 
 contract MyZkApp {
     IUniversalZKVerifier verifier = IUniversalZKVerifier(0x...);
-    
+
     function privateAction(
         bytes calldata proof,
         bytes calldata publicInputs
@@ -7906,7 +8226,7 @@ contract MyZkApp {
             ),
             "Invalid proof"
         );
-        
+
         // Your logic here
     }
 }
@@ -8075,19 +8395,19 @@ Add the verifier interface to your project:
 // IUniversalZKVerifier.sol
 interface IUniversalZKVerifier {
     enum ProofType { GROTH16, PLONK, STARK }
-    
+
     function verify(
         ProofType proofType,
         bytes calldata proof,
         bytes calldata publicInputs,
         bytes calldata vk
     ) external view returns (bool);
-    
+
     function registerVerificationKey(
         ProofType proofType,
         bytes calldata vk
     ) external returns (uint256 vkId);
-    
+
     function verifyWithVKId(
         ProofType proofType,
         bytes calldata proof,
@@ -8100,11 +8420,11 @@ import "./IUniversalZKVerifier.sol";
 
 contract PrivacyToken {
     IUniversalZKVerifier public immutable verifier;
-    
+
     constructor(address _verifier) {
         verifier = IUniversalZKVerifier(_verifier);
     }
-    
+
     function privateTransfer(
         bytes calldata proof,
         bytes calldata publicInputs
@@ -8118,7 +8438,7 @@ contract PrivacyToken {
             ),
             "Invalid proof"
         );
-        
+
         // Process transfer
         _executeTransfer(publicInputs);
     }
@@ -8196,13 +8516,13 @@ function privateTransfer(
 ) external {
     // Public inputs: [nullifier, commitment, recipient]
     require(verifier.verify(...), "Invalid proof");
-    
-    (bytes32 nullifier, bytes32 newCommitment, address recipient) = 
+
+    (bytes32 nullifier, bytes32 newCommitment, address recipient) =
         abi.decode(publicInputs, (bytes32, bytes32, address));
-    
+
     require(!nullifiers[nullifier], "Already spent");
     nullifiers[nullifier] = true;
-    
+
     // Update state
     commitments[newCommitment] = true;
 }
@@ -8213,13 +8533,13 @@ function castVote(
 ) external {
     // Public inputs: [voteOption, nullifier]
     require(verifier.verify(...), "Invalid proof");
-    
-    (uint8 option, bytes32 nullifier) = 
+
+    (uint8 option, bytes32 nullifier) =
         abi.decode(publicInputs, (uint8, bytes32));
-    
+
     require(!hasVoted[nullifier], "Already voted");
     hasVoted[nullifier] = true;
-    
+
     voteCount[option]++;
 }
 Pattern 3: Credential Verification
@@ -8238,24 +8558,24 @@ import "./YourContract.sol";
 contract YourContractTest is Test {
     YourContract app;
     IUniversalZKVerifier verifier;
-    
+
     function setUp() public {
         verifier = IUniversalZKVerifier(VERIFIER_ADDRESS);
         app = new YourContract(address(verifier));
     }
-    
+
     function testValidProof() public {
         bytes memory proof = ...; // Load test proof
         bytes memory inputs = ...;
-        
+
         app.yourFunction(proof, inputs);
         // Assert expected state changes
     }
-    
+
     function testInvalidProofReverts() public {
         bytes memory invalidProof = ...;
         bytes memory inputs = ...;
-        
+
         vm.expectRevert("Invalid proof");
         app.yourFunction(invalidProof, inputs);
     }
@@ -8333,14 +8653,14 @@ function privateAction(
 ) external {
     // Verify proof
     require(verifier.verify(...), "Invalid proof");
-    
+
     // CRITICAL: Validate decoded inputs
-    (address recipient, uint256 amount) = 
+    (address recipient, uint256 amount) =
         abi.decode(publicInputs, (address, uint256));
-    
+
     require(recipient != address(0), "Invalid recipient");
     require(amount <= MAX_AMOUNT, "Amount too large");
-    
+
     // Proceed with action
 }
 Prevent Replay Attacks
@@ -8352,14 +8672,14 @@ function privateAction(
     bytes calldata publicInputs
 ) external {
     require(verifier.verify(...), "Invalid proof");
-    
+
     // Extract nullifier from public inputs
     bytes32 nullifier = abi.decode(publicInputs, (bytes32));
-    
+
     // CRITICAL: Check not already used
     require(!usedNullifiers[nullifier], "Proof already used");
     usedNullifiers[nullifier] = true;
-    
+
     // Proceed
 }
 Gas Limit Considerations
@@ -8370,7 +8690,7 @@ uint256 GAS_FOR_VERIFICATION = 150_000; // Buffer included
 function privateAction(...) external {
     // Ensure enough gas
     require(gasleft() >= GAS_FOR_VERIFICATION, "Insufficient gas");
-    
+
     require(verifier.verify(...), "Invalid proof");
     // Continue
 }
@@ -8388,7 +8708,7 @@ function batchPrivateActions(
         publicInputs,
         vkId
     );
-    
+
     // Process results
     for (uint256 i = 0; i < results.length; i++) {
         if (results[i]) {
@@ -8406,7 +8726,7 @@ function flexibleVerify(
     bytes calldata publicInputs
 ) external {
     bool valid;
-    
+
     if (proofType == IUniversalZKVerifier.ProofType.GROTH16) {
         valid = verifier.verifyWithVKId(
             proofType, proof, publicInputs, groth16VkId
@@ -8418,7 +8738,7 @@ function flexibleVerify(
     } else {
         revert("Unsupported proof type");
     }
-    
+
     require(valid, "Invalid proof");
     // Continue
 }
@@ -8430,10 +8750,10 @@ mapping(uint256 => uint256) public circuitVersion; // version => vkId
 function upgradeCircuit(uint256 newVkId) external onlyOwner {
     uint256 currentVersion = latestVersion;
     uint256 newVersion = currentVersion + 1;
-    
+
     circuitVersion[newVersion] = newVkId;
     latestVersion = newVersion;
-    
+
     emit CircuitUpgraded(newVersion, newVkId);
 }
 
@@ -8445,7 +8765,7 @@ function verifyWithVersion(
 ) external view returns (bool) {
     uint256 vkId = circuitVersion[version];
     require(vkId != 0, "Invalid version");
-    
+
     return verifier.verifyWithVKId(
         IUniversalZKVerifier.ProofType.GROTH16,
         proof,
@@ -8508,7 +8828,7 @@ A unified smart contract infrastructure for verifying zero-knowledge proofs on A
 **For mainnet**: Professional security audit recommended before handling significant value.
 
 
-**Our recommendation**: 
+**Our recommendation**:
 - Use on testnet freely
 - For mainnet: Wait for audit or conduct your own
 - Start with small amounts until confident
@@ -8789,7 +9109,7 @@ See [Integration Guide](./INTEGRATION.md) for detailed instructions.
 
 **Planned rewards:**
 - Critical: $500-1000
-- High: $200-500  
+- High: $200-500
 - Medium: $50-200
 - Low: Recognition
 
@@ -9822,7 +10142,7 @@ Basic Integration
 contract MyZkApp {
     IUniversalZKVerifier verifier;
     uint256 myVKId;
-    
+
     constructor(address _verifier, bytes memory vk) {
         verifier = IUniversalZKVerifier(_verifier);
         myVKId = verifier.registerVerificationKey(
@@ -9830,7 +10150,7 @@ contract MyZkApp {
             vk
         );
     }
-    
+
     function protectedAction(
         bytes calldata proof,
         bytes calldata inputs
@@ -9844,7 +10164,7 @@ contract MyZkApp {
             ),
             "Invalid proof"
         );
-        
+
         // Execute protected action
         _doAction(inputs);
     }
@@ -9880,7 +10200,7 @@ function processBatch(
         inputs,
         myVKId
     );
-    
+
     uint256 successCount = 0;
     for (uint256 i = 0; i < results.length; i++) {
         if (results[i]) {
@@ -9890,7 +10210,7 @@ function processBatch(
             emit ProofFailed(i);
         }
     }
-    
+
     emit BatchProcessed(results.length, successCount);
 }
 
@@ -10016,7 +10336,7 @@ mapping(bytes32 => bool) verifiedProofs;
 
 function verify AndCache(bytes calldata proof, ...) internal {
     bytes32 proofHash = keccak256(proof);
-    
+
     if (!verifiedProofs[proofHash]) {
         require(verifier.verify(...)); // 60k first time
         verifiedProofs[proofHash] = true;
@@ -10100,9 +10420,9 @@ Measurement & Profiling
 Measure Your Gas Usage
 function testGasUsage() public {
     uint256 gasBefore = gasleft();
-    
+
     verifier.verify(...);
-    
+
     uint256 gasUsed = gasBefore - gasleft();
     console.log("Gas used:", gasUsed);
 }
@@ -10223,11 +10543,11 @@ event GasMetrics(
 
 function monitoredVerify(...) external {
     uint256 gasBefore = gasleft();
-    
+
     bool valid = verifier.verify(...);
-    
+
     emit GasMetrics("verification", gasBefore - gasleft(), block.timestamp);
-    
+
     return valid;
 }
 
@@ -10297,7 +10617,7 @@ Last updated: January 2025
 [0:08-0:15] PROBLEM Visual: Multiple duplicate verifier contracts on Arbiscan Voiceover: "Projects deploy the same verification code over and over, wasting gas and developer time."
 [0:15-0:25] SOLUTION Visual: Architecture diagram animating Voiceover: "Universal ZK Verifier: One contract, built with Stylus Rust, supporting all proof types. Deploy once, use forever."
 [0:25-0:35] LIVE DEMO - Generate Visual: Screen recording - Select circuit, enter inputs Voiceover: "Watch: Select a circuit, enter your inputs, generate a zero-knowledge proof in seconds." Visual: Proof generation progress bar → Success
-[0:35-0:45] LIVE DEMO - Verify  
+[0:35-0:45] LIVE DEMO - Verify
 Visual: Screen recording - Submit proof, transaction confirms
 Voiceover: "Submit to Arbitrum in one click. Verification completes on-chain."
 Visual: Transaction confirmed, checkmark animation
@@ -11080,7 +11400,7 @@ Result?
 ✅ Open source
 ✅ Production-ready
 
-4/ Why Stylus? 
+4/ Why Stylus?
 
 Rust→Wasm unlocks:
 • Native 64/128-bit arithmetic
@@ -11182,3 +11502,4 @@ A: "Multiple layers: One, we use arkworks and halo2 libraries that are battle-te
 
 
 
+````

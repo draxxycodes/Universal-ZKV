@@ -8,7 +8,7 @@
     <a href="https://discord.gg/UNtS7QXyPk"><img src="https://img.shields.io/discord/908465643727253524?label=Discord&logo=discord"></a>
 </p>
 
-The arkworks ecosystem consist of Rust libraries for designing and working with *zero knowledge succinct non-interactive arguments (zkSNARKs)*. This repository contains efficient implementations of the key algebraic components underlying zkSNARKs: finite fields, elliptic curves, and polynomials.
+The arkworks ecosystem consist of Rust libraries for designing and working with _zero knowledge succinct non-interactive arguments (zkSNARKs)_. This repository contains efficient implementations of the key algebraic components underlying zkSNARKs: finite fields, elliptic curves, and polynomials.
 
 This library is released under the MIT License and the Apache v2 License (see [License](#license)).
 
@@ -16,12 +16,12 @@ This library is released under the MIT License and the Apache v2 License (see [L
 
 ## Directory structure
 
-This repository contains several Rust crates:  
+This repository contains several Rust crates:
 
-* [`ark-ff`](ff): Generic abstractions for, and implementations of various kinds of finite fields
-* [`ark-ec`](ec): Generic abstractions for prime-order groups, and implementations of various kinds of (pairing-friendly and standard) elliptic curves
-* [`ark-poly`](poly): Interfaces for univariate, multivariate, and multilinear polynomials, and FFTs over finite fields
-* [`ark-serialize`](serialize): Efficient interfaces for serialization and point compression for finite fields and elliptic curves
+- [`ark-ff`](ff): Generic abstractions for, and implementations of various kinds of finite fields
+- [`ark-ec`](ec): Generic abstractions for prime-order groups, and implementations of various kinds of (pairing-friendly and standard) elliptic curves
+- [`ark-poly`](poly): Interfaces for univariate, multivariate, and multilinear polynomials, and FFTs over finite fields
+- [`ark-serialize`](serialize): Efficient interfaces for serialization and point compression for finite fields and elliptic curves
 
 In addition, the [`curves`](https://github.com/arkworks-rs/curves) repository contains concrete implementations of popular elliptic curves; see [here](https://github.com/arkworks-rs/curves/README.md) for details.
 
@@ -77,8 +77,8 @@ Note that because inline assembly support in Rust is currently unstable, using t
 
 The crates in this repository are licensed under either of the following licenses, at your discretion.
 
-* Apache License Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or [apache.org license link](http://www.apache.org/licenses/LICENSE-2.0))
-* MIT license ([LICENSE-MIT](LICENSE-MIT) or [opensource.org license link](http://opensource.org/licenses/MIT))
+- Apache License Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or [apache.org license link](http://www.apache.org/licenses/LICENSE-2.0))
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or [opensource.org license link](http://opensource.org/licenses/MIT))
 
 Unless you explicitly state otherwise, any contribution submitted for inclusion in this library by you shall be dual licensed as above (as defined in the Apache v2 License), without any additional terms or conditions.
 
@@ -92,4 +92,4 @@ the National Science Foundation;
 the UC Berkeley Center for Long-Term Cybersecurity;
 and donations from the Ethereum Foundation, the Interchain Foundation, and Qtum.
 
-An earlier version of this library was developed as part of the paper *"[ZEXE: Enabling Decentralized Private Computation][zexe]"*.
+An earlier version of this library was developed as part of the paper _"[ZEXE: Enabling Decentralized Private Computation][zexe]"_.

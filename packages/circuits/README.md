@@ -24,6 +24,7 @@ packages/circuits/
 **Purpose:** Prove knowledge of a preimage that hashes to a specific value.
 
 **Use Cases:**
+
 - Privacy-preserving identity systems
 - Commitment schemes
 - Nullifier generation for anonymous transactions
@@ -32,10 +33,12 @@ packages/circuits/
 **Constraints:** ~150 (highly efficient)
 
 **Inputs:**
+
 - `preimage[2]` (private): Two field elements to hash
 - `expectedHash` (public): Expected hash value
 
 **Outputs:**
+
 - `valid`: 1 if hash matches, 0 otherwise
 
 **Security Level:** 128-bit security (Poseidon over BN254)
@@ -47,6 +50,7 @@ packages/circuits/
 **Purpose:** Verify EdDSA signatures in zero-knowledge.
 
 **Use Cases:**
+
 - Anonymous authentication systems
 - Private voting mechanisms
 - Credential verification without revealing identity
@@ -55,11 +59,13 @@ packages/circuits/
 **Constraints:** ~2,500
 
 **Inputs:**
+
 - `Ax, Ay` (public): Public key coordinates
 - `S, R8x, R8y` (private): Signature components
 - `M` (public): Message to verify
 
 **Outputs:**
+
 - `valid`: 1 if signature is valid
 
 **Security Level:** 128-bit security (EdDSA over Baby Jubjub curve)
@@ -71,6 +77,7 @@ packages/circuits/
 **Purpose:** Prove a leaf exists in a Merkle tree without revealing the leaf or path.
 
 **Use Cases:**
+
 - Private airdrops (claim without revealing address)
 - Anonymous voting (prove eligibility without revealing identity)
 - ZK-rollups (state inclusion proofs)
@@ -81,12 +88,14 @@ packages/circuits/
 **Tree Capacity:** 1,048,576 leaves (2^20)
 
 **Inputs:**
+
 - `leaf` (private): Leaf value to prove
 - `pathElements[20]` (private): Sibling nodes along path
 - `pathIndices[20]` (private): 0=left, 1=right at each level
 - `root` (public): Expected Merkle root
 
 **Outputs:**
+
 - `valid`: 1 if leaf is in tree
 
 **Security Level:** 128-bit security (MiMC7 hash)
@@ -96,6 +105,7 @@ packages/circuits/
 ## 🔧 Prerequisites
 
 Ensure you have completed Task 3.5.1:
+
 - ✅ circom v2.1.6+ installed
 - ✅ snarkjs v0.7.5+ installed
 - ✅ powersOfTau28_hez_final.ptau generated (2.3 GB, 268M constraints)
@@ -163,11 +173,11 @@ snarkjs groth16 verify \
 
 ## 📊 Constraint Counts (Estimated)
 
-| Circuit | Constraints | Public Inputs | Private Inputs |
-|---------|-------------|---------------|----------------|
-| Poseidon | ~150 | 1 | 2 |
-| EdDSA | ~2,500 | 3 | 3 |
-| Merkle (20 levels) | ~4,000 | 1 | 41 |
+| Circuit            | Constraints | Public Inputs | Private Inputs |
+| ------------------ | ----------- | ------------- | -------------- |
+| Poseidon           | ~150        | 1             | 2              |
+| EdDSA              | ~2,500      | 3             | 3              |
+| Merkle (20 levels) | ~4,000      | 1             | 41             |
 
 **Total:** ~6,650 constraints (well within 268M limit of powersOfTau28_hez_final.ptau)
 
@@ -191,6 +201,7 @@ snarkjs groth16 verify \
 ## 🧪 Testing Strategy
 
 See `USAGE.md` for detailed testing procedures:
+
 - Unit tests for each circuit
 - Integration tests with actual proof generation
 - Differential testing against reference implementations
@@ -199,6 +210,7 @@ See `USAGE.md` for detailed testing procedures:
 ## 📝 Next Steps
 
 After completing this task (3.5.2), proceed to:
+
 - **Task 3.5.3:** Trusted Setup Ceremony (generate zkeys)
 - **Task 3.5.4:** Mass Proof Generation (10,000+ proofs)
 - **Task 3.5.5:** Proof Validation & Cataloging
@@ -206,6 +218,7 @@ After completing this task (3.5.2), proceed to:
 ## 🎯 Production Readiness
 
 ✅ **Industry-Grade Features:**
+
 - Standard cryptographic primitives (Poseidon, EdDSA, MiMC)
 - Optimized constraint counts
 - Clear input/output specifications
@@ -213,6 +226,7 @@ After completing this task (3.5.2), proceed to:
 - Compatible with Groth16, PLONK, and STARK verifiers
 
 ✅ **Uses Maximum Specifications:**
+
 - powersOfTau28_hez_final.ptau (268M constraints)
 - Production-grade circuit depth (20 levels for Merkle)
 - Security parameters aligned with Ethereum standards

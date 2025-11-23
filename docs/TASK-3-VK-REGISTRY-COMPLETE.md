@@ -10,6 +10,7 @@ Implemented production-grade VK registry with **(proofType, programId, vkHash)**
 ## Security Vulnerability Fixed
 
 ### **Before Task 3** ❌
+
 ```rust
 // Single-level storage
 mapping(bytes32 => bytes) verification_keys;  // vkHash => vkData
@@ -27,12 +28,14 @@ pub fn verify(&mut self, proof_type: u8, proof: Vec<u8>, vk_hash: [u8; 32])
 ```
 
 **Attack Scenario:**
+
 1. User registers **Groth16 VK** → gets `vkHash = 0xabc...`
-2. User registers **PLONK VK** → gets `vkHash = 0xdef...`  
+2. User registers **PLONK VK** → gets `vkHash = 0xdef...`
 3. **EXPLOIT:** User submits **Groth16 proof** with `vkHash = 0xdef...` (PLONK VK)
 4. Contract retrieves **wrong VK** → invalid verification!
 
 ### **After Task 3** ✅
+
 ```rust
 // Triple-nested storage
 mapping(uint8 => mapping(uint32 => mapping(bytes32 => bytes))) vk_registry;
@@ -47,7 +50,7 @@ pub fn register_vk_universal(
     vk: Vec<u8>,
 ) -> Result<[u8; 32]> {
     let vk_hash = keccak256(&vk);
-    
+
     // Store with triple binding
     self.vk_registry
         .get_mut(proof_type)
@@ -58,20 +61,21 @@ pub fn register_vk_universal(
 // Verify with binding validation
 pub fn verify_universal(&mut self, universal_proof_bytes: Vec<u8>) {
     let proof = UniversalProof::decode(universal_proof_bytes)?;
-    
+
     // Validate triple binding exists
     let vk = self.vk_registry
         .get(proof.proof_type)   // ← MUST match proof type
         .get(proof.program_id)   // ← MUST match circuit
         .get(proof.vk_hash)
         .ok_or(Error::VKNotRegistered)?;
-    
+
     // Verify with correct VK
     groth16::verify(&proof.proof_bytes, &proof.public_inputs, &vk)
 }
 ```
 
 **Attack Prevention:**
+
 - ❌ Cannot use Groth16 proof with PLONK VK (different `proof_type`)
 - ❌ Cannot use Circuit A's VK with Circuit B's proof (different `program_id`)
 - ❌ Cannot register duplicate VKs (idempotent operation)
@@ -83,22 +87,22 @@ pub fn verify_universal(&mut self, universal_proof_bytes: Vec<u8>) {
 sol_storage! {
     pub struct UZKVContract {
         // === NEW: Universal VK Registry (SECURE) ===
-        
+
         // VK Registry: proofType => programId => vkHash => vkData
         mapping(uint8 => mapping(uint32 => mapping(bytes32 => bytes))) vk_registry;
-        
+
         // Registration Status: proofType => programId => vkHash => isRegistered
         mapping(uint8 => mapping(uint32 => mapping(bytes32 => bool))) vk_registry_status;
-        
+
         // Precomputed Data: proofType => programId => vkHash => precomputedData
         // (For Groth16 e(α, β) pairing optimization)
         mapping(uint8 => mapping(uint32 => mapping(bytes32 => bytes))) precomputed_data;
-        
+
         // === Legacy storage (DEPRECATED but preserved for backward compatibility) ===
         mapping(bytes32 => bytes) verification_keys;
         mapping(bytes32 => bytes) precomputed_pairings;
         mapping(bytes32 => bool) vk_registered;
-        
+
         // ... (other fields unchanged)
     }
 }
@@ -117,20 +121,20 @@ pub fn register_vk_universal(
 ) -> Result<[u8; 32]> {
     // Validate proof type
     let ptype = ProofType::from_u8(proof_type).ok_or(Error::InvalidProofType)?;
-    
+
     // Compute VK hash
     let vk_hash = keccak256(&vk);
-    
+
     // Store with triple binding
     let proof_type_uint = U8::from(proof_type);
     let program_id_uint = U32::from(program_id);
-    
+
     self.vk_registry
         .setter(proof_type_uint)
         .setter(program_id_uint)
         .setter(vk_hash)
         .set_bytes(&vk);
-    
+
     // Precompute e(α, β) pairing for Groth16 (gas optimization)
     if matches!(ptype, ProofType::Groth16) {
         if let Ok(precomputed) = groth16::compute_precomputed_pairing(&vk) {
@@ -141,12 +145,13 @@ pub fn register_vk_universal(
                 .set_bytes(&precomputed);
         }
     }
-    
+
     Ok(vk_hash)
 }
 ```
 
 **Features:**
+
 - ✅ **Triple binding:** (proofType, programId, vkHash) → vkData
 - ✅ **Type validation:** Rejects invalid proof types
 - ✅ **Circuit isolation:** Each program_id has separate VK namespace
@@ -164,28 +169,28 @@ pub fn verify_universal(
     // Decode UniversalProof
     let proof = UniversalProof::decode(&universal_proof_bytes)
         .ok_or(Error::InvalidProofFormat)?;
-    
+
     // Validate version
     if proof.version != 1 {
         return Err(Error::InvalidProofFormat);
     }
-    
+
     // Convert types for storage lookup
     let proof_type_uint = U8::from(proof.proof_type.to_u8());
     let program_id_uint = U32::from(proof.program_id);
     let vk_hash_fixed = FixedBytes::from(proof.vk_hash);
-    
+
     // === SECURITY: Validate triple binding ===
     let vk_storage = self.vk_registry
         .getter(proof_type_uint)
         .getter(program_id_uint)
         .get(vk_hash_fixed);
-    
+
     if vk_storage.is_empty() {
         return Err(Error::VKNotRegistered);
     }
     let vk_data = vk_storage.get_bytes();
-    
+
     // Route to appropriate verifier
     let is_valid = match proof.proof_type {
         ProofType::Groth16 => {
@@ -194,7 +199,7 @@ pub fn verify_universal(
                 .getter(proof_type_uint)
                 .getter(program_id_uint)
                 .get(vk_hash_fixed);
-            
+
             if !precomputed_storage.is_empty() {
                 groth16::verify_with_precomputed(
                     &proof.proof_bytes,
@@ -219,18 +224,19 @@ pub fn verify_universal(
                 .map_err(|_| Error::VerificationFailed)?
         }
     };
-    
+
     // Increment verification counter
     if is_valid {
         let count = self.verification_count.get();
         self.verification_count.set(count + U256::from(1));
     }
-    
+
     Ok(is_valid)
 }
 ```
 
 **Features:**
+
 - ✅ **Decodes UniversalProof:** Extracts proof_type, program_id, vk_hash
 - ✅ **Validates binding:** Ensures VK registered for (proof_type, program_id, vk_hash)
 - ✅ **Multi-system support:** Routes to Groth16/PLONK/STARK verifiers
@@ -240,6 +246,7 @@ pub fn verify_universal(
 ## Type System Improvements
 
 ### Added Uint Imports
+
 ```rust
 use stylus_sdk::{
     alloy_primitives::{FixedBytes, U256, U8, U32},  // ← Added U8, U32
@@ -249,6 +256,7 @@ use stylus_sdk::{
 ```
 
 ### Type Conversions
+
 ```rust
 // Convert u8/u32 to Uint for storage mapping keys
 let proof_type_uint = U8::from(proof_type);   // u8 → Uint<8, 1>
@@ -261,6 +269,7 @@ self.vk_registry.setter(proof_type_uint)  // ← Must be Uint<8, 1>
 ## Error Handling
 
 ### New Error Variant
+
 ```rust
 pub enum Error {
     // ... existing errors
@@ -312,6 +321,7 @@ pub fn verify(
 ```
 
 **Migration Path:**
+
 1. **Phase 1 (Current):** Both APIs work (backward compatible)
 2. **Phase 2 (Future):** Add warnings when legacy functions are used
 3. **Phase 3 (Audit-ready):** Disable legacy functions or require admin override
@@ -328,20 +338,21 @@ $ cargo check --target wasm32-unknown-unknown
 
 ## Security Properties
 
-| Property | Status | Implementation |
-|----------|--------|----------------|
+| Property                       | Status      | Implementation                                          |
+| ------------------------------ | ----------- | ------------------------------------------------------- |
 | **VK Substitution Prevention** | ✅ COMPLETE | Triple binding validates (proofType, programId, vkHash) |
-| **Circuit Isolation** | ✅ COMPLETE | Each program_id has isolated VK namespace |
-| **Type Safety** | ✅ COMPLETE | ProofType enum validation in register_vk_universal() |
-| **Multiple Circuits per Type** | ✅ COMPLETE | program_id (u32) supports 4.2 billion circuits |
-| **Backward Compatibility** | ✅ COMPLETE | Legacy storage preserved, old functions still work |
-| **Gas Optimization** | ✅ COMPLETE | Precomputed e(α, β) pairing for Groth16 (~80k savings) |
-| **Idempotent Registration** | ✅ COMPLETE | Safe to register same VK multiple times |
-| **Version Gating** | ✅ COMPLETE | Only UniversalProof v1 accepted |
+| **Circuit Isolation**          | ✅ COMPLETE | Each program_id has isolated VK namespace               |
+| **Type Safety**                | ✅ COMPLETE | ProofType enum validation in register_vk_universal()    |
+| **Multiple Circuits per Type** | ✅ COMPLETE | program_id (u32) supports 4.2 billion circuits          |
+| **Backward Compatibility**     | ✅ COMPLETE | Legacy storage preserved, old functions still work      |
+| **Gas Optimization**           | ✅ COMPLETE | Precomputed e(α, β) pairing for Groth16 (~80k savings)  |
+| **Idempotent Registration**    | ✅ COMPLETE | Safe to register same VK multiple times                 |
+| **Version Gating**             | ✅ COMPLETE | Only UniversalProof v1 accepted                         |
 
 ## Gas Analysis
 
 ### VK Registration
+
 ```
 register_vk_universal() = ~120-220k gas
 ├─ Storage writes: ~80-120k gas (3 nested mappings)
@@ -350,6 +361,7 @@ register_vk_universal() = ~120-220k gas
 ```
 
 ### Verification (with precomputed pairing)
+
 ```
 verify_universal() = ~60-65k gas (Groth16)
 ├─ UniversalProof decode: ~5k gas
@@ -363,6 +375,7 @@ verify_universal() = ~60-65k gas (Groth16)
 ## Testing Requirements (Next Steps)
 
 ### Unit Tests Needed
+
 - [ ] Test register_vk_universal() with valid proof types
 - [ ] Test register_vk_universal() rejects invalid proof types
 - [ ] Test verify_universal() validates triple binding
@@ -373,6 +386,7 @@ verify_universal() = ~60-65k gas (Groth16)
 - [ ] Test version validation (only v1 accepted)
 
 ### Integration Tests Needed
+
 - [ ] Test full flow: register VK → generate proof → verify
 - [ ] Test cross-circuit isolation (Circuit A proof fails with Circuit B VK)
 - [ ] Test precomputed pairing optimization
@@ -402,6 +416,7 @@ Date: 2025
 ## Next Steps
 
 **Task 4:** Add `ProofVerified` event emission with fields:
+
 - `proof_type: u8`
 - `program_id: u32`
 - `vk_hash: bytes32`
@@ -410,6 +425,7 @@ Date: 2025
 - `timestamp: uint256`
 
 This will enable:
+
 - Off-chain monitoring and indexing
 - Proof submission analytics
 - User verification history

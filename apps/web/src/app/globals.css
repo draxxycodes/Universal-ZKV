@@ -3,31 +3,94 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
-}
+  /* Colors */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-card: #1a1a1a;
+  --color-bg-hover: #252525;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+
+  --color-yellow: #fbbf24;
+  --color-yellow-dark: #d97706;
+  --color-yellow-light: #fde68a;
+
+  --color-border: #2a2a2a;
+  --color-border-light: #404040;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Custom gradient backgrounds */
+  .gradient-yellow {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  }
+
+  .gradient-yellow-dark {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #92400e 100%);
+  }
+
+  .gradient-yellow-subtle {
+    background: linear-gradient(
+      135deg,
+      rgba(251, 191, 36, 0.1) 0%,
+      rgba(245, 158, 11, 0.05) 50%,
+      rgba(217, 119, 6, 0.1) 100%
+    );
+  }
+
+  .gradient-mesh {
+    background:
+      radial-gradient(at 0% 0%, rgba(251, 191, 36, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(217, 119, 6, 0.05) 0px, transparent 50%),
+      radial-gradient(
+        at 100% 100%,
+        rgba(245, 158, 11, 0.08) 0px,
+        transparent 50%
+      ),
+      radial-gradient(at 0% 100%, rgba(251, 191, 36, 0.05) 0px, transparent 50%);
+  }
+
+  /* Card styles */
+  .card-primary {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+  }
+
+  .card-secondary {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Text colors */
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(251, 191, 36, 0.1);
   }
 }

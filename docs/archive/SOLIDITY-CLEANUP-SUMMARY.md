@@ -5,6 +5,7 @@
 ### Files Removed (Obsolete Solidity Verifiers)
 
 **Contracts:**
+
 - ❌ `packages/contracts/src/UZKVProxy.sol` - Complex UUPS proxy (not needed)
 - ❌ `packages/contracts/src/UniversalZKVerifier.sol` - Solidity multi-proof router (replaced by Stylus)
 - ❌ `packages/contracts/src/Counter.sol` - Example template
@@ -12,6 +13,7 @@
 - ❌ `packages/contracts/src/interfaces/IUniversalVerifier.sol` - Obsolete interface
 
 **Tests & Scripts:**
+
 - ❌ All `test/*.t.sol` files - Using Rust integration tests instead
 - ❌ All `script/*.s.sol` files - Using `cargo stylus deploy` instead
 
@@ -20,18 +22,21 @@
 ### Files Retained (Essential Infrastructure)
 
 **Interfaces (50 lines):**
+
 - ✅ `packages/contracts/src/interfaces/IGroth16Verifier.sol`
   - Purpose: ABI definition for Stylus WASM contract
   - Generated from: `cargo stylus export-abi`
   - No logic, just type definitions
 
 **Proxies (90 lines):**
+
 - ✅ `packages/contracts/src/Groth16VerifierProxy.sol`
   - Purpose: Event emission wrapper around Stylus
   - Provides Solidity-style events for indexing
   - Delegates all verification to Stylus WASM
 
 **Libraries (148 lines):**
+
 - ✅ `packages/contracts/src/libraries/Storage.sol`
   - Purpose: ERC-7201 storage layout specification
   - Prevents storage collisions
@@ -66,21 +71,25 @@ User Request
 ## Benefits of Pure Stylus
 
 ### 1. Gas Efficiency
+
 - **Groth16 Verify:** 280k (Solidity) → 61k (Stylus) = **78% cheaper**
 - **Batch 10 Proofs:** 2.8M → 850k = **70% cheaper**
 
 ### 2. Smaller Codebase
+
 - **Before:** ~2000 lines of Solidity
 - **After:** 288 lines Solidity + 680 lines Rust
 - **Reduction:** 85% less Solidity code
 
 ### 3. Security Advantages
+
 - **Memory Safety:** Rust prevents buffer overflows, use-after-free
 - **Type Safety:** Strong typing prevents cryptographic errors
 - **Audit Surface:** Only 288 lines of Solidity to audit
 - **Formal Verification:** Rust's borrow checker provides compile-time guarantees
 
 ### 4. Developer Experience
+
 - **Modern Tooling:** cargo, rust-analyzer, clippy
 - **Better Libraries:** arkworks (battle-tested crypto)
 - **Easier Testing:** cargo test, integration tests
@@ -118,6 +127,7 @@ packages/
 ## Documentation Created
 
 ### New Architecture Docs
+
 1. **`packages/contracts/STYLUS-ARCHITECTURE.md`**
    - Complete architecture overview
    - Deployment models (on-chain vs hybrid)
@@ -147,21 +157,25 @@ packages/
 ## Next Steps
 
 ### Immediate (Week 1-2)
+
 - [ ] Build Stylus WASM for deployment
 - [ ] Write Rust integration tests
 - [ ] Deploy to Arbitrum Sepolia testnet
 
 ### Short-term (Week 3-4)
+
 - [ ] Build TypeScript SDK
 - [ ] Create demo frontend
 - [ ] Deploy to Arbitrum One mainnet
 
 ### Medium-term (Month 2-3)
+
 - [ ] Implement PLONK verifier (Stylus)
 - [ ] Implement STARK verifier (Stylus)
 - [ ] Build attestor service (hybrid model)
 
 ### Long-term (Month 4-6)
+
 - [ ] Professional security audit
 - [ ] Bug bounty program
 - [ ] Production monitoring
@@ -170,6 +184,7 @@ packages/
 ## Key Takeaways
 
 ### What We Removed
+
 - ❌ All Solidity verification logic (~2000 lines)
 - ❌ Complex proxy patterns (UUPS)
 - ❌ Mock implementations
@@ -177,12 +192,14 @@ packages/
 - ❌ Forge deployment scripts
 
 ### What We Kept
+
 - ✅ ABI interfaces (50 lines)
 - ✅ Event wrappers (90 lines)
 - ✅ Storage layout (148 lines)
 - ✅ **Total:** 288 lines of Solidity
 
 ### What We Built
+
 - ✅ Groth16 verifier in Rust (600 lines)
 - ✅ Contract scaffolding (80 lines)
 - ✅ Attestor contract (230 lines)
@@ -190,16 +207,16 @@ packages/
 
 ## Comparison: Before vs After
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| **Solidity LoC** | ~2000 | 288 |
-| **Rust LoC** | 0 | 680 |
-| **Total LoC** | 2000 | 968 |
-| **Gas Cost** | ~280k | ~61k |
-| **Audit Surface** | High | Low |
-| **Memory Safety** | Manual | Automatic |
-| **Type Safety** | Weak | Strong |
-| **Library Support** | Limited | arkworks |
+| Aspect              | Before  | After     |
+| ------------------- | ------- | --------- |
+| **Solidity LoC**    | ~2000   | 288       |
+| **Rust LoC**        | 0       | 680       |
+| **Total LoC**       | 2000    | 968       |
+| **Gas Cost**        | ~280k   | ~61k      |
+| **Audit Surface**   | High    | Low       |
+| **Memory Safety**   | Manual  | Automatic |
+| **Type Safety**     | Weak    | Strong    |
+| **Library Support** | Limited | arkworks  |
 
 **Result:** 52% less code, 78% cheaper gas, infinitely safer! 🦀
 

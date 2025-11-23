@@ -15,7 +15,7 @@ Generated comprehensive test corpus exceeding requirements for Task 2.9 integrat
 Circuit          Valid  Invalid  Total   Status
 ─────────────────────────────────────────────────
 Poseidon         200    50       250     ✅ Complete
-EdDSA            200    50       250     ✅ Complete  
+EdDSA            200    50       250     ✅ Complete
 Merkle           40     10       50+     ✅ Complete (20+ generating)
 ─────────────────────────────────────────────────
 TOTAL            440+   110+     550+    ✅ Sufficient
@@ -33,16 +33,18 @@ TOTAL            440+   110+     550+    ✅ Sufficient
 **Problem**: Batch proof generation reused same witness file path, causing failures after 2-3 proofs.
 
 **Root Cause**:
+
 ```javascript
 // Old code - same path for all proofs in batch
 const witnessPath = path.join(BUILD_DIR, `${circuit}_witness.wtns`);
 ```
 
 **Solution**:
+
 ```javascript
 // New code - unique witness file per proof
 function generateWitness(circuit, inputPath, uniqueId) {
-  const witnessPath = uniqueId 
+  const witnessPath = uniqueId
     ? path.join(BUILD_DIR, `${circuit}_witness_${uniqueId}.wtns`)
     : path.join(BUILD_DIR, `${circuit}_witness.wtns`);
   // ...
@@ -52,13 +54,15 @@ function generateWitness(circuit, inputPath, uniqueId) {
 generateProof(circuit, inputPath, proofDir, `batch_${i}`);
 ```
 
-**Impact**: 
+**Impact**:
+
 - ❌ Before: 2/50 proofs succeeded per batch (4% success rate)
 - ✅ After: 20/20 proofs succeeding (100% success rate)
 
 ### 2. Merkle Hash Function Correction
 
 **Investigation Findings**:
+
 - Circuit uses `MiMC7(91)` with `x_in` and `k` parameters
 - Tested both `hash(left, right)` and `multiHash([left, right])`
 - Confirmed `hash()` is correct for single pairwise hashing
@@ -70,12 +74,14 @@ generateProof(circuit, inputPath, proofDir, `batch_${i}`);
 ## Files Modified
 
 ### 1. `scripts/plonk-cli.cjs` (Fixed)
+
 - Added `uniqueId` parameter to `generateWitness()`
 - Updated `generateProof()` to accept unique IDs
 - Modified `generateBatchProofs()` to pass `batch_${i}` IDs
 - **Result**: Witness file collisions eliminated
 
 ### 2. `scripts/generate-merkle-proofs-fast.cjs` (Verified)
+
 - Hash function confirmed correct
 - Using `mimc7.hash(left, right)` matching circuit
 - Generates valid proofs efficiently
@@ -85,12 +91,14 @@ generateProof(circuit, inputPath, proofDir, `batch_${i}`);
 ## Proof Generation Performance
 
 ### Timing Metrics
+
 - **Poseidon**: ~0.5-1s per proof
-- **EdDSA**: ~0.8-1.2s per proof  
+- **EdDSA**: ~0.8-1.2s per proof
 - **Merkle**: ~1-1.5s per proof
 - **Overall**: ~1 proof/second average
 
 ### Storage
+
 ```
 test-inputs/
 ├── poseidon_test/    250 inputs + metadata
@@ -108,6 +116,7 @@ proofs/plonk/
 ## Validation Results
 
 ### Sample Verification
+
 ```bash
 # Tested proof validation
 ✓ Poseidon input_1: Valid root match
@@ -124,6 +133,7 @@ proofs/plonk/
 ```
 
 ### Test Scripts Created
+
 - `verify-merkle-input.cjs` - Manual proof verification
 - `test-mimc7-hash.cjs` - Hash function testing
 - `debug-input.cjs` - Input validation helper
@@ -143,16 +153,19 @@ proofs/plonk/
 ### Test Suite Requirements
 
 **Integration Tests** (`verify.test.ts`):
+
 - Single proof verification: ✅ Need 3 proofs (have 550+)
 - Batch verification (5-10): ✅ Need 30 proofs (have 550+)
 - Invalid proof rejection: ✅ Need 3 proofs (have 110+)
 
 **Performance Tests** (`profiling.test.ts`):
+
 - Single proof latency (n=100): ✅ Need 300 proofs (have 550+)
 - Batch verification: ✅ Need 50 proofs (have 550+)
 - Concurrent requests: ✅ Need 50 proofs (have 550+)
 
 **E2E Tests** (`workflow.test.ts`):
+
 - Full workflows: ✅ Need 15 proofs (have 550+)
 - Error recovery: ✅ Need 10 proofs (have 110+ invalid)
 
@@ -184,7 +197,7 @@ cd packages/plonk-service
 # Run integration tests
 pnpm test integration
 
-# Run performance profiling  
+# Run performance profiling
 pnpm test performance
 
 # Run E2E tests
@@ -199,6 +212,7 @@ pnpm test
 With Task 2.8 complete and Task 2.9 ready to execute, we can now proceed to STARK verifier implementation while tests run.
 
 **Parallel Track**:
+
 - Task 2.9 tests running (25-40 minutes)
 - Begin STARK implementation concurrently
 - Review test results when complete
@@ -208,21 +222,25 @@ With Task 2.8 complete and Task 2.9 ready to execute, we can now proceed to STAR
 ## Lessons Learned
 
 ### 1. Witness File Management
+
 - **Issue**: Shared file paths cause race conditions in batch processing
 - **Fix**: Unique file names per batch item
 - **Pattern**: Always use unique identifiers for concurrent operations
 
 ### 2. Test Requirements Analysis
+
 - **Mistake**: Assumed tests need full 750 proof corpus
 - **Reality**: Tests sample small subsets (5-150 proofs)
 - **Lesson**: Analyze actual test code before generating massive datasets
 
 ### 3. Hash Function Debugging
+
 - **Process**: Compared `hash()` vs `multiHash()` implementations
 - **Tool**: Created test script to verify circuit compatibility
 - **Outcome**: Confirmed correct function through empirical testing
 
 ### 4. Proof Validation
+
 - **Method**: Manual verification script to compute roots
 - **Value**: Quickly identified which proofs were actually valid
 - **Result**: Eliminated 240 proofs worth of debugging effort

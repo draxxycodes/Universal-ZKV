@@ -11,6 +11,7 @@ This document details the implementation of a STARK (Scalable Transparent ARgume
 ### Implementation Status
 
 ✅ **Complete**:
+
 - Crate structure and dependencies (Cargo.toml)
 - Error types and security levels (lib.rs - 200+ lines)
 - FRI (Fast Reed-Solomon IOP) verifier (fri.rs - 400+ lines)
@@ -19,11 +20,13 @@ This document details the implementation of a STARK (Scalable Transparent ARgume
 - Integration test suite (integration_tests.rs - 500+ lines)
 
 ⏳ **In Progress**:
+
 - Winterfell API compatibility refinement
 - Type safety fixes for generic field parameters
 - Full test execution validation
 
 📋 **Pending**:
+
 - Gas benchmarking with actual WASM deployment
 - 1000+ proof generation and validation
 - Production deployment to Arbitrum Stylus
@@ -43,14 +46,14 @@ STARK (Scalable Transparent ARgument of Knowledge) is a zero-knowledge proof sys
 
 ### 1.2 STARK vs Other Proof Systems
 
-| Property | Groth16 | PLONK | STARK (This Implementation) |
-|----------|---------|-------|----------------------------|
-| **Trusted Setup** | Circuit-specific | Universal (Powers of Tau) | None (Transparent) |
-| **Proof Size** | 192 bytes | ~800 bytes | ~50-200 KB (depends on security) |
-| **Verification Gas** | ~450k | ~950k | ~500-700k (target) |
-| **Post-Quantum** | ❌ No (relies on pairings) | ❌ No (relies on pairings) | ✅ Yes (hash-based) |
-| **Prover Time** | Fast | Medium | Slower (but parallelizable) |
-| **Best For** | Production SNARKs | Universal circuits | Transparent proofs, high security |
+| Property             | Groth16                    | PLONK                      | STARK (This Implementation)       |
+| -------------------- | -------------------------- | -------------------------- | --------------------------------- |
+| **Trusted Setup**    | Circuit-specific           | Universal (Powers of Tau)  | None (Transparent)                |
+| **Proof Size**       | 192 bytes                  | ~800 bytes                 | ~50-200 KB (depends on security)  |
+| **Verification Gas** | ~450k                      | ~950k                      | ~500-700k (target)                |
+| **Post-Quantum**     | ❌ No (relies on pairings) | ❌ No (relies on pairings) | ✅ Yes (hash-based)               |
+| **Prover Time**      | Fast                       | Medium                     | Slower (but parallelizable)       |
+| **Best For**         | Production SNARKs          | Universal circuits         | Transparent proofs, high security |
 
 ### 1.3 Use Cases
 
@@ -153,13 +156,13 @@ FRI is a polynomial commitment scheme that proves a polynomial has degree ≤ d 
 pub struct FriProof<F: StarkField> {
     /// Merkle roots for each FRI layer
     pub layer_commitments: Vec<[u8; 32]>,
-    
+
     /// Merkle proofs for queried positions
     pub layer_proofs: Vec<MerkleProof>,
-    
+
     /// Polynomial evaluations at queried positions
     pub layer_evaluations: Vec<Vec<F>>,
-    
+
     /// Final remainder polynomial (low-degree)
     pub remainder: Vec<F>,
 }
@@ -183,18 +186,18 @@ This reduces degree by half at each layer until we reach a polynomial of degree 
 pub fn verify(&self, proof: &FriProof<F>, options: &FriOptions) -> Result<()> {
     // 1. Validate proof structure
     validate_proof_structure(proof, options)?;
-    
+
     // 2. Generate query positions (Fiat-Shamir)
     let query_positions = generate_query_positions(proof, options.num_queries)?;
-    
+
     // 3. Verify each FRI layer
     for layer_idx in 0..options.num_layers {
         verify_layer(proof, layer_idx, query_positions)?;
     }
-    
+
     // 4. Verify remainder polynomial has low degree
     verify_remainder(proof.remainder, options.max_remainder_degree)?;
-    
+
     Ok(())
 }
 ```
@@ -210,7 +213,7 @@ fn verify_merkle_proof(
 ) -> Result<()> {
     let mut current_hash = *leaf_hash;
     let mut current_index = index;
-    
+
     for sibling_hash in merkle_path {
         // Hash in order (left/right based on index parity)
         if current_index % 2 == 0 {
@@ -220,7 +223,7 @@ fn verify_merkle_proof(
         }
         current_index /= 2;
     }
-    
+
     if &current_hash != expected_root {
         return Err(Error::MerkleProofFailed);
     }
@@ -247,6 +250,7 @@ F(n+2) = F(n+1) + F(n)
 ```
 
 **Trace**:
+
 ```
 Step | Value
 -----|------
@@ -262,6 +266,7 @@ Step | Value
 #### 3.2.2 Constraint Types
 
 **Boundary Constraints** (checked at specific steps):
+
 ```rust
 // F₀ = 1
 Assertion::single(0, 0, FieldElement::ONE);
@@ -274,13 +279,14 @@ Assertion::single(0, trace_length - 1, expected_result);
 ```
 
 **Transition Constraints** (checked at every step):
+
 ```rust
 // F(i+2) = F(i+1) + F(i)
 // Rearranged: F(i+2) - F(i+1) - F(i) = 0
 fn evaluate_transition<E: FieldElement>(frame: &EvaluationFrame<E>) -> E {
     let f_i = frame.current()[0];
     let f_i_plus_1 = frame.next()[0];
-    
+
     // Constraint: next value should equal sum of current and previous
     // (In practice, this is done via polynomial interpolation)
     f_i_plus_1 - f_i // Simplified constraint
@@ -312,16 +318,16 @@ The main STARK verifier integrates FRI and AIR to verify complete proofs.
 pub struct StarkProof {
     /// Commitment to execution trace (Merkle root)
     pub trace_commitment: [u8; 32],
-    
+
     /// Commitment to constraint composition polynomial
     pub composition_commitment: [u8; 32],
-    
+
     /// FRI proof (serialized)
     pub fri_proof: Vec<u8>,
-    
+
     /// Query proofs (Merkle paths for random checks)
     pub trace_query_proofs: Vec<QueryProof>,
-    
+
     /// Out-of-domain evaluation frame
     pub ood_frame: OodFrame,
 }
@@ -344,22 +350,22 @@ pub struct OodFrame {
 pub fn verify(vk: &StarkVerificationKey, proof: &StarkProof, public_inputs: &[F]) -> Result<()> {
     // Step 1: Validate proof structure
     validate_proof_structure(vk, proof)?;
-    
+
     // Step 2: Generate OOD (out-of-domain) challenge point z
     let ood_point = generate_ood_challenge(&proof.trace_commitment, &proof.composition_commitment)?;
-    
+
     // Step 3: Verify AIR constraints at OOD point
     verify_ood_constraints(vk, proof, ood_point, public_inputs)?;
-    
+
     // Step 4: Generate query positions (Fiat-Shamir)
     let query_positions = generate_query_positions(vk, &proof.composition_commitment, &proof.ood_frame)?;
-    
+
     // Step 5: Verify trace query proofs (Merkle proofs)
     verify_trace_queries(&proof.trace_commitment, &proof.trace_query_proofs, &query_positions)?;
-    
+
     // Step 6: Verify FRI proof (low-degree test)
     fri_verifier.verify(&proof.fri_proof, &vk.fri_options)?;
-    
+
     Ok(())
 }
 ```
@@ -374,7 +380,7 @@ fn generate_ood_challenge(trace_commitment: &[u8; 32], composition_commitment: &
     hasher.update(b"stark_ood_challenge");
     hasher.update(trace_commitment);
     hasher.update(composition_commitment);
-    
+
     let hash = hasher.finalize();
     F::from_random_bytes(&hash.as_bytes()[0..16])
 }
@@ -396,15 +402,15 @@ pub enum SecurityLevel {
 
 #### 4.1.1 Security Level Parameters
 
-| Level | Queries | Blowup Factor | Grinding Factor | Error Probability |
-|-------|---------|---------------|-----------------|-------------------|
-| Test96 | 27 | 8 | 16 | 2^-96 |
-| Proven100 | 28 | 8 | 20 | 2^-100 |
-| High128 | 36 | 16 | 28 | 2^-128 |
+| Level     | Queries | Blowup Factor | Grinding Factor | Error Probability |
+| --------- | ------- | ------------- | --------------- | ----------------- |
+| Test96    | 27      | 8             | 16              | 2^-96             |
+| Proven100 | 28      | 8             | 20              | 2^-100            |
+| High128   | 36      | 16            | 28              | 2^-128            |
 
 **Queries**: Number of random positions to check (more queries = higher security)  
 **Blowup Factor**: trace_length × blowup = evaluation_domain_size (higher = better soundness)  
-**Grinding Factor**: Proof-of-work difficulty to prevent grinding attacks  
+**Grinding Factor**: Proof-of-work difficulty to prevent grinding attacks
 
 #### 4.1.2 Soundness Calculation
 
@@ -441,22 +447,22 @@ Unlike pairing-based SNARKs (Groth16, PLONK), STARK is post-quantum secure becau
 pub fn estimate_gas_cost(vk: &StarkVerificationKey) -> GasEstimate {
     let num_queries = vk.security_level.num_queries();
     let num_fri_layers = vk.fri_options.num_layers;
-    
+
     // Merkle proof verification: ~5k gas each
     let merkle_gas = num_queries * 5_000;
-    
+
     // FRI verification: ~5k per layer per query
     let fri_gas = num_fri_layers * num_queries * 5_000;
-    
+
     // AIR constraint evaluation: ~50k gas
     let air_gas = 50_000;
-    
+
     // Field operations: ~50k gas
     let field_ops_gas = 50_000;
-    
+
     // Overhead: ~50k gas
     let overhead_gas = 50_000;
-    
+
     GasEstimate {
         merkle_proofs: merkle_gas,
         fri_verification: fri_gas,
@@ -472,24 +478,24 @@ pub fn estimate_gas_cost(vk: &StarkVerificationKey) -> GasEstimate {
 
 #### Trace Length: 1024, Security: Proven100
 
-| Component | Gas Cost | % of Total |
-|-----------|----------|------------|
-| **Merkle Proofs** | 140,000 | 23% |
-| **FRI Verification** | 280,000 | 46% |
-| **AIR Constraints** | 50,000 | 8% |
-| **Field Operations** | 50,000 | 8% |
-| **Overhead** | 50,000 | 8% |
-| **Total** | **610,000** | 100% |
+| Component            | Gas Cost    | % of Total |
+| -------------------- | ----------- | ---------- |
+| **Merkle Proofs**    | 140,000     | 23%        |
+| **FRI Verification** | 280,000     | 46%        |
+| **AIR Constraints**  | 50,000      | 8%         |
+| **Field Operations** | 50,000      | 8%         |
+| **Overhead**         | 50,000      | 8%         |
+| **Total**            | **610,000** | 100%       |
 
 #### Comparison with Other Proof Systems
 
-| Proof System | Gas Cost | Proof Size | Trusted Setup |
-|--------------|----------|------------|---------------|
-| Groth16 | ~450,000 | 192 bytes | Circuit-specific |
-| PLONK | ~950,000 | ~800 bytes | Universal |
-| **STARK (Test96)** | **~475,000** | ~50 KB | None |
-| **STARK (Proven100)** | **~610,000** | ~100 KB | None |
-| **STARK (High128)** | **~900,000** | ~200 KB | None |
+| Proof System          | Gas Cost     | Proof Size | Trusted Setup    |
+| --------------------- | ------------ | ---------- | ---------------- |
+| Groth16               | ~450,000     | 192 bytes  | Circuit-specific |
+| PLONK                 | ~950,000     | ~800 bytes | Universal        |
+| **STARK (Test96)**    | **~475,000** | ~50 KB     | None             |
+| **STARK (Proven100)** | **~610,000** | ~100 KB    | None             |
+| **STARK (High128)**   | **~900,000** | ~200 KB    | None             |
 
 ### 5.3 Gas Optimization Techniques
 
@@ -514,7 +520,7 @@ pub fn estimate_gas_cost(vk: &StarkVerificationKey) -> GasEstimate {
 fn test_fibonacci_trace_generation() {
     let generator = FibonacciTraceGenerator::new(FieldElement::ONE, FieldElement::ONE);
     let trace = generator.generate_trace(128);
-    
+
     // Verify: 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...
     assert_eq!(trace[0], FieldElement::from(1u64));
     assert_eq!(trace[9], FieldElement::from(55u64));
@@ -527,7 +533,7 @@ fn test_fibonacci_trace_generation() {
 #[test]
 fn test_fibonacci_air_creation() {
     let air = FibonacciAir::new(1024, F::ONE, F::ONE, F::from(100u64));
-    
+
     let assertions = air.get_assertions();
     assert_eq!(assertions.len(), 3); // F₀, F₁, F(n-1)
 }
@@ -540,7 +546,7 @@ fn test_fibonacci_air_creation() {
 fn test_gas_estimation_test96() {
     let vk = StarkVerificationKey::new_fibonacci(1024, SecurityLevel::Test96)?;
     let estimate = estimate_gas_cost(&vk);
-    
+
     assert!(estimate.total >= 400_000);
     assert!(estimate.total <= 700_000);
     assert!(estimate.fri_verification > estimate.merkle_proofs);
@@ -557,14 +563,14 @@ fn test_full_stark_verification() {
     // 1. Generate Fibonacci trace
     let generator = FibonacciTraceGenerator::new(F::ONE, F::ONE);
     let trace = generator.generate_trace(1024);
-    
+
     // 2. Generate STARK proof using Winterfell prover
     let proof = StarkProver::prove(trace, SecurityLevel::Proven100)?;
-    
+
     // 3. Verify proof
     let vk = StarkVerificationKey::new_fibonacci(1024, SecurityLevel::Proven100)?;
     let verifier = StarkVerifier::new();
-    
+
     verifier.verify(&vk, &proof, &[])?;
 }
 ```
@@ -578,7 +584,7 @@ fn benchmark_1000_proofs() {
         for security_level in [Test96, Proven100, High128] {
             // Generate 1000 proofs
             let proofs = generate_proofs(1000, trace_length, security_level);
-            
+
             // Verify all proofs
             for proof in proofs {
                 assert!(verify(&proof).is_ok());
@@ -632,6 +638,7 @@ stylus = ["stylus-sdk", "wee_alloc"]
 #### 8.1.1 Winterfell API Compatibility
 
 **Issue**: Some Winterfell API changes in v0.9 require adjustments:
+
 - `winter_math::field` module is private (need to import from top-level)
 - Generic type parameters need careful handling for `FriProof<F>`
 - Trait method signatures differ from documentation
@@ -655,6 +662,7 @@ stylus = ["stylus-sdk", "wee_alloc"]
 **Goal**: Implement full prover integration for end-to-end testing
 
 **Tasks**:
+
 - Integrate Winterfell prover with verifier
 - Generate 1000+ test proofs for different trace lengths
 - Validate proof generation → verification pipeline
@@ -666,12 +674,14 @@ stylus = ["stylus-sdk", "wee_alloc"]
 **Goal**: Deploy to Arbitrum testnet and measure actual gas costs
 
 **Tasks**:
+
 - Compile to WASM with `cargo-stylus`
 - Deploy to Arbitrum Sepolia testnet
 - Run verification transactions and measure gas
 - Compare with Groth16/PLONK verifiers
 
 **Expected Results**:
+
 - Test96: ~450-500k gas (competitive with Groth16)
 - Proven100: ~600-700k gas
 - High128: ~900k-1.2M gas (comparable to PLONK)
@@ -681,11 +691,13 @@ stylus = ["stylus-sdk", "wee_alloc"]
 **Goal**: Support arbitrary computations beyond Fibonacci
 
 **Tasks**:
+
 - Implement AIR for Merkle tree verification
 - Implement AIR for signature verification (Ed25519, ECDSA)
 - Create AIR builder API for custom computations
 
 **Use Cases**:
+
 - ZK-rollups (state transition proofs)
 - Privacy pools (transaction anonymity)
 - Verifiable computation (outsourced computation proofs)
@@ -711,12 +723,14 @@ stylus = ["stylus-sdk", "wee_alloc"]
 Transparent zero-knowledge proofs without trusted setup.
 
 ## Features
+
 - Post-quantum secure (Blake3-based)
 - ~500-700k gas (competitive with SNARKs)
 - Winterfell v0.9 integration
 - Fibonacci example (extensible to custom AIR)
 
 ## Usage
+
 \`\`\`rust
 use stark::{StarkVerifier, StarkVerificationKey, SecurityLevel};
 
@@ -726,6 +740,7 @@ verifier.verify(&vk, &proof, &public_inputs)?;
 \`\`\`
 
 ## Gas Costs
+
 - Test96: ~475k gas
 - Proven100: ~610k gas
 - High128: ~900k gas
@@ -738,6 +753,7 @@ verifier.verify(&vk, &proof, &public_inputs)?;
 ### 10.1 Achievement Summary
 
 ✅ **Implemented**:
+
 - Complete STARK verifier architecture (1500+ lines)
 - FRI polynomial commitment scheme
 - Fibonacci AIR constraint system
@@ -745,12 +761,14 @@ verifier.verify(&vk, &proof, &public_inputs)?;
 - Comprehensive test suite (30+ tests)
 
 ✅ **Advantages over Groth16/PLONK**:
+
 - **Transparent**: No trusted setup
 - **Post-quantum secure**: Hash-based (Blake3)
 - **Auditable**: No secret trapdoors
 - **Scalable**: Prover can be parallelized
 
 ⚠️ **Trade-offs**:
+
 - **Proof size**: 50-200 KB (vs 192 bytes for Groth16)
 - **Prover time**: Slower than SNARKs (but parallelizable)
 - **Gas cost**: Slightly higher than Groth16 (~25-35%)
@@ -760,6 +778,7 @@ verifier.verify(&vk, &proof, &public_inputs)?;
 **Current Status**: 75% production-ready
 
 **Completed**:
+
 - [x] Core verifier logic
 - [x] Security levels and parameters
 - [x] Gas estimation model
@@ -767,6 +786,7 @@ verifier.verify(&vk, &proof, &public_inputs)?;
 - [x] Unit tests for components
 
 **Remaining**:
+
 - [ ] Winterfell API compatibility fixes
 - [ ] Full integration tests with proof generation
 - [ ] WASM deployment and gas benchmarking
@@ -794,6 +814,7 @@ This STARK verifier provides the UZKV project with:
 Due to Winterfell API complexity and Windows build issues, implemented a **production-ready simplified STARK verifier** demonstrating core concepts.
 
 **Architecture:**
+
 ```
 packages/stylus/stark-simple/
 ├── src/
@@ -809,6 +830,7 @@ Total: ~700 lines of production Rust code
 ```
 
 **Key Features:**
+
 - ✅ **Transparent Setup**: No trusted ceremony
 - ✅ **Post-Quantum Secure**: Blake3 hash-based (collision-resistant)
 - ✅ **Gas Efficient**: 239-352k gas (vs 450k Groth16, 950k PLONK)
@@ -827,13 +849,14 @@ pub enum SecurityLevel {
 
 ### 6.3 Gas Benchmarking Results
 
-| Security Level | Queries | Gas Cost | vs Groth16 | vs PLONK |
-|---------------|---------|----------|------------|----------|
-| **Test96** | 27 | **~239,000** | -47% ✅ | -75% ✅ |
-| **Proven100** | 28 | **~246,000** | -45% ✅ | -74% ✅ |
-| **High128** | 36 | **~352,000** | -22% ✅ | -63% ✅ |
+| Security Level | Queries | Gas Cost     | vs Groth16 | vs PLONK |
+| -------------- | ------- | ------------ | ---------- | -------- |
+| **Test96**     | 27      | **~239,000** | -47% ✅    | -75% ✅  |
+| **Proven100**  | 28      | **~246,000** | -45% ✅    | -74% ✅  |
+| **High128**    | 36      | **~352,000** | -22% ✅    | -63% ✅  |
 
 **Gas Cost Breakdown (Proven100):**
+
 - Merkle Proofs: 140k gas (57%)
 - Constraint Checks: 56k gas (23%)
 - Field Operations: 50k gas (20%)
@@ -842,6 +865,7 @@ pub enum SecurityLevel {
 ### 6.4 Test Results
 
 **Unit Tests (9/9 Passing) ✅**
+
 - Fibonacci generation (various trace lengths)
 - Constraint verification (F(n+2) = F(n+1) + F(n))
 - Proof generation and structure
@@ -851,6 +875,7 @@ pub enum SecurityLevel {
 - Security level comparisons
 
 **Integration Tests (9/9 Passing) ✅**
+
 - Full proof generation + verification workflow
 - Multiple trace lengths (64, 128, 256, 512)
 - All security levels (Test96, Proven100, High128)
@@ -865,18 +890,21 @@ pub enum SecurityLevel {
 **Status: ✅ PRODUCTION-READY**
 
 The simplified STARK verifier is ready for:
+
 - Transparent zero-knowledge proofs
 - Post-quantum secure applications
 - Gas-efficient verification (239k-352k gas)
 - Compliance-focused use cases
 
 **Deployment Steps:**
+
 1. Compile to WASM: `cargo build --target wasm32-unknown-unknown --release --features stylus`
 2. Deploy to Arbitrum Sepolia testnet
 3. Run on-chain gas benchmarks
 4. Validate gas estimates
 
 **Future Enhancements:**
+
 - Full Winterfell prover integration (for complex AIR circuits)
 - Merkle tree optimization (batch verification)
 - Additional AIR constraints (beyond Fibonacci)
@@ -889,6 +917,7 @@ The simplified STARK verifier is ready for:
 ### A. Code Structure
 
 **Simplified Implementation (stark-simple/):**
+
 ```
 packages/stylus/stark-simple/
 ├── src/
@@ -906,6 +935,7 @@ Test Coverage: 100% of public APIs
 ```
 
 **Original Winterfell Attempt (stark/):**
+
 ```
 packages/stylus/stark/
 ├── Cargo.toml (50 lines)

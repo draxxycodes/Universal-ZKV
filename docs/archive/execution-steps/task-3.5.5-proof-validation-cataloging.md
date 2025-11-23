@@ -48,6 +48,7 @@ This task validates all generated zero-knowledge proofs and creates a comprehens
 Bash script for automated proof verification with the following features:
 
 **Core Capabilities:**
+
 - Batch verification of all proofs for all circuits
 - Per-circuit or selective verification support
 - Progress tracking with visual indicators
@@ -55,6 +56,7 @@ Bash script for automated proof verification with the following features:
 - Summary report generation (JSON format)
 
 **Usage Examples:**
+
 ```bash
 # Verify all proofs for all circuits
 ./scripts/verify-all-proofs.sh
@@ -67,6 +69,7 @@ Bash script for automated proof verification with the following features:
 ```
 
 **Key Features:**
+
 - Circuit name to VK file mapping (handles naming differences)
 - Colored output for success/failure/warnings
 - Per-circuit timing and statistics
@@ -78,23 +81,27 @@ Bash script for automated proof verification with the following features:
 Comprehensive metadata catalog containing:
 
 **Circuit Information:**
+
 - Circuit type (hash, signature, merkle_tree)
 - Constraint counts (520, 9073, 7324)
 - Public/private input counts
 - File paths (circom, r1cs, zkey, vk)
 
 **File Integrity:**
+
 - SHA256 hashes for r1cs files
 - SHA256 hashes for zkey files
 - SHA256 hashes for verification keys
 
 **Proof Metadata:**
+
 - Valid proof counts per circuit
 - Directory locations
 - Naming patterns
 - ID ranges
 
 **Trusted Setup Details:**
+
 - PTAU file information
 - Beacon value (deterministic)
 - Phase 2 contribution count
@@ -151,6 +158,7 @@ For each circuit and proof ID:
 ### 3. File Path Resolution
 
 **VK File Resolution:**
+
 ```bash
 Circuit: poseidon_test -> VK: poseidon_vk.json
 Circuit: eddsa_verify  -> VK: eddsa_vk.json
@@ -158,6 +166,7 @@ Circuit: merkle_proof  -> VK: merkle_vk.json
 ```
 
 **Proof File Resolution:**
+
 ```bash
 Proof:  ${circuit}_${id}_proof.json
 Public: ${circuit}_${id}_public.json
@@ -207,10 +216,18 @@ The script handles multiple error scenarios:
       "constraints": 520,
       "public_inputs": 1,
       "private_inputs": 2,
-      "files": { /* file paths */ },
-      "file_hashes": { /* SHA256 hashes */ },
-      "proofs": { /* proof metadata */ },
-      "trusted_setup": { /* setup details */ }
+      "files": {
+        /* file paths */
+      },
+      "file_hashes": {
+        /* SHA256 hashes */
+      },
+      "proofs": {
+        /* proof metadata */
+      },
+      "trusted_setup": {
+        /* setup details */
+      }
     }
   }
 }
@@ -236,6 +253,7 @@ The script handles multiple error scenarios:
 ```
 
 **Circuit Function:**
+
 - Computes Poseidon hash of two field elements
 - Used for efficient zero-knowledge hashing
 - Gas-optimized for EVM verification
@@ -258,6 +276,7 @@ The script handles multiple error scenarios:
 ```
 
 **Circuit Function:**
+
 - Verifies EdDSA signatures on Baby Jubjub elliptic curve
 - Used for privacy-preserving authentication
 - Supports MiMC hash for signature generation
@@ -280,6 +299,7 @@ The script handles multiple error scenarios:
 ```
 
 **Circuit Function:**
+
 - Proves membership in a Merkle tree (20 levels = 1M leaves)
 - Uses MiMC7 hash for efficient ZK computation
 - Public input is root hash, private inputs are leaf + path
@@ -324,6 +344,7 @@ Found 10 proofs, verifying first 10...
 ```
 
 **Performance:**
+
 - Verification rate: ~0.91 proofs/sec
 - Average time per proof: ~1.1s
 - Total time: 11s for 10 proofs
@@ -344,6 +365,7 @@ Found 10 proofs, verifying first 10...
 ```
 
 **Performance:**
+
 - Verification rate: ~0.91 proofs/sec
 - Average time per proof: ~1.1s
 - Total time: 11s for 10 proofs
@@ -364,6 +386,7 @@ Found 10 proofs, verifying first 10...
 ```
 
 **Performance:**
+
 - Verification rate: ~0.91 proofs/sec
 - Average time per proof: ~1.1s
 - Total time: 11s for 10 proofs
@@ -371,12 +394,14 @@ Found 10 proofs, verifying first 10...
 ### Analysis
 
 **Key Observations:**
+
 1. **100% Success Rate**: All 30 proofs verified successfully
 2. **Consistent Performance**: All circuits verify at similar rates (~1.1s per proof)
 3. **No Failures**: Zero invalid proofs, missing files, or errors
 4. **Production Ready**: Verification infrastructure works as expected
 
 **Verification Times:**
+
 - Poseidon: 11s (simplest circuit, 520 constraints)
 - EdDSA: 11s (most complex circuit, 9073 constraints)
 - Merkle: 11s (medium circuit, 7324 constraints)
@@ -429,10 +454,12 @@ The script accepts two optional arguments:
 ```
 
 **Arguments:**
+
 - `circuit_name`: One of `poseidon_test`, `eddsa_verify`, `merkle_proof`, or `all` (default)
 - `max_proofs`: Maximum number of proofs to verify per circuit (default: 10000)
 
 **Examples:**
+
 ```bash
 # Default: verify all proofs for all circuits
 ./scripts/verify-all-proofs.sh
@@ -492,24 +519,24 @@ sha256sum packages/circuits/build/poseidon_vk.json
 
 for circuit in poseidon_test eddsa_verify merkle_proof; do
   echo "Verifying $circuit..."
-  
+
   # Map circuit names to file base names
   case $circuit in
     poseidon_test) base="poseidon" ;;
     eddsa_verify) base="eddsa" ;;
     merkle_proof) base="merkle" ;;
   esac
-  
+
   # Get expected hashes from catalog
   r1cs_expected=$(jq -r ".circuits.$circuit.file_hashes.r1cs_sha256" packages/circuits/proof-catalog.json)
   zkey_expected=$(jq -r ".circuits.$circuit.file_hashes.zkey_sha256" packages/circuits/proof-catalog.json)
   vk_expected=$(jq -r ".circuits.$circuit.file_hashes.vk_sha256" packages/circuits/proof-catalog.json)
-  
+
   # Compute actual hashes
   r1cs_actual=$(sha256sum packages/circuits/build/${circuit}.r1cs | cut -d' ' -f1)
   zkey_actual=$(sha256sum packages/circuits/build/${base}_beacon.zkey | cut -d' ' -f1)
   vk_actual=$(sha256sum packages/circuits/build/${base}_vk.json | cut -d' ' -f1)
-  
+
   # Compare
   if [ "$r1cs_expected" = "$r1cs_actual" ] && \
      [ "$zkey_expected" = "$zkey_actual" ] && \
@@ -546,7 +573,7 @@ for i in {0..9}; do
     packages/circuits/build/poseidon_vk.json \
     packages/circuits/proofs/poseidon_test/valid/poseidon_test_${i}_public.json \
     packages/circuits/proofs/poseidon_test/valid/poseidon_test_${i}_proof.json
-  
+
   if [ $? -ne 0 ]; then
     echo "❌ Proof $i is INVALID"
     exit 1
@@ -635,7 +662,7 @@ Given:
 
 Verify:
   e(A, B) = e(α, β) · e(IC₀ + Σ(xᵢ · ICᵢ), γ) · e(C, δ)
-  
+
 Where:
   - e: Optimal Ate pairing (BN254 curve)
   - α, β, γ, δ: Group elements from trusted setup
@@ -643,6 +670,7 @@ Where:
 ```
 
 **Performance Characteristics:**
+
 - **Pairing computations:** 3 pairings (left side) + 1 pairing (right side) = 4 pairings total
 - **Time complexity:** O(1) - constant time regardless of circuit size
 - **Typical time:** ~1-2s on modern hardware
@@ -656,6 +684,7 @@ sha256sum <file> | cut -d' ' -f1
 ```
 
 **Why SHA256?**
+
 - Industry standard for file integrity
 - Fast computation (~500 MB/s on modern CPUs)
 - Collision resistance (2^128 security level)
@@ -670,7 +699,16 @@ Each proof consists of three JSON files:
 ```json
 {
   "pi_a": ["<x>", "<y>", "1"],
-  "pi_b": [[["<x1>", "<y1>"], ["<x2>", "<y2>"]], [["1", "0"], ["0", "1"]]],
+  "pi_b": [
+    [
+      ["<x1>", "<y1>"],
+      ["<x2>", "<y2>"]
+    ],
+    [
+      ["1", "0"],
+      ["0", "1"]
+    ]
+  ],
   "pi_c": ["<x>", "<y>", "1"],
   "protocol": "groth16",
   "curve": "bn128"
@@ -678,6 +716,7 @@ Each proof consists of three JSON files:
 ```
 
 **Components:**
+
 - `pi_a`: Point A in G1 (affine coordinates)
 - `pi_b`: Point B in G2 (affine coordinates, extension field)
 - `pi_c`: Point C in G1 (affine coordinates)
@@ -689,6 +728,7 @@ Each proof consists of three JSON files:
 ```
 
 **Format:**
+
 - Array of public signal values (as strings)
 - First element is typically the output
 - Values are field elements in decimal string format
@@ -702,6 +742,7 @@ Each proof consists of three JSON files:
 ```
 
 **Format:**
+
 - First element is always "1" (constant)
 - Followed by all private inputs
 - Last element(s) are public outputs
@@ -727,16 +768,19 @@ circom poseidon_test.circom --r1cs --wasm --sym
 ```
 
 **Poseidon Test:**
+
 - Total constraints: 520
 - Public signals: 1 (output)
 - Private inputs: 2 (input elements)
 
 **EdDSA Verify:**
+
 - Total constraints: 9,073
 - Public signals: 1 (verification result)
 - Private inputs: 6 (message, signature R, signature S, public key Ax, Ay, enabled)
 
 **Merkle Proof:**
+
 - Total constraints: 7,324
 - Public signals: 1 (root hash)
 - Private inputs: 21 (leaf + 20 path elements)
@@ -744,11 +788,13 @@ circom poseidon_test.circom --r1cs --wasm --sym
 #### Input/Output Counts
 
 **Public Inputs:**
+
 - Visible to verifier
 - Included in verification equation
 - Count: 1 for all test circuits (output signal)
 
 **Private Inputs:**
+
 - Hidden from verifier
 - Part of witness
 - Count: Varies by circuit (2, 6, 21)
@@ -767,12 +813,14 @@ All circuits use deterministic beacon setup:
 ```
 
 **PTAU Parameters:**
+
 - Max constraints: 2^28 = 268,435,456
 - Actual usage: 520 / 9,073 / 7,324 (< 0.01% utilization)
 - File size: ~195 MB
 - Source: Hermez ceremony (perpetual powers of tau)
 
 **Beacon Randomness:**
+
 - Value: `0102030405060708...1f20` (32 bytes)
 - Purpose: Deterministic randomness for reproducible setup
 - Security: Not secure for production (use real randomness)
@@ -861,6 +909,7 @@ find packages/circuits/build -type f -name "*_vk.json" | wc -l
 **Date:** 2025-01-23
 
 **Next Steps:**
+
 - Proceed to Phase 4: Smart Contracts (UUPS Proxy)
 - Use verified proofs for differential fuzzing (Phase 6)
 - Integrate catalog into SDK for proof selection
@@ -929,6 +978,7 @@ Found 10 proofs, verifying first 10...
 See `packages/circuits/proof-catalog.json` for the complete catalog.
 
 **Key Sections:**
+
 - `version`: Catalog schema version
 - `verification_summary`: Overall verification statistics
 - `circuits`: Per-circuit metadata

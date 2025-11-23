@@ -5,11 +5,13 @@
 **The project has migrated to 100% Stylus for all verification logic.**
 
 Solidity files in `packages/contracts` are **interface-only**:
+
 - ✅ `IGroth16Verifier.sol` - ABI definition
 - ✅ `Groth16VerifierProxy.sol` - Event wrapper
 - ✅ `Storage.sol` - ERC-7201 storage layout
 
 **All cryptographic verification happens in Rust/WASM:**
+
 - ✅ `packages/stylus/src/groth16.rs` - 600+ lines of Groth16 verification
 - ✅ `packages/stylus/src/lib.rs` - Contract entry point
 - ✅ `packages/attestor/src/lib.rs` - Hybrid attestation model
@@ -43,6 +45,7 @@ Savings: 78%
 ## What Changed from Original Plan
 
 ### Before (Pure Solidity Plan)
+
 - ❌ UZKVProxy.sol - UUPS proxy
 - ❌ UniversalZKVerifier.sol - Multi-proof router
 - ❌ Groth16Verifier.sol - Solidity verification
@@ -52,6 +55,7 @@ Savings: 78%
 **Problem:** Gas costs ~280k per proof, complex audit surface
 
 ### After (Pure Stylus Implementation)
+
 - ✅ Stylus Groth16 WASM (Rust)
 - ✅ Stylus Attestor WASM (Rust)
 - ✅ Minimal Solidity interfaces (~288 lines)
@@ -92,23 +96,27 @@ packages/
 ## Updated Phase Execution
 
 ### Phase 1-2: Foundation (Week 1-5) - ✅ COMPLETE
+
 - Monorepo setup
 - Rust toolchain
 - ERC-7201 storage
 - Supply chain security (vendored arkworks)
 
 ### Phase 3: Stylus Migration (Week 6) - ✅ COMPLETE
+
 - **Task 3.1:** Groth16 Stylus implementation (600+ lines Rust)
 - **Task 3.2:** Gas optimization (78% savings achieved)
 - **Task 3.3:** Integration with Solidity interface
 
 ### Phase 4: Solidity Cleanup (Week 7) - ✅ COMPLETE
+
 - Removed all Solidity verifiers
 - Kept minimal interface layer (288 lines)
 - Updated documentation
 - **This is where we are now**
 
 ### Phase 5: Testing & Deployment (Weeks 8-10) - IN PROGRESS
+
 - Rust unit tests (cargo test)
 - Integration tests (Stylus SDK)
 - TypeScript SDK
@@ -144,22 +152,24 @@ forge create src/Groth16VerifierProxy.sol:Groth16VerifierProxy \
 
 ## Gas Comparison
 
-| Operation | Solidity | Stylus | Savings |
-|-----------|----------|--------|---------|
-| Groth16 Verify | 280,000 | 61,000 | **78%** |
-| BN254 Pairing | 180,000 | 25,000 | **86%** |
-| Field Ops | 5,000 | 500 | **90%** |
+| Operation         | Solidity  | Stylus  | Savings |
+| ----------------- | --------- | ------- | ------- |
+| Groth16 Verify    | 280,000   | 61,000  | **78%** |
+| BN254 Pairing     | 180,000   | 25,000  | **86%** |
+| Field Ops         | 5,000     | 500     | **90%** |
 | Batch (10 proofs) | 2,800,000 | 850,000 | **70%** |
 
 ## Security Benefits
 
 ### Rust Advantages
+
 1. **Memory Safety** - No buffer overflows, use-after-free
 2. **Type Safety** - Strong typing prevents field element errors
 3. **Panic Safety** - WASM panics = clean revert
 4. **Formal Verification** - Borrow checker provides compile-time guarantees
 
 ### Audit Surface
+
 - **Solidity:** 288 lines (interfaces only)
 - **Rust:** 680 lines (verification logic)
 - **Total:** 968 lines (vs 2000+ pure Solidity)
@@ -169,17 +179,20 @@ forge create src/Groth16VerifierProxy.sol:Groth16VerifierProxy \
 ## Testing Strategy
 
 ### Unit Tests (Rust)
+
 ```bash
 cd packages/stylus
 cargo test
 ```
 
 ### Integration Tests (Stylus SDK)
+
 ```bash
 cargo test --features integration
 ```
 
 ### E2E Tests (TypeScript)
+
 ```bash
 cd packages/sdk
 pnpm test
@@ -235,6 +248,7 @@ A: Yes! Code complete, in testing phase
 ---
 
 **See also:**
+
 - [packages/contracts/STYLUS-ARCHITECTURE.md](packages/contracts/STYLUS-ARCHITECTURE.md) - Full architecture
 - [packages/stylus/README.md](packages/stylus/README.md) - Stylus implementation
 - [packages/attestor/README-FINAL.md](packages/attestor/README-FINAL.md) - Hybrid model

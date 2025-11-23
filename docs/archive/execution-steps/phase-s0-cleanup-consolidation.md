@@ -17,10 +17,12 @@ Consolidate 3 separate Cargo workspaces into a single unified workspace and remo
 ### ✅ Task S0.1: Delete Redundant STARK Implementation
 
 **Problem:** Two STARK implementations existed:
+
 - `stark/` - Old Winterfell v0.9 attempt (1,500+ lines)
 - `stark-simple/` - New production-ready implementation (700+ lines, 18 tests)
 
 **Action:**
+
 ```bash
 cd packages/stylus
 rm -rf stark
@@ -35,6 +37,7 @@ rm -rf stark
 **Problem:** PLONK was a separate workspace with its own `Cargo.toml`.
 
 **Structure Before:**
+
 ```
 packages/stylus/
   plonk/
@@ -44,6 +47,7 @@ packages/stylus/
 ```
 
 **Actions:**
+
 ```bash
 cd packages/stylus
 mkdir -p src/plonk tests/plonk
@@ -53,6 +57,7 @@ rm -rf plonk
 ```
 
 **Files Moved:**
+
 - `kzg.rs` (11,482 bytes) - KZG polynomial commitment verification
 - `lib.rs` (4,001 bytes) - Module entry point
 - `plonk.rs` (18,751 bytes) - Main PLONK verification logic
@@ -68,6 +73,7 @@ rm -rf plonk
 **Problem:** STARK-simple was a separate workspace with its own `Cargo.toml`.
 
 **Structure Before:**
+
 ```
 packages/stylus/
   stark-simple/
@@ -80,6 +86,7 @@ packages/stylus/
 ```
 
 **Actions:**
+
 ```bash
 cd packages/stylus
 mkdir -p src/stark tests/stark
@@ -89,6 +96,7 @@ rm -rf stark-simple
 ```
 
 **Files Moved:**
+
 - `fibonacci.rs` (5,060 bytes) - Fibonacci STARK prover/verifier
 - `lib.rs` (943 bytes) - Module entry point
 - `types.rs` (2,602 bytes) - STARK data structures
@@ -115,6 +123,7 @@ Added dependencies for PLONK and STARK (commented out temporarily due to `no_std
 ```
 
 **Note:** Dependencies commented out because:
+
 1. `halo2_proofs` requires `std` features not compatible with WASM `no_std`
 2. `blake3` has `getrandom` dependency that needs WASM-specific configuration
 3. Will be enabled with proper feature flags in Phase S1
@@ -137,6 +146,7 @@ pub mod groth16;
 ```
 
 **Module Structure Fixes:**
+
 1. Removed `#![no_std]` and `#![no_main]` from submodules (only in main lib.rs)
 2. Removed duplicate `#[global_allocator]` declarations
 3. Cleaned up standalone module boilerplate
@@ -156,18 +166,21 @@ cargo check
 **Result:** Code compiles successfully up to linker phase. Linker error is Windows-specific issue with `stylus-sdk` native dependencies (`native_keccak256`), not a code structure issue.
 
 **Errors Encountered:**
+
 ```
 error: linking with `link.exe` failed: exit code: 1120
 liballoy_primitives.rlib : error LNK2019: unresolved external symbol native_keccak256
 ```
 
 **Analysis:**
+
 - ✅ Code structure is correct
 - ✅ Dependencies resolve properly
 - ✅ Rust compilation succeeds
 - ⚠️ Windows MSVC linker issue with Stylus SDK (not blocking for Linux/Docker builds)
 
 **Tests:** Cannot run on Windows due to linker issue, but tests are properly organized:
+
 - `tests/groth16/` - 8 tests (existing, passing on Linux)
 - `tests/plonk/plonk_tests.rs` - 31 tests (ready)
 - `tests/stark/integration.rs` - 18 tests (ready)
@@ -210,6 +223,7 @@ packages/stylus/
 ## 📊 Metrics
 
 **Code Reduction:**
+
 - ❌ Deleted: `stark/` (1,500+ lines of redundant code)
 - ❌ Deleted: `plonk/Cargo.toml` (separate workspace)
 - ❌ Deleted: `stark-simple/Cargo.toml` (separate workspace)
@@ -217,11 +231,13 @@ packages/stylus/
 - ✅ Kept: 57 tests (8 Groth16 + 31 PLONK + 18 STARK)
 
 **Workspace Consolidation:**
+
 - Before: 3 separate Cargo workspaces
 - After: 1 unified workspace
 - Build efficiency: ~40% faster (single dependency resolution)
 
 **Files Changed:**
+
 - 26 files changed
 - 2,320 insertions
 - 2,959 deletions
@@ -236,11 +252,13 @@ packages/stylus/
 **Problem:** `stylus-sdk` has native Keccak256 implementation that doesn't link on Windows MSVC.
 
 **Error:**
+
 ```
 error LNK2019: unresolved external symbol native_keccak256
 ```
 
 **Workaround:**
+
 1. Use WSL2 or Docker for builds
 2. Or use Linux CI/CD environment
 3. Or wait for Stylus SDK Windows support
@@ -252,6 +270,7 @@ error LNK2019: unresolved external symbol native_keccak256
 **Reason:** `halo2_proofs` and `blake3` require `std` features incompatible with WASM `no_std`.
 
 **Solution (Phase S1):**
+
 1. Configure proper `no_std` feature flags
 2. Add WASM-specific dependency configurations
 3. Use conditional compilation for std vs no_std
@@ -310,11 +329,13 @@ Next: Phase S1 - Unified Stylus Contract (multi-proof routing)
 **Phase S1: Unified Stylus Contract (Week 1)**
 
 Tasks:
+
 1. S1.1: Add multi-proof routing to lib.rs
 2. S1.2: Implement batch verification
 3. S1.3: Build & export ABI
 
 **Prerequisites:**
+
 - ✅ Cleanup complete (this phase)
 - ⏳ Fix PLONK/STARK dependency issues
 - ⏳ Configure no_std feature flags

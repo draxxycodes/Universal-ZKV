@@ -6,7 +6,7 @@ on:
         description: Version to release
         required: true
         type: choice
-        options: 
+        options:
           - alpha
           - patch
           - minor
@@ -14,7 +14,7 @@ on:
         description: Branch to target
         required: true
         type: string
-        default: 'releases'
+        default: "releases"
 
 jobs:
   make-release-pr:
@@ -31,4 +31,4 @@ jobs:
           pr-template-file: .github/release-pr-template.ejs
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          base-branch: ${{ inputs.base_branch }} 
+          base-branch: ${{ inputs.base_branch }}

@@ -2,7 +2,7 @@
 
 **Network:** Arbitrum Sepolia  
 **Status:** Ready for Deployment  
-**Prerequisites:** ✅ All Phase S0-S4 complete  
+**Prerequisites:** ✅ All Phase S0-S4 complete
 
 ---
 
@@ -241,18 +241,18 @@ node scripts/benchmark-gas.js
 #   Network: arbitrum-sepolia
 #   Stylus Verifier: 0x...
 #   Universal Verifier: 0x...
-# 
+#
 # 📊 Benchmark 1: Single Proof Verification
 # ──────────────────────────────────────────────
 #   GROTH16: XX,XXX gas
 #   PLONK: XX,XXX gas
 #   STARK: XX,XXX gas
-# 
+#
 # 📊 Benchmark 2: Batch Verification
 # ──────────────────────────────────────────────
 #   Batch 10: XXX,XXX gas (XX,XXX per proof)
 #   Batch 50: X,XXX,XXX gas (XX,XXX per proof)
-# 
+#
 # ✅ Benchmarking complete!
 # 📄 Report saved: benchmarks/gas-report.md
 ```
@@ -298,25 +298,25 @@ node scripts/benchmark-gas.js
 
 ### Deployment Costs
 
-| Operation | Estimated Gas | Cost @ 0.1 gwei |
-|-----------|--------------|-----------------|
-| Stylus WASM Deployment | ~5,000,000 | ~0.0005 ETH |
-| UniversalZKVerifier | ~2,100,000 | ~0.00021 ETH |
-| Proxy Deployment | ~260,000 | ~0.000026 ETH |
-| Initialize | ~125,000 | ~0.0000125 ETH |
-| Set Stylus Verifier | ~26,000 | ~0.0000026 ETH |
-| **Total** | **~7,511,000** | **~0.00075 ETH** |
+| Operation              | Estimated Gas  | Cost @ 0.1 gwei  |
+| ---------------------- | -------------- | ---------------- |
+| Stylus WASM Deployment | ~5,000,000     | ~0.0005 ETH      |
+| UniversalZKVerifier    | ~2,100,000     | ~0.00021 ETH     |
+| Proxy Deployment       | ~260,000       | ~0.000026 ETH    |
+| Initialize             | ~125,000       | ~0.0000125 ETH   |
+| Set Stylus Verifier    | ~26,000        | ~0.0000026 ETH   |
+| **Total**              | **~7,511,000** | **~0.00075 ETH** |
 
-*Note: Arbitrum Sepolia typically has very low gas prices (~0.1 gwei)*
+_Note: Arbitrum Sepolia typically has very low gas prices (~0.1 gwei)_
 
 ### Operation Costs
 
-| Operation | Expected Gas | Deviation |
-|-----------|--------------|-----------|
-| Single Verification | ~87,000 | ±5% |
-| Batch 10 | ~170,000 | ±5% |
-| Batch 50 | ~530,000 | ±5% |
-| VK Registration | ~75,000 | ±5% |
+| Operation           | Expected Gas | Deviation |
+| ------------------- | ------------ | --------- |
+| Single Verification | ~87,000      | ±5%       |
+| Batch 10            | ~170,000     | ±5%       |
+| Batch 50            | ~530,000     | ±5%       |
+| VK Registration     | ~75,000      | ±5%       |
 
 ---
 
@@ -327,6 +327,7 @@ node scripts/benchmark-gas.js
 **Error:** `insufficient funds for gas * price + value`
 
 **Solution:**
+
 ```bash
 # Get testnet ETH from faucet
 # Visit: https://faucet.quicknode.com/arbitrum/sepolia
@@ -341,6 +342,7 @@ cast balance $DEPLOYER --rpc-url $ARB_SEPOLIA_RPC
 **Error:** `command not found: cargo-stylus`
 
 **Solution:**
+
 ```bash
 # Install cargo-stylus
 cargo install --force cargo-stylus
@@ -354,6 +356,7 @@ cargo stylus --version
 **Error:** `error sending request for url`
 
 **Solution:**
+
 ```bash
 # Test RPC connectivity
 cast block-number --rpc-url $ARB_SEPOLIA_RPC
@@ -370,6 +373,7 @@ export ARB_SEPOLIA_RPC="https://arb-sepolia.g.alchemy.com/v2/YOUR_KEY"
 **Error:** `Failed to verify contract`
 
 **Solution:**
+
 ```bash
 # Wait 1-2 minutes for Arbiscan to index
 sleep 120
@@ -390,11 +394,13 @@ forge verify-contract \
 **Observation:** Live testnet gas differs from local tests by >10%
 
 **Analysis:**
+
 - Network congestion may affect gas
 - RPC provider may report differently
 - Transaction batching effects
 
 **Solution:**
+
 ```bash
 # Re-run benchmarks multiple times
 for i in {1..3}; do
@@ -429,7 +435,7 @@ cat > deployments/SEPOLIA-DEPLOYMENT.md << EOF
 - Size: $(ls -lh packages/stylus/artifacts/uzkv_stylus_optimized.wasm | awk '{print $5}')
 
 ### UniversalZKVerifier
-- Address: $VERIFIER_ADDRESS  
+- Address: $VERIFIER_ADDRESS
 - Explorer: https://sepolia.arbiscan.io/address/$VERIFIER_ADDRESS
 - Verified: ✅ Yes
 

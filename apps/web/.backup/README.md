@@ -44,24 +44,28 @@ apps/web/
 ## 🎯 Features
 
 ### Landing Page
+
 - Hero section with 3 proof systems
 - Feature comparison table
 - Live network statistics
 - Architecture diagram
 
 ### Interactive Demo
+
 - Complete workflow: Generate → Verify → Attest
 - Real-time progress tracking
 - Gas cost display
 - Transaction links to Arbiscan
 
 ### Gas Comparison
+
 - Interactive charts (Groth16 vs PLONK vs STARK)
 - Cost calculator
 - Benchmark tables
 - Stylus vs Solidity comparison
 
 ### Attestation Explorer
+
 - Search by proof hash
 - Recent attestations list
 - Network statistics
@@ -84,16 +88,19 @@ PRIVATE_KEY=your_private_key
 ## 📦 Dependencies
 
 ### Core
+
 - **Next.js 14** - React framework
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 
 ### Web3
+
 - **wagmi v2** - React hooks for Ethereum
 - **viem** - Ethereum utilities
 - **@uzkv/sdk** - Universal verifier SDK
 
 ### UI
+
 - **shadcn/ui** - UI components
 - **recharts** - Charts
 - **lucide-react** - Icons
@@ -102,14 +109,16 @@ PRIVATE_KEY=your_private_key
 ## 🎨 Design System
 
 ### Colors
+
 ```css
---groth16: #3b82f6;  /* Blue */
---plonk: #8b5cf6;    /* Purple */
---stark: #ec4899;    /* Pink */
+--groth16: #3b82f6; /* Blue */
+--plonk: #8b5cf6; /* Purple */
+--stark: #ec4899; /* Pink */
 --arbitrum: #28a0f0; /* Arbitrum blue */
 ```
 
 ### Typography
+
 - Font: Inter, system-ui, sans-serif
 - Responsive sizing with Tailwind
 
@@ -158,38 +167,54 @@ pnpm start
 ## 📖 API Routes
 
 ### `POST /api/generate`
+
 Generate proof for a circuit
 
 **Request**:
+
 ```json
 {
   "circuit": "poseidon_test",
   "proofType": "groth16",
-  "inputs": { /* circuit inputs */ }
+  "inputs": {
+    /* circuit inputs */
+  }
 }
 ```
 
 **Response**:
+
 ```json
 {
-  "proof": { /* proof data */ },
-  "publicInputs": [/* public signals */]
+  "proof": {
+    /* proof data */
+  },
+  "publicInputs": [
+    /* public signals */
+  ]
 }
 ```
 
 ### `POST /api/verify`
+
 Verify proof locally
 
 **Request**:
+
 ```json
 {
-  "proof": { /* proof data */ },
-  "publicInputs": [/* public signals */],
+  "proof": {
+    /* proof data */
+  },
+  "publicInputs": [
+    /* public signals */
+  ],
   "proofType": "groth16"
 }
 ```
 
 **Response**:
+
 ```json
 {
   "verified": true,
@@ -198,9 +223,11 @@ Verify proof locally
 ```
 
 ### `POST /api/attest`
+
 Submit attestation to Arbitrum
 
 **Request**:
+
 ```json
 {
   "proofHash": "0x123...",
@@ -209,6 +236,7 @@ Submit attestation to Arbitrum
 ```
 
 **Response**:
+
 ```json
 {
   "txHash": "0x789...",

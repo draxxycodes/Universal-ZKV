@@ -1,6 +1,7 @@
 # Windows Installation Fix
 
 ## Problem
+
 OneDrive sync is interfering with `node_modules` installation, causing permission errors.
 
 ## ✅ Solution 1: Exclude node_modules from OneDrive (RECOMMENDED)
@@ -12,6 +13,7 @@ OneDrive sync is interfering with `node_modules` installation, causing permissio
 3. Repeat for `C:\Users\priya\OneDrive\Documents\uzkv\apps\web\node_modules`
 
 ### Step 2: Add to .gitignore (already done)
+
 ```
 node_modules/
 ```
@@ -26,6 +28,7 @@ npm install
 ```
 
 ### Step 4: Start dev server
+
 ```powershell
 npm run dev
 ```
@@ -48,6 +51,7 @@ npm run dev
 ```
 
 **Advantages:**
+
 - No OneDrive interference
 - Faster builds
 - No permission issues
@@ -70,6 +74,7 @@ pnpm dev
 ```
 
 **Advantages:**
+
 - Best performance
 - No Windows/WSL translation overhead
 - Proper symlink support
@@ -82,6 +87,7 @@ pnpm dev
 ## Current Status
 
 Your installation keeps failing because:
+
 1. OneDrive is syncing the `node_modules` folder
 2. It locks files while syncing
 3. Package managers can't rename/delete locked files
@@ -111,6 +117,7 @@ If you see "Ready" and a localhost URL, **it worked!** 🎉
 ## My Recommendation
 
 **Use Solution 2** (move to C:\Dev):
+
 - Simple
 - Clean
 - No OneDrive headaches

@@ -19,6 +19,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 #### Core Components:
 
 **`src/server.ts`** (150 lines):
+
 - Express.js server with security middleware
 - Helmet.js for HTTP security headers
 - CORS configuration
@@ -28,6 +29,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 - WASM initialization on startup
 
 **`src/routes/verify.ts`** (270 lines):
+
 - POST `/verify` - Single proof verification with optional attestation
 - POST `/verify/batch` - Batch verification (max 100 proofs)
 - GET `/attestation/:proofHash` - Check attestation status
@@ -37,6 +39,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 - Comprehensive error handling
 
 **`src/utils/wasm-loader.ts`** (240 lines):
+
 - WASM module loader for Groth16 verifier
 - Proof structure validation
 - Verification key validation
@@ -45,6 +48,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 - Error handling and logging
 
 **`src/utils/attestor-client.ts`** (220 lines):
+
 - Viem integration with Arbitrum Sepolia
 - Contract interaction methods:
   - `attestProof()` - Submit proof attestation on-chain
@@ -62,6 +66,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 #### Features:
 
 **`src/index.ts`** (250 lines):
+
 - `UZKVClient` class with full API coverage
 - Type-safe interfaces for all request/response types
 - Methods:
@@ -129,6 +134,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 ## Key Features Implemented
 
 ### Security
+
 - ✅ Helmet.js HTTP security headers (CSP, XSS protection)
 - ✅ CORS with configurable origins
 - ✅ Rate limiting (100 requests/minute default)
@@ -137,12 +143,14 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 - ✅ Request logging with Pino
 
 ### Performance
+
 - ✅ Off-chain verification: ~5-10ms per proof
 - ✅ Batch verification: 30-50% faster than sequential
 - ✅ Async/await throughout
 - ✅ Connection pooling ready
 
 ### Developer Experience
+
 - ✅ TypeScript with strict mode
 - ✅ Comprehensive type definitions
 - ✅ JSDoc comments
@@ -151,6 +159,7 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 - ✅ Environment variable configuration
 
 ### Production Ready
+
 - ✅ Structured logging (Pino)
 - ✅ Graceful shutdown
 - ✅ Error handling at all levels
@@ -162,19 +171,26 @@ Successfully completed the implementation of the off-chain Groth16 verification 
 ## API Endpoints
 
 ### POST /verify
+
 Verify a single Groth16 proof with optional on-chain attestation.
 
 **Request:**
+
 ```json
 {
-  "proof": { /* Groth16 proof object */ },
+  "proof": {
+    /* Groth16 proof object */
+  },
   "publicInputs": ["1", "2", "3"],
-  "vk": { /* Verification key */ },
+  "vk": {
+    /* Verification key */
+  },
   "attestOnChain": true
 }
 ```
 
 **Response:**
+
 ```json
 {
   "valid": true,
@@ -189,15 +205,19 @@ Verify a single Groth16 proof with optional on-chain attestation.
 ```
 
 ### POST /verify/batch
+
 Verify up to 100 proofs in a single request.
 
 ### GET /attestation/:proofHash
+
 Check if a proof has been attested on-chain.
 
 ### GET /attestation/events
+
 Fetch recent ProofAttested events from the contract.
 
 ### GET /health
+
 Service health check.
 
 ---
@@ -205,45 +225,45 @@ Service health check.
 ## SDK Usage Example
 
 ```typescript
-import { createUZKVClient } from '@uzkv/sdk';
+import { createUZKVClient } from "@uzkv/sdk";
 
 // Initialize client
 const client = createUZKVClient({
-  serviceUrl: 'http://localhost:3001',
-  rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
-  attestorAddress: '0x36e937ebcf56c5dec6ecb0695001becc87738177',
+  serviceUrl: "http://localhost:3001",
+  rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+  attestorAddress: "0x36e937ebcf56c5dec6ecb0695001becc87738177",
 });
 
 // Verify proof with attestation
 const result = await client.verify({
   proof: myGroth16Proof,
-  publicInputs: ['1', '2'],
+  publicInputs: ["1", "2"],
   vk: myVerificationKey,
   attestOnChain: true,
 });
 
 if (result.valid) {
-  console.log('✅ Proof verified!');
-  console.log('Proof Hash:', result.proofHash);
-  
+  console.log("✅ Proof verified!");
+  console.log("Proof Hash:", result.proofHash);
+
   if (result.attestation?.success) {
-    console.log('✅ Attested on-chain!');
-    console.log('TX:', result.attestation.transactionHash);
-    console.log('Gas:', result.attestation.gasUsed);
+    console.log("✅ Attested on-chain!");
+    console.log("TX:", result.attestation.transactionHash);
+    console.log("Gas:", result.attestation.gasUsed);
   }
 } else {
-  console.log('❌ Invalid proof:', result.error);
+  console.log("❌ Invalid proof:", result.error);
 }
 
 // Check attestation status
 const status = await client.getAttestationStatus(result.proofHash!);
-console.log('Attested:', status.isAttested);
-console.log('Time:', status.timestampISO);
+console.log("Attested:", status.isAttested);
+console.log("Time:", status.timestampISO);
 
 // Batch verification
 const batchResults = await client.verifyBatch([
-  { proof: proof1, publicInputs: ['1'], vk: vk1 },
-  { proof: proof2, publicInputs: ['2'], vk: vk2 },
+  { proof: proof1, publicInputs: ["1"], vk: vk1 },
+  { proof: proof2, publicInputs: ["2"], vk: vk2 },
 ]);
 console.log(`${batchResults.validProofs}/${batchResults.totalProofs} valid`);
 ```
@@ -272,6 +292,7 @@ pnpm dev
 ### Environment Configuration
 
 Required variables in `.env`:
+
 ```env
 PORT=3001
 RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
@@ -282,6 +303,7 @@ LOG_LEVEL=info
 ```
 
 Optional for automatic attestation:
+
 ```env
 PRIVATE_KEY=0x...  # For signing attestation transactions
 ```
@@ -312,17 +334,17 @@ curl http://localhost:3001/attestation/0xabc123...
 ### SDK Testing
 
 ```typescript
-import { createUZKVClient } from '@uzkv/sdk';
+import { createUZKVClient } from "@uzkv/sdk";
 
 const client = createUZKVClient();
 
 // Health check
 const health = await client.healthCheck();
-console.log('Service:', health.status);
+console.log("Service:", health.status);
 
 // Service info
 const info = await client.getServiceInfo();
-console.log('Endpoints:', info.endpoints);
+console.log("Endpoints:", info.endpoints);
 ```
 
 ---
@@ -331,18 +353,19 @@ console.log('Endpoints:', info.endpoints);
 
 Based on design specifications:
 
-| Operation | Time/Cost | Notes |
-|-----------|-----------|-------|
-| Off-chain verify | ~5-10ms | WASM execution |
-| On-chain attest | ~60k gas | ~$0.10 on Arbitrum |
-| Batch verify (10) | ~40ms | 60% of sequential |
-| Batch verify (100) | ~350ms | 70% of sequential |
+| Operation          | Time/Cost | Notes              |
+| ------------------ | --------- | ------------------ |
+| Off-chain verify   | ~5-10ms   | WASM execution     |
+| On-chain attest    | ~60k gas  | ~$0.10 on Arbitrum |
+| Batch verify (10)  | ~40ms     | 60% of sequential  |
+| Batch verify (100) | ~350ms    | 70% of sequential  |
 
 ---
 
 ## Next Steps
 
 ### Immediate (Task 1.2)
+
 1. **Integration Tests**: Create comprehensive test suite
    - Test all API endpoints
    - Test SDK methods
@@ -356,7 +379,9 @@ Based on design specifications:
    - Code coverage reporting
 
 ### Near Term
+
 3. **CLI Tools**: Create command-line interface
+
    ```bash
    uzkv verify --proof proof.json --vk vk.json
    uzkv attest --hash 0xabc123...
@@ -374,6 +399,7 @@ Based on design specifications:
 ## Files Created
 
 ### packages/groth16-service/
+
 - ✅ `package.json` - Dependencies and scripts
 - ✅ `tsconfig.json` - TypeScript configuration
 - ✅ `.env.example` - Environment template
@@ -385,6 +411,7 @@ Based on design specifications:
 - ✅ `src/utils/attestor-client.ts` - Contract client (220 lines)
 
 ### packages/sdk/
+
 - ✅ `package.json` - SDK package config
 - ✅ `tsconfig.json` - TypeScript config
 - ✅ `.gitignore` - Git exclusions
@@ -392,6 +419,7 @@ Based on design specifications:
 - ✅ `src/index.ts` - SDK implementation (250 lines)
 
 ### scripts/
+
 - ✅ `setup-groth16-service.sh` - Linux/Mac setup
 - ✅ `setup-groth16-service.ps1` - Windows setup
 
@@ -401,15 +429,15 @@ Based on design specifications:
 
 ## Phase 1 Completion Status
 
-| Task | Status | Lines | Notes |
-|------|--------|-------|-------|
-| Groth16 Rust Verifier | ✅ | 600+ | In packages/stylus/src/groth16.rs |
-| Attestor Contract | ✅ | 140 | Deployed at 0x36e937...77 |
-| Test Corpus | ✅ | - | 30,000+ valid, 1,700+ invalid |
-| Unit Tests | ✅ | - | 6+ tests in groth16.rs |
-| **Off-Chain Service** | ✅ | **880** | **This completion** |
-| **TypeScript SDK** | ✅ | **250** | **This completion** |
-| Integration Tests | ⏳ | - | Next: Task 1.2 |
+| Task                  | Status | Lines   | Notes                             |
+| --------------------- | ------ | ------- | --------------------------------- |
+| Groth16 Rust Verifier | ✅     | 600+    | In packages/stylus/src/groth16.rs |
+| Attestor Contract     | ✅     | 140     | Deployed at 0x36e937...77         |
+| Test Corpus           | ✅     | -       | 30,000+ valid, 1,700+ invalid     |
+| Unit Tests            | ✅     | -       | 6+ tests in groth16.rs            |
+| **Off-Chain Service** | ✅     | **880** | **This completion**               |
+| **TypeScript SDK**    | ✅     | **250** | **This completion**               |
+| Integration Tests     | ⏳     | -       | Next: Task 1.2                    |
 
 **Phase 1 Progress**: 100% (was 85%, now complete)  
 **Overall Project**: 42% (was 35%)
@@ -419,6 +447,7 @@ Based on design specifications:
 ## Summary
 
 Successfully implemented a production-grade off-chain verification service with:
+
 - ✅ 880 lines of service code (Express + WASM + Attestor)
 - ✅ 250 lines of SDK code (TypeScript client)
 - ✅ 5 REST API endpoints with full validation
@@ -431,6 +460,7 @@ Successfully implemented a production-grade off-chain verification service with:
 **Phase 1 is now 100% complete!** 🎉
 
 The service is ready for:
+
 - Integration testing (Task 1.2)
 - Demo UI integration (Phase 5)
 - Production deployment

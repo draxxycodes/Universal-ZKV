@@ -3,7 +3,7 @@
 **Status:** ✅ COMPLETE  
 **Phase:** 2 - Core Cryptography (Groth16)  
 **Complexity:** HIGH  
-**Priority:** CRITICAL  
+**Priority:** CRITICAL
 
 ---
 
@@ -18,6 +18,7 @@ Implement the production-grade Groth16 zkSNARK verifier module in Rust with `no_
 ### 1. Crate Configuration (`Cargo.toml`)
 
 **Dependencies configured:**
+
 - ✅ **wee_alloc v0.4.5:** Custom allocator for WASM (deterministic memory usage)
 - ✅ **ark-groth16 v0.4.0:** Groth16 verifier (vendored, local path)
 - ✅ **ark-bn254 v0.3.0:** BN254 curve implementation (vendored)
@@ -26,6 +27,7 @@ Implement the production-grade Groth16 zkSNARK verifier module in Rust with `no_
 - ✅ **ark-serialize v0.4.0:** Serialization utilities (vendored)
 
 **Configuration:**
+
 ```toml
 [dependencies]
 wee_alloc = "0.4.5"
@@ -37,6 +39,7 @@ ark-serialize = { path = "vendor/ark-algebra/serialize", version = "0.4.0", defa
 ```
 
 **Rationale:**
+
 - `default-features = false`: Removes dependencies on std library
 - `features = ["std"]`: Stylus SDK requires std feature (despite no_std attribute)
 - Local paths: Supply chain security (Task 2.1 vendored dependencies)
@@ -47,12 +50,14 @@ ark-serialize = { path = "vendor/ark-algebra/serialize", version = "0.4.0", defa
 **Architecture:** Full Arbitrum Stylus on-chain contract (not just a library)
 
 **Global Allocator:**
+
 ```rust
 #[global_allocator]
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 ```
 
 **Contract State (ERC-7201 Namespacing):**
+
 ```rust
 sol_storage! {
     #[entrypoint]
@@ -115,6 +120,7 @@ sol_storage! {
    - View function
 
 **Error Handling:**
+
 ```rust
 pub enum Error {
     DeserializationError,    // Proof bytes malformed
@@ -130,6 +136,7 @@ pub enum Error {
 ```
 
 **Security Features:**
+
 - ✅ No panics (all errors returned)
 - ✅ Circuit breaker (pause/unpause)
 - ✅ Access control (admin-only functions)
@@ -140,6 +147,7 @@ pub enum Error {
 **Solidity Integration:**
 
 **Interface (`packages/contracts/src/interfaces/IGroth16Verifier.sol`):**
+
 ```solidity
 interface IGroth16Verifier {
     function verify_groth16(bytes calldata proof, bytes calldata publicInputs, bytes32 vkHash) external returns (bool);
@@ -155,14 +163,15 @@ interface IGroth16Verifier {
 ```
 
 **Proxy Contract (`packages/contracts/src/Groth16VerifierProxy.sol`):**
+
 ```solidity
 contract Groth16VerifierProxy {
     IGroth16Verifier public immutable stylusVerifier;
-    
+
     event ProofVerified(address indexed caller, bytes32 indexed vkHash, bool valid);
     event VKRegistered(bytes32 indexed vkHash, address indexed registrar);
     event NullifierUsed(bytes32 indexed nullifier, address indexed caller);
-    
+
     function verifyProof(bytes calldata proof, bytes calldata publicInputs, bytes32 vkHash) external returns (bool)
     function registerVK(bytes calldata vk) external returns (bytes32)
     function getVerificationCount() external view returns (uint256)
@@ -171,6 +180,7 @@ contract Groth16VerifierProxy {
 ```
 
 **Cross-Language Type Mappings:**
+
 - Rust `Vec<u8>` ↔ Solidity `bytes`
 - Rust `[u8; 32]` ↔ Solidity `bytes32`
 - Rust `U256` ↔ Solidity `uint256`
@@ -182,6 +192,7 @@ contract Groth16VerifierProxy {
 **Purpose:** Core cryptographic verification logic (called by Stylus contract's verify_groth16 method)
 
 **Security Constants:**
+
 ```rust
 const MAX_PUBLIC_INPUTS: usize = 256;  // Gas safety limit
 const MAX_PROOF_SIZE: usize = 512;     // 3 G1 + 1 G2 points
@@ -189,6 +200,7 @@ const MAX_VK_SIZE: usize = 4096;       // Conservative upper bound
 ```
 
 **Core Verification Function:**
+
 ```rust
 pub fn verify(
     proof_bytes: &[u8],
@@ -230,16 +242,19 @@ pub fn verify(
 **Pairing Engine Implementation:**
 
 Groth16 verification equation:
+
 ```
 e(A, B) == e(α, β) * e(L, γ) * e(C, δ)
 ```
 
 Where:
+
 ```
 L = vk.gamma_abc_g1[0] + Σ(public_inputs[i] * vk.gamma_abc_g1[i+1])
 ```
 
 **Optimization: Multi-Pairing**
+
 ```rust
 Bn254::multi_pairing(
     [proof.a, -vk.alpha_g1, -L, -proof.c],
@@ -272,6 +287,7 @@ Single multi-pairing call instead of 4 individual pairings (30% gas savings).
 **Rationale:** Windows nightly toolchain has proc-macro linking issues (LNK1120) with stylus-sdk. Standalone tests verify the groth16.rs verification engine logic independently. These tests are **supplementary** to the main Stylus contract implementation, not a bypass of it.
 
 **Coverage:**
+
 1. ✅ `test_valid_proof_structure()` - Random valid proof points
 2. ✅ `test_identity_point_valid()` - Identity point validation
 3. ✅ `test_all_identity_points_valid()` - All identity points
@@ -288,6 +304,7 @@ Single multi-pairing call instead of 4 individual pairings (30% gas savings).
 14. ✅ `test_curve_point_arithmetic()` - Point addition, scalar multiplication
 
 **Test Results:**
+
 - **Total:** 14 tests implemented
 - **Status:** Cannot execute on Windows due to stylus-proc linking issue
 - **Workaround:** Linux deployment environment will run full test suite
@@ -378,6 +395,7 @@ Single multi-pairing call instead of 4 individual pairings (30% gas savings).
 **Issue:** Windows nightly-2024-02-01 toolchain has proc-macro linking failure
 
 **Error:**
+
 ```
 error: linking with `link.exe` failed: exit code: 1120
 unresolved external symbol native_keccak256 referenced in function keccak256
@@ -385,23 +403,27 @@ fatal error LNK1120: 1 unresolved externals
 ```
 
 **Root Cause:**
+
 - stylus-proc (procedural macro crate) depends on alloy-primitives
 - alloy-primitives has external symbol `native_keccak256`
 - Windows nightly linker cannot resolve MSVC symbol
 
 **Impact:**
+
 - ✅ Production code implemented (groth16.rs)
 - ✅ Comprehensive tests written (groth16_standalone.rs)
 - ❌ Cannot execute tests on Windows
 - ✅ Tests WILL execute on Linux deployment environment
 
 **Mitigation:**
+
 - Phase 0 Task 0.3 documented this limitation
 - Linux deployment machine will have full test coverage
 - Standalone test file created to verify logic separately
 - Production code architecture-independent (pure Rust, no Windows-specific code)
 
 **Acceptance Criteria:**
+
 - Per PROJECT-EXECUTION-PROD.md Phase 0 Definition of Done
 - Windows limitation acceptable for local development
 - Deployment environment (Linux) is primary target
@@ -432,6 +454,7 @@ fatal error LNK1120: 1 unresolved externals
 18. ✅ **Cross-language types:** Rust ↔ Solidity type mappings documented
 
 **Deviations from Plan:**
+
 - WASM build: Cannot compile on Windows (stylus-proc linking issue)
 - Acceptable: Phase 0 documented Windows limitation
 - Tests: Written but cannot execute on Windows
@@ -444,18 +467,21 @@ fatal error LNK1120: 1 unresolved externals
 ## Next Steps
 
 **Task 2.3: Gas Optimization**
+
 - Implement VK pre-computation (save 1 pairing)
 - Add wasm-opt binary optimization
 - Benchmark gas costs vs Solidity baseline
 - Target: < 24KB WASM binary, < 500k gas per proof
 
 **Task 2.4: Differential Testing**
+
 - Generate 10,000+ test proofs (Task 3.5)
 - Compare Rust verifier vs Solidity reference
 - 1M+ fuzz iterations (valid + invalid proofs)
 - Assert: 100% agreement between implementations
 
 **Task 2.5: Documentation**
+
 - API documentation (rustdoc)
 - Security assumptions documented
 - Gas benchmarking report
@@ -476,6 +502,7 @@ fatal error LNK1120: 1 unresolved externals
 ## Task Summary
 
 **Files Created:**
+
 - ✅ `packages/stylus/src/groth16.rs` (372 lines - verification engine)
 - ✅ `packages/stylus/tests/groth16_standalone.rs` (383 lines - supplementary tests)
 - ✅ `packages/contracts/src/interfaces/IGroth16Verifier.sol` (50+ lines - Solidity interface)
@@ -483,12 +510,14 @@ fatal error LNK1120: 1 unresolved externals
 - ✅ `packages/contracts/test/Groth16VerifierProxy.t.sol` (140+ lines - integration tests)
 
 **Files Modified:**
+
 - ✅ `packages/stylus/Cargo.toml` (added wee_alloc, ark-serialize, stylus-sdk dependencies)
 - ✅ `packages/stylus/src/lib.rs` (REWRITTEN - full Stylus smart contract with sol_storage!, #[entrypoint], #[external] methods)
 
 **Total Lines Added:** 1,100+ lines of production code
 
 **Contract Architecture:** Full Arbitrum Stylus on-chain smart contract
+
 - ✅ sol_storage! macro (6 storage fields: verification_count, verification_keys, vk_registered, paused, admin, nullifiers)
 - ✅ #[entrypoint] attribute (marks UZKVContract as contract entry point)
 - ✅ #[external] methods (9 callable functions: verify_groth16, register_vk, get_verification_count, is_paused, pause, unpause, is_vk_registered, mark_nullifier_used, is_nullifier_used)

@@ -24,6 +24,7 @@ cargo test --release
 ## Phase 2: Proof Generation (30 min)
 
 ### Groth16 Proofs
+
 ```bash
 cd packages/circuits
 circom src/poseidon_test.circom --r1cs --wasm --sym -o build/
@@ -32,6 +33,7 @@ snarkjs groth16 prove build/circuit.zkey witness.wtns proof.json public.json
 ```
 
 ### PLONK Proofs (120+ available)
+
 ```bash
 cd packages/plonk-service
 npm run generate-proofs
@@ -39,6 +41,7 @@ npm run verify-proof -- proofs/plonk/proof_001.json
 ```
 
 ### STARK Proofs
+
 ```bash
 cd packages/stylus
 cargo run --bin generate_stark_proof -- --steps 100 --output fibonacci_proof.json
@@ -122,7 +125,7 @@ cargo fuzz run fuzz_groth16_verifier
 ✅ Gas costs documented  
 ✅ Security audit complete  
 ✅ SDK published  
-✅ Example integrations working  
+✅ Example integrations working
 
 **Estimated Timeline:** 2-3 weeks for full production deployment
 

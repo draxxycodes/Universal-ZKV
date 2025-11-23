@@ -89,10 +89,10 @@ pub struct MyStruct {
 }
 
 impl CanonicalSerialize for MyStruct {
-    // We only have to implement the `serialize_with_mode` method; the other methods 
+    // We only have to implement the `serialize_with_mode` method; the other methods
     // have default implementations that call the latter.
     //
-    // Notice that `serialize_with_mode` takes `mode: Compress` as an argument. This 
+    // Notice that `serialize_with_mode` takes `mode: Compress` as an argument. This
     // is used to indicate whether we want to serialize with or without compression.
     fn serialize_with_mode<W: Write>(&self, mut writer: W, mode: Compress) -> Result<(), SerializationError> {
         self.a.serialize_with_mode(&mut writer, mode)?;
@@ -106,7 +106,7 @@ impl CanonicalSerialize for MyStruct {
 }
 
 impl CanonicalDeserialize for MyStruct {
-    // We only have to implement the `deserialize_with_mode` method; the other methods 
+    // We only have to implement the `deserialize_with_mode` method; the other methods
     // have default implementations that call the latter.
     fn deserialize_with_mode<R: Read>(mut reader: R, compress: Compress, validate: Validate) -> Result<Self, SerializationError> {
         let a = G1Affine::deserialize_with_mode(&mut reader, compress, validate)?;

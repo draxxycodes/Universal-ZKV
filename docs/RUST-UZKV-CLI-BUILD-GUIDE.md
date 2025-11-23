@@ -124,7 +124,7 @@ fn main() -> Result<()> {
 
     // Verify proof using UZKV
     let proof_type_u8 = args.proof_type.to_u8();
-    
+
     match uzkv_stylus::uzkv::verify_universal_proof(
         proof_type_u8,
         &proof,
@@ -142,7 +142,7 @@ fn main() -> Result<()> {
                 },
                 error: None,
             };
-            
+
             println!("{}", serde_json::to_string_pretty(&result)?);
             std::process::exit(if is_valid { 0 } else { 1 });
         }
@@ -154,7 +154,7 @@ fn main() -> Result<()> {
                 message: "Verification error".to_string(),
                 error: Some(error_msg),
             };
-            
+
             eprintln!("{}", serde_json::to_string_pretty(&result)?);
             std::process::exit(2);
         }
@@ -224,12 +224,12 @@ Update `scripts/verify-with-uzkv.cjs`:
 ```javascript
 // Replace snarkjs calls with Rust UZKV
 function verifyGroth16(proofPath, publicInputsPath, vkPath) {
-    const result = execSync(
-        `./packages/uzkv-cli/target/release/uzkv-cli -t groth16 -p "${proofPath}" -i "${publicInputsPath}" -v "${vkPath}"`,
-        { encoding: 'utf8', stdio: 'pipe' }
-    );
-    const parsed = JSON.parse(result);
-    return parsed.valid;
+  const result = execSync(
+    `./packages/uzkv-cli/target/release/uzkv-cli -t groth16 -p "${proofPath}" -i "${publicInputsPath}" -v "${vkPath}"`,
+    { encoding: "utf8", stdio: "pipe" },
+  );
+  const parsed = JSON.parse(result);
+  return parsed.valid;
 }
 ```
 

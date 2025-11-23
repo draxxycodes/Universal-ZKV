@@ -5,19 +5,19 @@
  * Test vectors should match the Rust tests in packages/stylus/src/types.rs
  */
 
-import { describe, it, expect } from 'vitest';
-import { ProofType, PublicStatement, UniversalProof } from './types';
+import { describe, it, expect } from "vitest";
+import { ProofType, PublicStatement, UniversalProof } from "./types";
 
-describe('ProofType', () => {
-  it('should have correct numeric values', () => {
+describe("ProofType", () => {
+  it("should have correct numeric values", () => {
     expect(ProofType.Groth16).toBe(0);
     expect(ProofType.PLONK).toBe(1);
     expect(ProofType.STARK).toBe(2);
   });
 });
 
-describe('PublicStatement', () => {
-  it('should encode and decode correctly', () => {
+describe("PublicStatement", () => {
+  it("should encode and decode correctly", () => {
     const statement = new PublicStatement({
       merkleRoot: new Uint8Array(32).fill(0x11),
       publicKey: new Uint8Array(32).fill(0x22),
@@ -36,7 +36,7 @@ describe('PublicStatement', () => {
     expect(decoded.extra).toEqual(statement.extra);
   });
 
-  it('should encode with correct size (no extra data)', () => {
+  it("should encode with correct size (no extra data)", () => {
     const statement = new PublicStatement({
       merkleRoot: new Uint8Array(32).fill(0x11),
       publicKey: new Uint8Array(32).fill(0x22),
@@ -48,7 +48,7 @@ describe('PublicStatement', () => {
     expect(encoded.length).toBe(116); // 32+32+32+16+4+0
   });
 
-  it('should encode with extra data', () => {
+  it("should encode with extra data", () => {
     const extra = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
     const statement = new PublicStatement({
       merkleRoot: new Uint8Array(32).fill(0x11),
@@ -65,7 +65,7 @@ describe('PublicStatement', () => {
     expect(decoded.extra).toEqual(extra);
   });
 
-  it('should validate field sizes', () => {
+  it("should validate field sizes", () => {
     // Invalid merkleRoot size
     expect(() => {
       new PublicStatement({
@@ -74,7 +74,7 @@ describe('PublicStatement', () => {
         nullifier: new Uint8Array(32),
         value: 0n,
       });
-    }).toThrow('merkleRoot must be 32 bytes');
+    }).toThrow("merkleRoot must be 32 bytes");
 
     // Invalid publicKey size
     expect(() => {
@@ -84,7 +84,7 @@ describe('PublicStatement', () => {
         nullifier: new Uint8Array(32),
         value: 0n,
       });
-    }).toThrow('publicKey must be 32 bytes');
+    }).toThrow("publicKey must be 32 bytes");
 
     // Invalid nullifier size
     expect(() => {
@@ -94,10 +94,10 @@ describe('PublicStatement', () => {
         nullifier: new Uint8Array(31), // Wrong size
         value: 0n,
       });
-    }).toThrow('nullifier must be 32 bytes');
+    }).toThrow("nullifier must be 32 bytes");
   });
 
-  it('should validate value range', () => {
+  it("should validate value range", () => {
     // Negative value
     expect(() => {
       new PublicStatement({
@@ -106,7 +106,7 @@ describe('PublicStatement', () => {
         nullifier: new Uint8Array(32),
         value: -1n,
       });
-    }).toThrow('value must be non-negative');
+    }).toThrow("value must be non-negative");
 
     // Value too large for u128
     expect(() => {
@@ -116,15 +116,15 @@ describe('PublicStatement', () => {
         nullifier: new Uint8Array(32),
         value: 2n ** 128n, // Exactly at limit (should fail)
       });
-    }).toThrow('value must fit in u128');
+    }).toThrow("value must fit in u128");
   });
 
-  it('should decode and reject buffer too short', () => {
+  it("should decode and reject buffer too short", () => {
     const tooShort = new Uint8Array(100); // < 116 bytes
-    expect(() => PublicStatement.decode(tooShort)).toThrow('Buffer too short');
+    expect(() => PublicStatement.decode(tooShort)).toThrow("Buffer too short");
   });
 
-  it('should calculate encoded size correctly', () => {
+  it("should calculate encoded size correctly", () => {
     const statement1 = new PublicStatement({
       merkleRoot: new Uint8Array(32),
       publicKey: new Uint8Array(32),
@@ -143,7 +143,7 @@ describe('PublicStatement', () => {
     expect(statement2.encodedSize()).toBe(216); // 116 + 100
   });
 
-  it('should handle large u128 values correctly', () => {
+  it("should handle large u128 values correctly", () => {
     const maxU128 = 2n ** 128n - 1n;
     const statement = new PublicStatement({
       merkleRoot: new Uint8Array(32),
@@ -159,8 +159,8 @@ describe('PublicStatement', () => {
   });
 });
 
-describe('UniversalProof', () => {
-  it('should encode and decode correctly', () => {
+describe("UniversalProof", () => {
+  it("should encode and decode correctly", () => {
     const proof = new UniversalProof({
       version: 1,
       proofType: ProofType.PLONK,
@@ -181,7 +181,7 @@ describe('UniversalProof', () => {
     expect(decoded.publicInputsBytes).toEqual(proof.publicInputsBytes);
   });
 
-  it('should default to version 1', () => {
+  it("should default to version 1", () => {
     const proof = new UniversalProof({
       proofType: ProofType.Groth16,
       programId: 0,
@@ -193,7 +193,7 @@ describe('UniversalProof', () => {
     expect(proof.version).toBe(1);
   });
 
-  it('should reject invalid version', () => {
+  it("should reject invalid version", () => {
     expect(() => {
       new UniversalProof({
         version: 99,
@@ -203,10 +203,10 @@ describe('UniversalProof', () => {
         proofBytes: new Uint8Array(0),
         publicInputsBytes: new Uint8Array(0),
       });
-    }).toThrow('Unsupported protocol version: 99');
+    }).toThrow("Unsupported protocol version: 99");
   });
 
-  it('should validate vkHash size', () => {
+  it("should validate vkHash size", () => {
     expect(() => {
       new UniversalProof({
         proofType: ProofType.Groth16,
@@ -215,10 +215,10 @@ describe('UniversalProof', () => {
         proofBytes: new Uint8Array(0),
         publicInputsBytes: new Uint8Array(0),
       });
-    }).toThrow('vkHash must be 32 bytes');
+    }).toThrow("vkHash must be 32 bytes");
   });
 
-  it('should validate programId range', () => {
+  it("should validate programId range", () => {
     expect(() => {
       new UniversalProof({
         proofType: ProofType.Groth16,
@@ -227,7 +227,7 @@ describe('UniversalProof', () => {
         proofBytes: new Uint8Array(0),
         publicInputsBytes: new Uint8Array(0),
       });
-    }).toThrow('programId must be a valid u32');
+    }).toThrow("programId must be a valid u32");
 
     expect(() => {
       new UniversalProof({
@@ -237,31 +237,35 @@ describe('UniversalProof', () => {
         proofBytes: new Uint8Array(0),
         publicInputsBytes: new Uint8Array(0),
       });
-    }).toThrow('programId must be a valid u32');
+    }).toThrow("programId must be a valid u32");
   });
 
-  it('should decode and reject buffer too short', () => {
+  it("should decode and reject buffer too short", () => {
     const tooShort = new Uint8Array(40); // < 46 bytes
-    expect(() => UniversalProof.decode(tooShort)).toThrow('Buffer too short');
+    expect(() => UniversalProof.decode(tooShort)).toThrow("Buffer too short");
   });
 
-  it('should decode and reject invalid version', () => {
+  it("should decode and reject invalid version", () => {
     const buffer = new Uint8Array(46);
     buffer[0] = 99; // Invalid version
     buffer[1] = ProofType.Groth16;
 
-    expect(() => UniversalProof.decode(buffer)).toThrow('Unsupported protocol version: 99');
+    expect(() => UniversalProof.decode(buffer)).toThrow(
+      "Unsupported protocol version: 99",
+    );
   });
 
-  it('should decode and reject invalid proof type', () => {
+  it("should decode and reject invalid proof type", () => {
     const buffer = new Uint8Array(46);
     buffer[0] = 1; // Valid version
     buffer[1] = 99; // Invalid proof type
 
-    expect(() => UniversalProof.decode(buffer)).toThrow('Invalid proof type: 99');
+    expect(() => UniversalProof.decode(buffer)).toThrow(
+      "Invalid proof type: 99",
+    );
   });
 
-  it('should calculate encoded size correctly', () => {
+  it("should calculate encoded size correctly", () => {
     const proof = new UniversalProof({
       proofType: ProofType.PLONK,
       programId: 0,
@@ -273,7 +277,7 @@ describe('UniversalProof', () => {
     expect(proof.encodedSize()).toBe(290); // 46 + 128 + 116
   });
 
-  it('should work with PublicStatement via withStatement', () => {
+  it("should work with PublicStatement via withStatement", () => {
     const statement = new PublicStatement({
       merkleRoot: new Uint8Array(32).fill(0x11),
       publicKey: new Uint8Array(32).fill(0x22),
@@ -296,7 +300,7 @@ describe('UniversalProof', () => {
     expect(decodedStatement.value).toBe(statement.value);
   });
 
-  it('should encode all proof types correctly', () => {
+  it("should encode all proof types correctly", () => {
     const proofTypes = [ProofType.Groth16, ProofType.PLONK, ProofType.STARK];
 
     proofTypes.forEach((proofType) => {
@@ -316,8 +320,8 @@ describe('UniversalProof', () => {
   });
 });
 
-describe('Cross-Compatibility Test Vectors', () => {
-  it('should match Rust test vector for PublicStatement', () => {
+describe("Cross-Compatibility Test Vectors", () => {
+  it("should match Rust test vector for PublicStatement", () => {
     // This matches the Rust test: test_public_statement_encode_decode
     const statement = new PublicStatement({
       merkleRoot: new Uint8Array(32).fill(0x01),
@@ -366,7 +370,7 @@ describe('Cross-Compatibility Test Vectors', () => {
     expect(decoded.value).toBe(12345n);
   });
 
-  it('should match Rust test vector for UniversalProof', () => {
+  it("should match Rust test vector for UniversalProof", () => {
     // This matches the Rust test: test_universal_proof_encode_decode
     const proof = new UniversalProof({
       version: 1,

@@ -14,6 +14,7 @@
 **Context:** Perform Phase 2 trusted setup for Groth16 proof system, creating production-ready zkey files with multiple contributions and beacon randomness.
 
 **Constraints:**
+
 - ✅ Multi-party ceremony (minimum 2 contributions + beacon)
 - ✅ Uses production PTAU (powersOfTau28_hez_final.ptau - 268M constraints)
 - ✅ Verification keys exported for Solidity integration
@@ -26,18 +27,19 @@
 ### 1. ✅ Circuit Compilation
 
 **Circuits Compiled:**
+
 - `poseidon_test.circom` → `poseidon_test.r1cs`
 - `eddsa_verify.circom` → `eddsa_verify.r1cs`
 - `merkle_proof.circom` → `merkle_proof.r1cs`
 
 **Constraint Counts:**
 
-| Circuit | Constraints | Public Inputs | Private Inputs | Wires |
-|---------|-------------|---------------|----------------|-------|
-| Poseidon Hash | 520 | 1 | 2 | 524 |
-| EdDSA Signature | 9,073 | 3 | 3 | 9,074 |
-| Merkle Tree (20) | 7,324 | 1 | 41 | 7,366 |
-| **Total** | **16,917** | **5** | **46** | **16,964** |
+| Circuit          | Constraints | Public Inputs | Private Inputs | Wires      |
+| ---------------- | ----------- | ------------- | -------------- | ---------- |
+| Poseidon Hash    | 520         | 1             | 2              | 524        |
+| EdDSA Signature  | 9,073       | 3             | 3              | 9,074      |
+| Merkle Tree (20) | 7,324       | 1             | 41             | 7,366      |
+| **Total**        | **16,917**  | **5**         | **46**         | **16,964** |
 
 **PTAU Headroom:** 268,435,456 - 16,917 = 268,418,539 (99.9937% available)
 
@@ -46,6 +48,7 @@
 ### 2. ✅ Phase 2 Trusted Setup (Groth16)
 
 **Ceremony Structure (per circuit):**
+
 1. **Initial Setup:** `groth16 setup` with powersOfTau28_hez_final.ptau
 2. **Contribution 1:** User contribution with entropy
 3. **Contribution 2:** Second contribution with different entropy
@@ -54,6 +57,7 @@
 6. **Verification:** zkey integrity check
 
 **Poseidon Circuit:**
+
 - Circuit Hash: `087b27b8 d6985efe 226d223c 0b6e3edd ...`
 - Contribution 1: `1cde9ec1 ff074705 03814c9d e9ad6e43 ...`
 - Contribution 2: `67480800 be5e1247 56a9eb1c c4cfcc13 ...`
@@ -61,12 +65,14 @@
 - Status: ✅ **ZKey Ok!**
 
 **EdDSA Circuit:**
+
 - Circuit Hash: `07606394 1289aaa0 dba1db22 2efbdc0c ...`
 - Multi-party contributions completed
 - Beacon randomness applied
 - Status: ✅ **ZKey Ok!**
 
 **Merkle Circuit:**
+
 - Circuit Hash: `0928f5b3 ee44875f 0470c89e f915c973 ...`
 - Multi-party contributions completed
 - Beacon randomness applied
@@ -78,15 +84,16 @@
 
 **Proving Keys (zkey files):**
 
-| Circuit | Initial | Contrib 1 | Contrib 2 | Final | Beacon | Size |
-|---------|---------|-----------|-----------|-------|--------|------|
-| Poseidon | poseidon_0000.zkey | poseidon_0001.zkey | - | poseidon_final.zkey | poseidon_beacon.zkey | 250KB |
-| EdDSA | eddsa_0000.zkey | eddsa_0001.zkey | - | eddsa_final.zkey | eddsa_beacon.zkey | 5.0MB |
-| Merkle | merkle_0000.zkey | merkle_0001.zkey | - | merkle_final.zkey | merkle_beacon.zkey | 3.9MB |
+| Circuit  | Initial            | Contrib 1          | Contrib 2 | Final               | Beacon               | Size  |
+| -------- | ------------------ | ------------------ | --------- | ------------------- | -------------------- | ----- |
+| Poseidon | poseidon_0000.zkey | poseidon_0001.zkey | -         | poseidon_final.zkey | poseidon_beacon.zkey | 250KB |
+| EdDSA    | eddsa_0000.zkey    | eddsa_0001.zkey    | -         | eddsa_final.zkey    | eddsa_beacon.zkey    | 5.0MB |
+| Merkle   | merkle_0000.zkey   | merkle_0001.zkey   | -         | merkle_final.zkey   | merkle_beacon.zkey   | 3.9MB |
 
 **Total:** 12 zkey files (27.3 MB)
 
 **Verification Keys (JSON):**
+
 - `build/poseidon_vk.json` (3.1 KB)
 - `build/eddsa_vk.json` (3.4 KB)
 - `build/merkle_vk.json` (3.1 KB)
@@ -119,6 +126,7 @@ snarkjs r1cs info build/merkle_proof.r1cs
 ```
 
 **Output:**
+
 ```
 Poseidon: 520 constraints (bn-128)
 EdDSA: 9,073 constraints (bn-128)
@@ -171,6 +179,7 @@ snarkjs zkey verify \
 ```
 
 **Output:**
+
 ```
 [INFO] ZKey Ok!
 ```
@@ -178,6 +187,7 @@ snarkjs zkey verify \
 ### Step 3: Repeat for All Circuits
 
 Applied same ceremony to:
+
 - ✅ EdDSA circuit (9,073 constraints)
 - ✅ Merkle circuit (7,324 constraints)
 
@@ -188,6 +198,7 @@ Applied same ceremony to:
 ### Multi-Party Computation
 
 **Contribution Chain:**
+
 1. **Initial Setup:** Uses Powers of Tau (268M constraints)
 2. **Contribution 1:** Entropy from timestamp + project name
 3. **Contribution 2:** Entropy from timestamp + username
@@ -198,6 +209,7 @@ Applied same ceremony to:
 ### Beacon Randomness
 
 **Parameters:**
+
 - Beacon value: `0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f`
 - Iterations: 10 (2^10 = 1024 hashes)
 - Purpose: Public verifiable randomness (prevents coordinator manipulation)
@@ -205,6 +217,7 @@ Applied same ceremony to:
 ### Verification
 
 All zkeys verified against:
+
 - ✅ Original R1CS circuit
 - ✅ Powers of Tau ceremony file
 - ✅ Contribution chain integrity
@@ -245,6 +258,7 @@ packages/circuits/
 ### Circuit Hash Consistency
 
 All circuits verified with consistent hashes across:
+
 - Initial R1CS compilation
 - Setup phase
 - Each contribution
@@ -304,6 +318,7 @@ packages/circuits/build/*.wtns
 ```
 
 **Rationale:**
+
 - zkeys are large (up to 5MB) and can be regenerated
 - VK files are small (3-4KB) and needed for integration
 - R1CS/sym files can be regenerated from source circuits
@@ -365,17 +380,20 @@ packages/circuits/build/*.wtns
 ## 🔄 Next Steps
 
 **Immediate (Task 3.5.4):**
+
 - Mass proof generation (10,000+ proofs per circuit)
 - Create diverse test dataset
 - Generate malformed proofs for negative testing
 - Validate proof generation pipeline
 
 **Task 3.5.5:**
+
 - Verify all generated proofs
 - Create proof catalog with metadata
 - Document proof structure and format
 
 **Phase 4 Integration:**
+
 - Import VK files into Solidity contracts
 - Generate Solidity verifier contracts
 - Integrate with UUPS proxy
@@ -385,6 +403,7 @@ packages/circuits/build/*.wtns
 ## 📊 Performance Metrics
 
 **Setup Time (per circuit):**
+
 - Poseidon: ~5 seconds (520 constraints)
 - EdDSA: ~15 seconds (9,073 constraints)
 - Merkle: ~12 seconds (7,324 constraints)
@@ -392,11 +411,13 @@ packages/circuits/build/*.wtns
 **Total Ceremony Time:** ~2 minutes (all 3 circuits)
 
 **File Sizes:**
+
 - zkey files: 27.3 MB (12 files)
 - VK files: 9.6 KB (3 files)
 - R1CS files: ~8 MB (3 files)
 
 **Constraint Efficiency:**
+
 - Used: 16,917 constraints
 - Available: 268,435,456 constraints
 - Utilization: 0.0063% (excellent headroom)
@@ -420,7 +441,7 @@ packages/circuits/build/*.wtns
 
 ---
 
-*Completed by: AI Assistant*  
-*Date: November 20, 2025*  
-*Project: Universal ZK-Proof Verifier (UZKV)*  
-*Phase: 3.5 - Production Circuit Infrastructure*
+_Completed by: AI Assistant_  
+_Date: November 20, 2025_  
+_Project: Universal ZK-Proof Verifier (UZKV)_  
+_Phase: 3.5 - Production Circuit Infrastructure_

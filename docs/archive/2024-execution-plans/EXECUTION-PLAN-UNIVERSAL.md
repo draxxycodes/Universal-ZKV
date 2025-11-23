@@ -14,20 +14,21 @@
 
 ### Overall Progress: **45% Complete**
 
-| Phase | Status | Completion | Key Achievements |
-|-------|--------|------------|------------------|
-| **Phase 0: Foundation** | ✅ DONE | 100% | Docker build, size analysis, gate decision, attestor deployed |
-| **Phase 1: Groth16 Production** | ✅ DONE | 100% | 600+ lines verifier, 30K+ proofs, attestor live, SDK + service + tests complete |
-| **Phase 2: PLONK** | ❌ NOT STARTED | 10% | Scaffolded modules only |
-| **Phase 3: STARK** | ❌ NOT STARTED | 5% | Basic structure only |
-| **Phase 4: Universal Integration** | ⚠️ PARTIAL | 50% | Router exists, SDK complete |
-| **Phase 5: Demo UI** | ❌ NOT STARTED | 0% | Empty Next.js folder |
-| **Phase 6: Testing & CI** | ⚠️ PARTIAL | 50% | 80+ integration tests, no CI/CD yet |
-| **Phase 7: Documentation** | ⚠️ PARTIAL | 70% | Extensive docs + SDK docs + test docs |
+| Phase                              | Status         | Completion | Key Achievements                                                                |
+| ---------------------------------- | -------------- | ---------- | ------------------------------------------------------------------------------- |
+| **Phase 0: Foundation**            | ✅ DONE        | 100%       | Docker build, size analysis, gate decision, attestor deployed                   |
+| **Phase 1: Groth16 Production**    | ✅ DONE        | 100%       | 600+ lines verifier, 30K+ proofs, attestor live, SDK + service + tests complete |
+| **Phase 2: PLONK**                 | ❌ NOT STARTED | 10%        | Scaffolded modules only                                                         |
+| **Phase 3: STARK**                 | ❌ NOT STARTED | 5%         | Basic structure only                                                            |
+| **Phase 4: Universal Integration** | ⚠️ PARTIAL     | 50%        | Router exists, SDK complete                                                     |
+| **Phase 5: Demo UI**               | ❌ NOT STARTED | 0%         | Empty Next.js folder                                                            |
+| **Phase 6: Testing & CI**          | ⚠️ PARTIAL     | 50%        | 80+ integration tests, no CI/CD yet                                             |
+| **Phase 7: Documentation**         | ⚠️ PARTIAL     | 70%        | Extensive docs + SDK docs + test docs                                           |
 
 ### What's Working Right Now ✅
 
 **Groth16 Verifier** (Production-Ready):
+
 - ✅ **Full Implementation**: 600+ lines Rust in `packages/stylus/src/groth16.rs`
 - ✅ **Deployed Attestor**: Contract at `0x36e937ebcf56c5dec6ecb0695001becc87738177` (7.2KB)
 - ✅ **Test Corpus**: 30,331 valid proofs + 1,731 invalid proofs cataloged
@@ -36,11 +37,13 @@
 - ✅ **Gas Optimized**: Precomputed pairings, batch verification support
 
 **Build Infrastructure**:
+
 - ✅ **Docker**: Reproducible build environment at `packages/stylus/Dockerfile`
 - ✅ **Size Measured**: Full WASM 143KB, Groth16 122KB, Attestor 7.2KB
 - ✅ **Gate Decision**: Attestor pattern selected due to 24KB limit
 
 **Documentation**:
+
 - ✅ **Brutal Assessment**: Honest evaluation in `BRUTAL-ASSESSMENT.md`
 - ✅ **Deployment Guides**: Complete instructions with actual contract addresses
 - ✅ **Architecture**: Clear diagrams and explanations
@@ -49,6 +52,7 @@
 ### Critical Gaps ❌
 
 **SDK & Integration** (Now Complete! 🎉):
+
 - ✅ `packages/sdk/` - **Complete TypeScript SDK** with full API coverage (250 lines)
 - ✅ **Node.js verification service** - Express server with security middleware (150 lines)
 - ✅ **REST API** - 5 endpoints with validation, rate limiting, and logging (270 lines)
@@ -59,17 +63,20 @@
 - ❌ No CLI tools yet
 
 **Frontend** (No User Interface):
+
 - ❌ `apps/web/` exists but is empty
 - ❌ No proof upload UI
 - ❌ No demo application
 - ❌ Nothing deployed
 
 **PLONK/STARK** (Universal Verifier Incomplete):
+
 - ❌ PLONK: Commented out with "TODO: Enable once dependencies are no_std compatible"
 - ❌ STARK: Basic scaffolding only
 - ❌ Both return `ProofTypeNotSupported` error
 
 **CI/CD** (No Automation):
+
 - ❌ No GitHub Actions workflows
 - ❌ No automated testing
 - ❌ No fuzzing
@@ -78,6 +85,7 @@
 ### Immediate Priorities (Next 4 Weeks)
 
 **Week 1: Integration Testing & CLI** ✅ FULLY COMPLETE!
+
 1. ✅ ~~Create TypeScript SDK in `packages/sdk/`~~ **DONE**
 2. ✅ ~~Build Node.js verification service with Express~~ **DONE**
 3. ✅ ~~Implement WASM loader for off-chain Groth16 verification~~ **DONE**
@@ -86,6 +94,7 @@
 6. ⏳ Create CLI tools for proof verification (optional enhancement)
 
 **Week 2-3: Demo UI & Documentation**
+
 1. Set up Next.js 14 app in `apps/web/`
 2. Build proof upload and verification UI
 3. Add wallet integration (wagmi/RainbowKit)
@@ -93,6 +102,7 @@
 5. Deploy demo to Vercel
 
 **Week 4: PLONK Foundation**
+
 1. Begin PLONK implementation
 2. KZG commitment scheme
 3. Test vector generation
@@ -100,6 +110,7 @@
 ### Deployment Status
 
 **Live on Arbitrum Sepolia**:
+
 - ✅ Attestor Contract: `0x36e937ebcf56c5dec6ecb0695001becc87738177`
 - ✅ Deployment TX: `0xe670ad061254c77e07bc000443dd96237bca720612fcc97fd27397f178b196d7`
 - ✅ Activation TX: `0xb677f28655d18c2cb53ac94e4a80da366d56131cb1693b76227673118daac071`
@@ -107,6 +118,7 @@
 - ✅ Status: Initialized and active
 
 **Not Deployed**:
+
 - ❌ Full Groth16 verifier (143KB exceeds limit)
 - ❌ PLONK verifier (not implemented)
 - ❌ STARK verifier (not implemented)
@@ -117,6 +129,7 @@
 **Remaining Work**: ~13 weeks at current pace
 
 **Parallel Development Opportunities**:
+
 - SDK + Service (2 weeks) || PLONK Implementation (6 weeks)
 - Demo UI (2 weeks) || STARK Implementation (6 weeks)
 - Can compress 20-week timeline to 12-14 weeks with 2 developers
@@ -130,6 +143,7 @@
 ### The Reality Check
 
 Based on brutal assessment findings:
+
 - **Current state**: 35% complete
 - **Groth16**: ✅ Working (5,118 lines Rust)
 - **PLONK**: ⚠️ 10% (scaffolded but incomplete)
@@ -169,16 +183,19 @@ Based on brutal assessment findings:
 ### Critical Decisions (Gates)
 
 **Gate 1** (Week 1): Measure exact WASM sizes
+
 - If Groth16 alone > 24KB → use attestor (already deployed)
 - If PLONK verifier > 24KB → off-chain service + attestor
 - If STARK verifier > 24KB → off-chain service + attestor
 
 **Gate 2** (Week 5): PLONK implementation path
+
 - Attempt 1: Full on-chain Stylus with minimal KZG
 - Attempt 2: Hybrid (KZG on-chain, proof gen off-chain)
 - Fallback: Full off-chain + attestor
 
 **Gate 3** (Week 9): STARK implementation path
+
 - Attempt 1: Minimal Stylus micro-verifier (merkle checks only)
 - Fallback: Full off-chain WASM + attestor
 
@@ -191,42 +208,20 @@ Based on brutal assessment findings:
 ### Must-Have Features (v1.0)
 
 **Groth16**:
+
 1. ✅ Verify proofs on-chain OR via attestor
 2. ✅ VK registry with precomputed pairings
 3. ✅ Batch verification (30-50% gas savings)
 4. ✅ Gas cost documented and benchmarked
 5. ✅ 100% compatibility with snarkjs/circom
 
-**PLONK**:
-6. ✅ Full PLONK verifier implementation (KZG + Fiat-Shamir)
-7. ✅ Universal setup (no circuit-specific trusted setup)
-8. ✅ Proof generation pipeline (snarkjs or custom)
-9. ✅ 500+ test vectors passing
-10. ✅ Gas cost < 150k (if on-chain) or $0.10 (if attestor)
+**PLONK**: 6. ✅ Full PLONK verifier implementation (KZG + Fiat-Shamir) 7. ✅ Universal setup (no circuit-specific trusted setup) 8. ✅ Proof generation pipeline (snarkjs or custom) 9. ✅ 500+ test vectors passing 10. ✅ Gas cost < 150k (if on-chain) or $0.10 (if attestor)
 
-**STARK**:
-11. ✅ FRI polynomial commitment verification
-12. ✅ AIR (Algebraic Intermediate Representation) framework
-13. ✅ Fibonacci + basic arithmetic circuits
-14. ✅ Transparent setup (no trusted setup)
-15. ✅ Proof generation tools
+**STARK**: 11. ✅ FRI polynomial commitment verification 12. ✅ AIR (Algebraic Intermediate Representation) framework 13. ✅ Fibonacci + basic arithmetic circuits 14. ✅ Transparent setup (no trusted setup) 15. ✅ Proof generation tools
 
-**Integration**:
-16. ✅ Universal router contract with proof type detection
-17. ✅ TypeScript SDK supporting all three systems
-18. ✅ CLI tools: `uzkv verify --type plonk proof.json`
-19. ✅ Demo UI with drag-and-drop proof upload
-20. ✅ 200+ integration tests (all proof types)
-21. ✅ Gas benchmarking suite with comparison charts
-22. ✅ Live demo on Arbitrum Sepolia
+**Integration**: 16. ✅ Universal router contract with proof type detection 17. ✅ TypeScript SDK supporting all three systems 18. ✅ CLI tools: `uzkv verify --type plonk proof.json` 19. ✅ Demo UI with drag-and-drop proof upload 20. ✅ 200+ integration tests (all proof types) 21. ✅ Gas benchmarking suite with comparison charts 22. ✅ Live demo on Arbitrum Sepolia
 
-**Production Quality**:
-23. ✅ CI/CD with automated testing
-24. ✅ Reproducible builds (Docker)
-25. ✅ Rate limiting and monitoring
-26. ✅ Error handling and logging
-27. ✅ Security best practices (key management, input validation)
-28. ✅ Comprehensive documentation
+**Production Quality**: 23. ✅ CI/CD with automated testing 24. ✅ Reproducible builds (Docker) 25. ✅ Rate limiting and monitoring 26. ✅ Error handling and logging 27. ✅ Security best practices (key management, input validation) 28. ✅ Comprehensive documentation
 
 ### Out of Scope (Future v2.0+)
 
@@ -251,6 +246,7 @@ Based on brutal assessment findings:
 **Status**: ✅ All tasks completed successfully
 
 **Completion Summary**:
+
 - ✅ Docker build environment created (`packages/stylus/Dockerfile`)
 - ✅ Size measurements completed: Full WASM = 143KB, Groth16 = 122KB, Attestor = 7.2KB
 - ✅ Gate decision made: Attestor pattern selected and deployed
@@ -406,7 +402,7 @@ Date: November 22, 2024
 
 Measurements:
 - Full WASM: 143KB (6x over limit)
-- Groth16 only: 122KB (5x over limit) 
+- Groth16 only: 122KB (5x over limit)
 - Arbitrum limit: 24KB
 
 Decision:
@@ -419,6 +415,7 @@ Attestor pattern provides production-grade solution at 7.2KB.
 ```
 
 **Deliverables**:
+
 - ✅ Reproducible Docker build - `packages/stylus/Dockerfile`
 - ✅ Size measurements documented - See BRUTAL-ASSESSMENT.md, ATTESTOR-DEPLOYMENT.md
 - ✅ Gate decision recorded - Attestor pattern selected
@@ -434,6 +431,7 @@ Attestor pattern provides production-grade solution at 7.2KB.
 **Status**: ✅ Groth16 verifier fully implemented (600+ lines), attestor deployed, 30,000+ proofs validated, **SDK and service completed**
 
 **Completion Summary**:
+
 - ✅ Groth16 core verifier: 600+ lines in `packages/stylus/src/groth16.rs`
 - ✅ Attestor contract: Deployed at 0x36e937ebcf56c5dec6ecb0695001becc87738177 (7.2KB)
 - ✅ Test corpus: 30,000+ valid proofs, 1,700+ invalid proofs
@@ -447,6 +445,7 @@ Attestor pattern provides production-grade solution at 7.2KB.
 **✅ COMPLETED** - Full implementation of Node.js verification service with TypeScript SDK
 
 **What's Complete**:
+
 - ✅ Attestor contract code: `packages/attestor/src/lib.rs` (140 lines)
 - ✅ Deployed to Arbitrum Sepolia: 0x36e937ebcf56c5dec6ecb0695001becc87738177
 - ✅ Deployment fee: 0.000085 ETH (~$0.30)
@@ -460,6 +459,7 @@ Attestor pattern provides production-grade solution at 7.2KB.
 **Implementation Details**:
 
 **Package Structure**:
+
 ```
 packages/
 ├── groth16-service/          # Node.js verification service
@@ -544,24 +544,24 @@ pnpm start
 **SDK Usage Example**:
 
 ```typescript
-import { createUZKVClient } from '@uzkv/sdk';
+import { createUZKVClient } from "@uzkv/sdk";
 
 const client = createUZKVClient({
-  serviceUrl: 'http://localhost:3001',
-  rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
-  attestorAddress: '0x36e937ebcf56c5dec6ecb0695001becc87738177',
+  serviceUrl: "http://localhost:3001",
+  rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+  attestorAddress: "0x36e937ebcf56c5dec6ecb0695001becc87738177",
 });
 
 // Verify with attestation
 const result = await client.verify({
   proof: myProof,
-  publicInputs: ['1', '2'],
+  publicInputs: ["1", "2"],
   vk: myVK,
   attestOnChain: true,
 });
 
-console.log('Valid:', result.valid);
-console.log('TX:', result.attestation?.transactionHash);
+console.log("Valid:", result.valid);
+console.log("TX:", result.attestation?.transactionHash);
 ```
 
 **Next Steps**: Proceed to Task 1.2 for integration testing
@@ -573,6 +573,7 @@ console.log('TX:', result.attestation?.transactionHash);
 **Test Implementation**:
 
 **Test Suite Structure** (`packages/groth16-service/test/`):
+
 ```
 test/
 ├── api.test.ts          # REST API endpoint tests (20+ tests)
@@ -629,6 +630,7 @@ test/
    - ✅ End-to-end latency measurement
 
 **Testing Infrastructure**:
+
 - ✅ Vitest configuration with coverage reporting
 - ✅ Test fixtures (valid proof, verification key)
 - ✅ Supertest for API testing
@@ -637,6 +639,7 @@ test/
 - ✅ Comprehensive test README
 
 **Running Tests**:
+
 ```bash
 cd packages/groth16-service
 
@@ -657,6 +660,7 @@ pnpm test --coverage
 ```
 
 **Performance Targets** (All Met):
+
 - ✅ Single verification: < 50ms
 - ✅ Batch improvement: > 30%
 - ✅ Gas estimation: < 5s
@@ -664,6 +668,7 @@ pnpm test --coverage
 - ✅ SDK latency: < 1s
 
 **Deliverables**:
+
 - ✅ **80+ comprehensive tests** across 5 test files
 - ✅ **API endpoint coverage** - All 5 endpoints tested
 - ✅ **Proof validation** - Valid and invalid cases
@@ -684,6 +689,7 @@ pnpm test --coverage
 **Status**: ❌ 10% complete - Modules scaffolded but not implemented
 
 **What Exists**:
+
 - ⚠️ Scaffolded modules in `packages/stylus/src/plonk/`:
   - `kzg.rs` - KZG commitment scheme (stub)
   - `plonk.rs` - PLONK verifier core (stub)
@@ -693,6 +699,7 @@ pnpm test --coverage
 - ⚠️ Commented out in `lib.rs` with TODO
 
 **What's Needed**:
+
 - [ ] Full KZG polynomial commitment implementation
 - [ ] PLONK verification algorithm
 - [ ] Fiat-Shamir transcript
@@ -718,12 +725,14 @@ pnpm test --coverage
 ### Task 2.1: PLONK Theory & Design (Week 4, Days 1-2)
 
 **Study PLONK protocol**:
+
 - Gates: arithmetic, custom
 - Permutation argument
 - KZG polynomial commitments
 - Fiat-Shamir heuristic
 
 **Design decisions**:
+
 ```markdown
 # PLONK Design Doc
 
@@ -733,23 +742,23 @@ pnpm test --coverage
    - Trusted setup (universal SRS)
    - Commitment: C = [p(τ)]₁
    - Opening proof
-   
 2. **Circuit Constraints**
    - Gate constraints: Q_L·a + Q_R·b + Q_O·c + Q_M·ab + Q_C = 0
    - Permutation (copy constraints)
-   
 3. **Verification**
    - Verify openings via pairings
    - Check gate/permutation equations
-   
+
 ## Implementation Plan
 
 ### On-Chain Attempt
+
 - Minimal KZG (pairing checks only)
 - Precompute SRS commitments
 - Size target: <20KB
 
 ### Off-Chain Fallback
+
 - Full implementation
 - Service API
 - Attestor
@@ -784,7 +793,7 @@ pub fn verify_opening(
 ) -> bool {
     // Pairing check
     // e(C - v·G1, G2) = e(π, τ·G2 - z·G2)
-    
+
     // TODO: Implement using ark-ec pairing
     todo!()
 }
@@ -796,7 +805,7 @@ pub fn verify_opening(
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_kzg_opening() {
         // Generate test polynomial
@@ -823,15 +832,15 @@ pub struct PlonkProof {
     pub a_comm: Commitment,
     pub b_comm: Commitment,
     pub c_comm: Commitment,
-    
+
     // Permutation commitments
     pub z_comm: Commitment,
-    
+
     // Quotient polynomial
     pub t_lo_comm: Commitment,
     pub t_mid_comm: Commitment,
     pub t_hi_comm: Commitment,
-    
+
     // Openings
     pub a_eval: Fr,
     pub b_eval: Fr,
@@ -839,7 +848,7 @@ pub struct PlonkProof {
     pub s1_eval: Fr,
     pub s2_eval: Fr,
     pub z_shifted_eval: Fr,
-    
+
     // Opening proofs
     pub opening_proof: OpeningProof,
     pub shifted_proof: OpeningProof,
@@ -852,12 +861,12 @@ pub struct VerificationKey {
     pub q_o: Commitment,
     pub q_m: Commitment,
     pub q_c: Commitment,
-    
+
     // Permutation commitments
     pub s1: Commitment,
     pub s2: Commitment,
     pub s3: Commitment,
-    
+
     // Domain
     pub domain_size: usize,
 }
@@ -873,20 +882,20 @@ pub fn verify(
     let gamma = transcript.challenge(b"gamma");
     let alpha = transcript.challenge(b"alpha");
     let zeta = transcript.challenge(b"zeta");
-    
+
     // 2. Verify gate constraints
     // Q_L·a + Q_R·b + Q_O·c + Q_M·ab + Q_C + PI = 0
-    
+
     // 3. Verify permutation
     // Check z(ωζ)(a + βζ + γ)... = z(ζ)(a + β·s₁ + γ)...
-    
+
     // 4. Verify quotient polynomial
     // t(ζ) = (gate + perm) / Z_H(ζ)
-    
+
     // 5. Verify KZG openings
     verify_opening(&proof.a_comm, &proof.opening_proof, &zeta, &vk.srs_g2)?;
     // ... other openings
-    
+
     Ok(true)
 }
 
@@ -899,12 +908,12 @@ impl Transcript {
     fn new() -> Self {
         Self { state: Vec::new() }
     }
-    
+
     fn append(&mut self, label: &[u8], data: &[u8]) {
         self.state.extend_from_slice(label);
         self.state.extend_from_slice(data);
     }
-    
+
     fn challenge(&mut self, label: &[u8]) -> Fr {
         self.append(label, &[]);
         // Hash state to get challenge
@@ -915,12 +924,12 @@ impl Transcript {
 
 fn create_transcript(proof: &PlonkProof, inputs: &[Fr]) -> Transcript {
     let mut transcript = Transcript::new();
-    
+
     // Append all proof elements in order
     transcript.append(b"a_comm", &serialize(&proof.a_comm));
     transcript.append(b"b_comm", &serialize(&proof.b_comm));
     // ... etc
-    
+
     transcript
 }
 ```
@@ -962,6 +971,7 @@ wc -c target/wasm32-unknown-unknown/release/*.wasm
 ```
 
 **Gate Decision**:
+
 - If < 24KB: Deploy on-chain ✅
 - If > 24KB: Continue to off-chain service ⚠️
 
@@ -992,6 +1002,7 @@ mkdir -p packages/plonk-prover
 ```
 
 **Options**:
+
 1. Use snarkjs PLONK
 2. Use arkworks plonk crate
 3. Custom implementation
@@ -1024,14 +1035,14 @@ impl Circuit<Fr> for SimpleCircuit {
         let a_var = cs.alloc_input(self.a)?;
         let b_var = cs.alloc(self.b)?;
         let c_var = cs.alloc(self.c)?;
-        
+
         // Constraint: a * b = c
         cs.enforce_constraint(
             lc!() + a_var,
             lc!() + b_var,
             lc!() + c_var,
         )?;
-        
+
         Ok(())
     }
 }
@@ -1046,7 +1057,7 @@ fn main() {
     let circuit = load_circuit();
     let srs = load_srs();
     let proof = generate_proof(circuit, &srs)?;
-    
+
     // Save to JSON
     serde_json::to_writer(File::create("proof.json")?, &proof)?;
 }
@@ -1096,6 +1107,7 @@ console.log(`Min: ${Math.min(...results)}, Max: ${Math.max(...results)}`);
 ```
 
 **Deliverables**:
+
 - ✅ PLONK verifier implemented
 - ✅ 500+ test proofs generated
 - ✅ All tests passing
@@ -1111,14 +1123,16 @@ console.log(`Min: ${Math.min(...results)}, Max: ${Math.max(...results)}`);
 **Status**: ❌ 5% complete - Basic structure only
 
 **What Exists**:
+
 - ⚠️ Scaffolded modules in `packages/stylus/src/stark/`:
   - `fibonacci.rs` - Example Fibonacci circuit (3 tests)
   - `verifier.rs` - STARK verifier stub (5 tests)
   - `types.rs` - Type definitions (basic)
-- ⚠️ Wrapper in `stark_wrapper.rs` (returns false)  
+- ⚠️ Wrapper in `stark_wrapper.rs` (returns false)
 - ⚠️ Commented out in `lib.rs` with TODO
 
 **What's Needed**:
+
 - [ ] Complete FRI (Fast Reed-Solomon IOP) implementation
 - [ ] AIR (Algebraic Intermediate Representation) framework
 - [ ] STARK prover implementation
@@ -1131,6 +1145,7 @@ console.log(`Min: ${Math.min(...results)}, Max: ${Math.max(...results)}`);
 **Reality**: STARK proofs are large (FRI requires many rounds). Expect off-chain implementation.
 
 **Approach**:
+
 1. Implement full STARK verifier in Rust (no_std)
 2. Compile to WASM for off-chain service
 3. Optionally: Micro-verifier on Stylus (merkle root checks only)
@@ -1169,7 +1184,7 @@ pub fn verify_fri<F: Field>(
     // 1. Verify commitment chain
     // 2. Verify query paths
     // 3. Check final polynomial degree
-    
+
     todo!()
 }
 
@@ -1182,7 +1197,7 @@ fn verify_merkle_path(
 ) -> bool {
     let mut current = keccak256(leaf);
     let mut idx = index;
-    
+
     for sibling in path {
         current = if idx % 2 == 0 {
             keccak256(&[&current, sibling].concat())
@@ -1191,7 +1206,7 @@ fn verify_merkle_path(
         };
         idx /= 2;
     }
-    
+
     current == *root
 }
 ```
@@ -1209,13 +1224,13 @@ use ark_ff::Field;
 pub trait Air<F: Field> {
     /// Number of columns in trace
     fn num_columns(&self) -> usize;
-    
+
     /// Transition constraints (relate current row to next)
     fn transition_constraints(&self, current: &[F], next: &[F]) -> Vec<F>;
-    
+
     /// Boundary constraints (fix values at specific rows)
     fn boundary_constraints(&self, row: usize, values: &[F]) -> Vec<F>;
-    
+
     /// Degree of constraints
     fn constraint_degree(&self) -> usize;
 }
@@ -1229,7 +1244,7 @@ impl Air<Fr> for FibonacciAir {
     fn num_columns(&self) -> usize {
         2 // Two columns: fib[i], fib[i+1]
     }
-    
+
     fn transition_constraints(&self, current: &[Fr], next: &[Fr]) -> Vec<Fr> {
         // next[0] = current[1]
         // next[1] = current[0] + current[1]
@@ -1238,7 +1253,7 @@ impl Air<Fr> for FibonacciAir {
             next[1] - (current[0] + current[1]),
         ]
     }
-    
+
     fn boundary_constraints(&self, row: usize, values: &[Fr]) -> Vec<Fr> {
         if row == 0 {
             // fib[0] = 1, fib[1] = 1
@@ -1247,7 +1262,7 @@ impl Air<Fr> for FibonacciAir {
             vec![]
         }
     }
-    
+
     fn constraint_degree(&self) -> usize {
         1 // Linear constraints
     }
@@ -1280,20 +1295,20 @@ impl StarkProver {
     ) -> Result<StarkProof<F>, Error> {
         // 1. Commit to trace
         let trace_commitment = commit_to_trace(trace);
-        
+
         // 2. Build constraint polynomial
         let constraints = evaluate_constraints(air, trace);
-        
+
         // 3. Compose and commit
         let composition = compose_constraints(&constraints);
         let composition_commitment = commit(&composition);
-        
+
         // 4. Run FRI on composition
         let fri_proof = FriProver::prove(&composition)?;
-        
+
         // 5. Generate query proofs
         let trace_queries = generate_queries(trace, &challenges)?;
-        
+
         Ok(StarkProof {
             trace_commitment,
             composition_commitment,
@@ -1308,14 +1323,14 @@ fn evaluate_constraints<F: Field, A: Air<F>>(
     trace: &[Vec<F>],
 ) -> Vec<Vec<F>> {
     let mut constraints = Vec::new();
-    
+
     for i in 0..trace.len() - 1 {
         let current = &trace[i];
         let next = &trace[i + 1];
         let constraint_values = air.transition_constraints(current, next);
         constraints.push(constraint_values);
     }
-    
+
     constraints
 }
 ```
@@ -1336,20 +1351,20 @@ pub fn verify_stark<F: Field, A: Air<F>>(
     if !verify_fri(&proof.fri_proof, &proof.composition_commitment, air.constraint_degree())? {
         return Ok(false);
     }
-    
+
     // 2. Verify trace queries
     for query in &proof.trace_queries {
         if !verify_trace_query(query, &proof.trace_commitment)? {
             return Ok(false);
         }
     }
-    
+
     // 3. Verify boundary constraints
     // TODO: Check public inputs match trace
-    
+
     // 4. Verify constraint composition
     // TODO: Recompute composition and check against commitment
-    
+
     Ok(true)
 }
 ```
@@ -1394,12 +1409,13 @@ impl Air<Fr> for HashChainAir {
         let expected = self.hash_fn.hash(current);
         vec![next[0] - expected]
     }
-    
+
     // ...
 }
 ```
 
 **Deliverables**:
+
 - ✅ FRI implementation complete
 - ✅ AIR framework working
 - ✅ STARK prover generating proofs
@@ -1416,6 +1432,7 @@ impl Air<Fr> for HashChainAir {
 **Status**: ⚠️ 40% complete - Universal router exists, SDK empty, CLI not created
 
 **What Exists**:
+
 - ✅ Universal router in `lib.rs`: `verify()` function with proof type routing
 - ✅ ProofType enum: Groth16 (0), PLONK (1), STARK (2)
 - ✅ `verify_universal()` function with type detection
@@ -1423,6 +1440,7 @@ impl Air<Fr> for HashChainAir {
 - ✅ `batch_verify()` with multi-proof support
 
 **What's Missing**:
+
 - ❌ TypeScript SDK (`packages/sdk/` is empty)
 - ❌ CLI tool
 - ❌ Integration examples
@@ -1455,12 +1473,12 @@ impl UZKVContract {
             _ => Err(Error::InvalidProofType),
         }
     }
-    
+
     fn verify_groth16(&mut self, proof: Vec<u8>, inputs: Vec<u8>, vk: Vec<u8>) -> Result<bool> {
         // Call groth16::verify
         groth16::verify(&proof, &inputs, &vk)
     }
-    
+
     fn verify_plonk(&mut self, proof: Vec<u8>, inputs: Vec<u8>, vk: Vec<u8>) -> Result<bool> {
         // Call plonk::verify if on-chain
         // Otherwise return error (use service)
@@ -1483,7 +1501,7 @@ impl UZKVContract {
 ```typescript
 // packages/sdk/src/index.ts
 
-export type ProofType = 'groth16' | 'plonk' | 'stark';
+export type ProofType = "groth16" | "plonk" | "stark";
 
 export interface UniversalProofData {
   type: ProofType;
@@ -1496,39 +1514,39 @@ export class UniversalVerifier {
   private groth16Service: string;
   private plonkService: string;
   private starkService: string;
-  
+
   constructor(config: {
     groth16Url?: string;
     plonkUrl?: string;
     starkUrl?: string;
   }) {
-    this.groth16Service = config.groth16Url || 'http://localhost:3001';
-    this.plonkService = config.plonkUrl || 'http://localhost:3002';
-    this.starkService = config.starkUrl || 'http://localhost:3003';
+    this.groth16Service = config.groth16Url || "http://localhost:3001";
+    this.plonkService = config.plonkUrl || "http://localhost:3002";
+    this.starkService = config.starkUrl || "http://localhost:3003";
   }
-  
+
   async verify(proofData: UniversalProofData): Promise<VerificationResult> {
     switch (proofData.type) {
-      case 'groth16':
+      case "groth16":
         return this.verifyGroth16(proofData);
-      case 'plonk':
+      case "plonk":
         return this.verifyPlonk(proofData);
-      case 'stark':
+      case "stark":
         return this.verifyStark(proofData);
       default:
         throw new Error(`Unknown proof type: ${proofData.type}`);
     }
   }
-  
+
   private async verifyGroth16(data: UniversalProofData) {
     const response = await fetch(`${this.groth16Service}/api/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     return response.json();
   }
-  
+
   // Similar for PLONK and STARK...
 }
 ```
@@ -1538,37 +1556,34 @@ export class UniversalVerifier {
 ```typescript
 // packages/cli/src/index.ts
 
-import { Command } from 'commander';
-import { UniversalVerifier } from '@uzkv/sdk';
+import { Command } from "commander";
+import { UniversalVerifier } from "@uzkv/sdk";
 
 const program = new Command();
 
-program
-  .name('uzkv')
-  .description('Universal ZK Verifier CLI')
-  .version('1.0.0');
+program.name("uzkv").description("Universal ZK Verifier CLI").version("1.0.0");
 
 program
-  .command('verify')
-  .description('Verify a ZK proof')
-  .requiredOption('-t, --type <type>', 'Proof type (groth16|plonk|stark)')
-  .requiredOption('-p, --proof <file>', 'Path to proof JSON file')
-  .option('-v, --vk <file>', 'Path to verification key')
+  .command("verify")
+  .description("Verify a ZK proof")
+  .requiredOption("-t, --type <type>", "Proof type (groth16|plonk|stark)")
+  .requiredOption("-p, --proof <file>", "Path to proof JSON file")
+  .option("-v, --vk <file>", "Path to verification key")
   .action(async (options) => {
-    const proofData = JSON.parse(fs.readFileSync(options.proof, 'utf8'));
-    
+    const proofData = JSON.parse(fs.readFileSync(options.proof, "utf8"));
+
     const verifier = new UniversalVerifier({
       groth16Url: process.env.GROTH16_URL,
       plonkUrl: process.env.PLONK_URL,
       starkUrl: process.env.STARK_URL,
     });
-    
+
     const result = await verifier.verify({
       type: options.type,
-      ...proofData
+      ...proofData,
     });
-    
-    console.log('Verification result:', result);
+
+    console.log("Verification result:", result);
   });
 
 program.parse();
@@ -1587,6 +1602,7 @@ uzkv verify --type stark --proof stark_proof.json
 ```
 
 **Deliverables**:
+
 - ✅ Universal router contract
 - ✅ TypeScript SDK (all proof types)
 - ✅ CLI tool
@@ -1601,9 +1617,11 @@ uzkv verify --type stark --proof stark_proof.json
 **Status**: ❌ 0% complete - Empty Next.js folder
 
 **What Exists**:
+
 - ⚠️ `apps/web/` directory structure exists (empty)
 
 **What's Needed**:
+
 - [ ] Next.js 14 app setup
 - [ ] Proof upload UI
 - [ ] Verification result display
@@ -1624,6 +1642,7 @@ pnpm add zustand react-dropzone recharts
 ### Task 5.2: Core Features
 
 **Pages**:
+
 1. `/` - Landing page
 2. `/verify` - Proof upload and verification
 3. `/status` - Attestation status checker
@@ -1645,13 +1664,13 @@ export default function VerifyPage() {
   const [proofType, setProofType] = useState<'groth16' | 'plonk' | 'stark'>('groth16');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'application/json': ['.json'] },
     onDrop: async (files) => {
       const file = files[0];
       const proofData = JSON.parse(await file.text());
-      
+
       setLoading(true);
       const verifier = new UniversalVerifier();
       const result = await verifier.verify({
@@ -1662,16 +1681,16 @@ export default function VerifyPage() {
       setLoading(false);
     }
   });
-  
+
   return (
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="text-4xl font-bold mb-8">Verify ZK Proof</h1>
-      
+
       {/* Proof type selector */}
       <div className="mb-6">
         <label className="block mb-2">Proof Type</label>
-        <select 
-          value={proofType} 
+        <select
+          value={proofType}
           onChange={(e) => setProofType(e.target.value as any)}
           className="w-full p-2 border rounded"
         >
@@ -1680,16 +1699,16 @@ export default function VerifyPage() {
           <option value="stark">STARK</option>
         </select>
       </div>
-      
+
       {/* Dropzone */}
-      <div 
-        {...getRootProps()} 
+      <div
+        {...getRootProps()}
         className="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer hover:bg-gray-50"
       >
         <input {...getInputProps()} />
         <p>Drop proof JSON file here, or click to select</p>
       </div>
-      
+
       {/* Results */}
       {loading && <div className="mt-4">Verifying...</div>}
       {result && (
@@ -1732,6 +1751,7 @@ export function BenchmarkChart() {
 ```
 
 **Deliverables**:
+
 - ✅ Demo UI deployed to Vercel
 - ✅ All proof types supported
 - ✅ Real-time verification
@@ -1747,13 +1767,15 @@ export function BenchmarkChart() {
 **Status**: ⚠️ 30% complete - Unit tests exist, CI/fuzzing not set up
 
 **What Exists**:
+
 - ✅ Groth16 unit tests: 6+ tests in `groth16.rs`
-- ✅ Storage tests: 3+ tests in `storage.rs`  
+- ✅ Storage tests: 3+ tests in `storage.rs`
 - ✅ STARK tests: 8+ tests in `stark/fibonacci.rs` and `stark/verifier.rs`
 - ✅ Proof corpus: 30,000+ valid, 1,700+ invalid proofs
 - ✅ Docker build environment
 
 **What's Missing**:
+
 - ❌ GitHub Actions CI/CD workflows
 - ❌ Integration test suite
 - ❌ E2E tests
@@ -1768,34 +1790,34 @@ export function BenchmarkChart() {
 ```typescript
 // tests/integration/universal.test.ts
 
-describe('Universal Verifier Integration', () => {
-  describe('Groth16', () => {
-    it('verifies valid proofs', async () => {
+describe("Universal Verifier Integration", () => {
+  describe("Groth16", () => {
+    it("verifies valid proofs", async () => {
       for (const proof of groth16Proofs) {
-        const result = await verifier.verify({ type: 'groth16', ...proof });
+        const result = await verifier.verify({ type: "groth16", ...proof });
         expect(result.isValid).toBe(true);
       }
     });
-    
-    it('rejects invalid proofs', async () => {
+
+    it("rejects invalid proofs", async () => {
       // Test with tampered proofs
     });
-    
-    it('handles malformed inputs', async () => {
+
+    it("handles malformed inputs", async () => {
       // Test error cases
     });
   });
-  
-  describe('PLONK', () => {
+
+  describe("PLONK", () => {
     // Similar tests...
   });
-  
-  describe('STARK', () => {
+
+  describe("STARK", () => {
     // Similar tests...
   });
-  
-  describe('Cross-proof validation', () => {
-    it('correctly identifies proof types', async () => {
+
+  describe("Cross-proof validation", () => {
+    it("correctly identifies proof types", async () => {
       // Test auto-detection
     });
   });
@@ -1803,6 +1825,7 @@ describe('Universal Verifier Integration', () => {
 ```
 
 **Test coverage targets**:
+
 - Unit tests: >80%
 - Integration tests: >90%
 - E2E tests: Critical paths
@@ -1827,27 +1850,27 @@ jobs:
         with:
           toolchain: 1.75
           target: wasm32-unknown-unknown
-      
+
       - name: Run tests
         run: |
           cd packages/stylus
           cargo test --all-features
-      
+
       - name: Build WASM
         run: |
           cargo build --release --target wasm32-unknown-unknown
-      
+
       - name: Measure size
         run: |
           ls -lh target/wasm32-unknown-unknown/release/*.wasm
           wc -c target/wasm32-unknown-unknown/release/*.wasm
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: wasm-binary
           path: target/wasm32-unknown-unknown/release/*.wasm
-  
+
   test-typescript:
     runs-on: ubuntu-latest
     steps:
@@ -1856,12 +1879,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'pnpm'
-      
+          cache: "pnpm"
+
       - run: pnpm install
       - run: pnpm test
       - run: pnpm build
-  
+
   benchmark:
     runs-on: ubuntu-latest
     needs: [test-rust, test-typescript]
@@ -1869,11 +1892,11 @@ jobs:
       - name: Run gas benchmarks
         run: |
           pnpm benchmark:gas
-      
+
       - name: Generate report
         run: |
           pnpm benchmark:report
-      
+
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:
@@ -1917,10 +1940,10 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 100 {
         return;
     }
-    
+
     let proof = &data[0..80];
     let inputs = &data[80..];
-    
+
     // Should not panic
     let _ = groth16::verify(proof, inputs, &VK);
 });
@@ -1931,6 +1954,7 @@ cargo fuzz run groth16_verify -- -max_total_time=3600
 ```
 
 **Deliverables**:
+
 - ✅ 200+ tests passing
 - ✅ CI running on every PR
 - ✅ Fuzzing harness
@@ -1945,6 +1969,7 @@ cargo fuzz run groth16_verify -- -max_total_time=3600
 **Status**: ⚠️ 60% complete - Extensive docs exist, launch not complete
 
 **What Exists**:
+
 - ✅ Comprehensive documentation:
   - `BRUTAL-ASSESSMENT.md` - Honest status evaluation
   - `ATTESTOR-DEPLOYMENT.md` - Deployment guide with actual addresses
@@ -1958,6 +1983,7 @@ cargo fuzz run groth16_verify -- -max_total_time=3600
 - ✅ Security considerations
 
 **What's Missing**:
+
 - ❌ Video demos
 - ❌ Launch announcement
 - ❌ Performance report with actual benchmarks
@@ -1973,6 +1999,7 @@ mkdir -p docs
 ```
 
 **Files**:
+
 1. `README.md` - Overview and quick start
 2. `ARCHITECTURE.md` - System design
 3. `API.md` - API reference
@@ -1990,16 +2017,19 @@ Production-grade zero-knowledge proof verification on Arbitrum.
 ## Features
 
 ✅ **Multi-Proof Support**
+
 - Groth16 (trusted setup, ~60k gas)
 - PLONK (universal setup, ~120k gas)
 - STARK (transparent, FRI-based)
 
 ✅ **Optimized**
+
 - Gas-efficient verification
 - Batch verification support
 - Precomputed pairings
 
 ✅ **Production-Ready**
+
 - 200+ tests
 - CI/CD pipeline
 - Comprehensive docs
@@ -2008,18 +2038,21 @@ Production-grade zero-knowledge proof verification on Arbitrum.
 ## Quick Start
 
 \`\`\`bash
+
 # Install SDK
+
 pnpm add @uzkv/sdk viem
 
 # Verify a proof
+
 import { UniversalVerifier } from '@uzkv/sdk';
 
 const verifier = new UniversalVerifier();
 const result = await verifier.verify({
-  type: 'groth16',
-  proof: '0x...',
-  publicInputs: '0x...',
-  vk: '0x...'
+type: 'groth16',
+proof: '0x...',
+publicInputs: '0x...',
+vk: '0x...'
 });
 
 console.log('Valid:', result.isValid);
@@ -2031,11 +2064,11 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Benchmarks
 
-| Proof System | Gas Cost | Proof Size | Setup |
-|--------------|----------|------------|-------|
-| Groth16 | ~60k | 128 bytes | Trusted |
-| PLONK | ~120k | 512 bytes | Universal |
-| STARK | ~$0.10 | ~50 KB | Transparent |
+| Proof System | Gas Cost | Proof Size | Setup       |
+| ------------ | -------- | ---------- | ----------- |
+| Groth16      | ~60k     | 128 bytes  | Trusted     |
+| PLONK        | ~120k    | 512 bytes  | Universal   |
+| STARK        | ~$0.10   | ~50 KB     | Transparent |
 
 ## License
 
@@ -2045,6 +2078,7 @@ MIT
 ### Task 7.2: Video Demos
 
 **Record demos**:
+
 1. Quick start (2 min)
 2. All proof types (5 min)
 3. SDK usage (3 min)
@@ -2073,6 +2107,7 @@ Date: April 12, 2026
 ## Summary
 
 Successfully implemented universal ZK verifier supporting:
+
 - Groth16 (on-chain)
 - PLONK (hybrid)
 - STARK (off-chain)
@@ -2080,16 +2115,19 @@ Successfully implemented universal ZK verifier supporting:
 ## Gas Costs
 
 ### Groth16
+
 - Single verification: 58,342 gas (~$0.05)
 - Batch (10 proofs): 385,120 gas (~$0.30) - 34% savings
 - VK registration: 102,453 gas (one-time)
 
 ### PLONK
+
 - Single verification: 118,927 gas (~$0.10)
 - Universal setup: No circuit-specific cost
 - Proof generation: ~5s
 
 ### STARK
+
 - Attestation: 41,283 gas (~$0.10)
 - Off-chain verification: ~200ms
 - FRI proof size: ~48KB
@@ -2109,6 +2147,7 @@ Successfully implemented universal ZK verifier supporting:
 ```
 
 **Deliverables**:
+
 - ✅ Complete documentation
 - ✅ Video demos
 - ✅ Performance report
@@ -2121,24 +2160,28 @@ Successfully implemented universal ZK verifier supporting:
 ### Critical Risks
 
 **Risk 1: WASM Size Exceeds Limits**
+
 - Probability: HIGH (already 143KB)
 - Impact: HIGH (blocks on-chain deployment)
 - Mitigation: Attestor pattern (already deployed)
 - Contingency: All proof types via off-chain services
 
 **Risk 2: PLONK/STARK Complexity**
+
 - Probability: MEDIUM
 - Impact: HIGH (timeline slip)
 - Mitigation: Start with minimal implementations
 - Contingency: Ship Groth16-only v1, PLONK/STARK in v2
 
 **Risk 3: Gas Costs Higher Than Expected**
+
 - Probability: MEDIUM
 - Impact: MEDIUM
 - Mitigation: Benchmark early, optimize iteratively
 - Contingency: Document actual costs, adjust claims
 
 **Risk 4: Integration Bugs**
+
 - Probability: MEDIUM
 - Impact: MEDIUM
 - Mitigation: Comprehensive testing, fuzzing
@@ -2147,11 +2190,13 @@ Successfully implemented universal ZK verifier supporting:
 ### Fallback Strategies
 
 **If Timeline Slips**:
+
 - **20% slip**: Cut STARK, ship Groth16+PLONK only
 - **40% slip**: Ship Groth16-only v1 (already working)
 - **>50% slip**: Reassess scope
 
 **If Size Gates Fail**:
+
 - All proof systems use attestor pattern
 - Still production-grade, just different architecture
 - Update marketing to "Hybrid Universal Verifier"
@@ -2166,6 +2211,7 @@ Successfully implemented universal ZK verifier supporting:
 **Optimal**: 2 developers (12-14 weeks parallel work)
 
 **Skills needed**:
+
 - Rust (cryptography, no_std)
 - TypeScript/Node.js
 - Zero-knowledge proof systems
@@ -2174,11 +2220,13 @@ Successfully implemented universal ZK verifier supporting:
 ### Infrastructure
 
 **Development**:
+
 - GitHub account (free)
 - Vercel (free tier)
 - Railway/Render for services (free tier)
 
 **Deployment**:
+
 - Arbitrum Sepolia RPC (free)
 - Gas fees: ~$200-300 total
 - Domain (optional): ~$10/year
@@ -2219,6 +2267,7 @@ Successfully implemented universal ZK verifier supporting:
 **Week 1 Actions** (Start Now):
 
 1. **Baseline Build** (Day 1):
+
    ```bash
    cd packages/stylus
    docker build -t uzkv-builder .
@@ -2226,6 +2275,7 @@ Successfully implemented universal ZK verifier supporting:
    ```
 
 2. **Size Analysis** (Day 1):
+
    ```bash
    # Strip PLONK/STARK, measure Groth16-only
    cargo build --release --target wasm32-unknown-unknown --no-default-features
@@ -2237,6 +2287,7 @@ Successfully implemented universal ZK verifier supporting:
    - Plan PLONK/STARK paths
 
 4. **Test Validation** (Day 3-4):
+
    ```bash
    cargo test --all
    cargo test --test integration
@@ -2254,30 +2305,36 @@ Successfully implemented universal ZK verifier supporting:
 ### A. Technology Stack
 
 **Smart Contracts**:
+
 - Arbitrum Stylus (Rust → WASM)
 - Solidity (minimal, for attestor)
 
 **Cryptography**:
+
 - arkworks (BN254, pairing)
 - Custom FRI implementation
 - KZG commitments
 
 **Services**:
+
 - Node.js + Express
 - TypeScript
 - Docker
 
 **Frontend**:
+
 - Next.js 14
 - Tailwind CSS
 - viem/wagmi
 
 **Testing**:
+
 - Cargo test
 - Vitest
 - cargo-fuzz
 
 **CI/CD**:
+
 - GitHub Actions
 - Docker
 - Vercel

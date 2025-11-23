@@ -9,6 +9,7 @@
 ## 📊 Executive Summary
 
 ### What We Have ✅
+
 - ✅ **Groth16 Verifier Core** (5,118 lines Rust) - WORKS
 - ✅ **Attestor Contract** (140 lines) - DEPLOYED on Arbitrum Sepolia
 - ✅ **30,000+ Test Proofs** - Generated and catalogued
@@ -16,6 +17,7 @@
 - ✅ **Monorepo Structure** - Proper tooling setup
 
 ### What's MISSING ❌
+
 - ❌ **NO SDK** - Empty folder, zero integration code
 - ❌ **NO Frontend** - Empty web app folder
 - ❌ **NO Integration Tests** - No Solidity tests, no E2E tests
@@ -27,6 +29,7 @@
 - ❌ **NO Security Audit** - Zero formal verification
 
 ### Critical Issues 🚨
+
 1. **SIZE PROBLEM**: Main verifier is **143KB** (6x over Arbitrum's 24KB limit)
 2. **ONLY PATH FORWARD**: Attestor pattern (already deployed)
 3. **GAP BETWEEN CLAIMS AND REALITY**: README says "production-ready" but it's NOT
@@ -41,6 +44,7 @@
 **Claimed**: "Groth16, PLONK, STARK verifiers in one contract"
 
 **Reality**:
+
 - ✅ Groth16: Fully implemented (600+ lines)
 - ❌ PLONK: Stubbed out, commented, NOT WORKING
   ```rust
@@ -50,6 +54,7 @@
 - ❌ STARK: Stubbed out, commented, NOT WORKING
 
 **What's Needed**:
+
 - [ ] Implement PLONK verifier (~2 weeks)
 - [ ] Implement STARK verifier (~2 weeks)
 - [ ] Make dependencies no_std compatible
@@ -65,6 +70,7 @@
 **Claimed**: "Gas-optimized batch processing (30-50% savings for 10+ proofs)"
 
 **Reality**:
+
 - ✅ Code exists in `groth16.rs`:
   ```rust
   pub fn batch_verify(
@@ -80,6 +86,7 @@
 - ❌ Size problem means can't deploy to test it
 
 **What's Needed**:
+
 - [ ] Create integration tests with 10+ proofs
 - [ ] Run gas benchmarks on testnet
 - [ ] Prove the 30-50% savings claim
@@ -95,6 +102,7 @@
 **Claimed**: "Pre-register VKs for reuse across calls"
 
 **Reality**:
+
 - ✅ Storage implementation exists:
   ```rust
   sol_storage! {
@@ -110,6 +118,7 @@
 - ❌ UNTESTED on-chain
 
 **What's Needed**:
+
 - [ ] Add access controls (owner-only registration)
 - [ ] Implement VK validation before storage
 - [ ] Test with multiple VKs
@@ -125,6 +134,7 @@
 **Claimed**: "npm package for easy integration"
 
 **Reality**:
+
 ```bash
 $ ls packages/sdk/
 # Empty folder
@@ -133,6 +143,7 @@ $ ls packages/sdk/
 **NOTHING EXISTS**. Zero code. Zero tests. Zero documentation.
 
 **What's Needed**:
+
 - [ ] Create TypeScript package structure
 - [ ] Implement proof encoding/decoding
 - [ ] Contract interaction helpers
@@ -152,6 +163,7 @@ $ ls packages/sdk/
 **Claimed**: "Live proof generation and verification UI"
 
 **Reality**:
+
 ```bash
 $ ls apps/web/
 # Empty folder
@@ -160,6 +172,7 @@ $ ls apps/web/
 **NOTHING EXISTS**. Not even a `package.json`.
 
 **What's Needed**:
+
 - [ ] Next.js 14 project setup
 - [ ] Proof upload interface
 - [ ] Wallet connection (wagmi/viem)
@@ -179,6 +192,7 @@ $ ls apps/web/
 **Claimed**: "Automated comparison vs Solidity baselines"
 
 **Reality**:
+
 - ✅ Some unit tests exist (6 tests in groth16.rs)
 - ❌ NO actual gas measurements
 - ❌ NO comparison with Solidity
@@ -186,6 +200,7 @@ $ ls apps/web/
 - ❌ Claims like "78% cheaper" are UNVERIFIED
 
 **What We CLAIM**:
+
 ```markdown
 | Gas (Groth16 verify) | ~280k | ~61k | **78% reduction** |
 ```
@@ -193,6 +208,7 @@ $ ls apps/web/
 **What We CAN'T PROVE**: We have never measured on-chain gas costs.
 
 **What's Needed**:
+
 - [ ] Deploy Solidity baseline verifier
 - [ ] Deploy Stylus verifier (currently impossible due to size)
 - [ ] Run identical proofs on both
@@ -210,12 +226,14 @@ $ ls apps/web/
 **Claimed**: "Certora specs for critical invariants"
 
 **Reality**:
+
 - ❌ NO Certora specs
 - ❌ NO formal verification setup
 - ❌ NO mathematical proofs
 - ❌ NO symbolic execution
 
 **What's Needed**:
+
 - [ ] Write Certora specs for storage safety
 - [ ] Verify pairing operations mathematically
 - [ ] Prove nullifier uniqueness
@@ -231,12 +249,14 @@ $ ls apps/web/
 **Claimed**: "1M+ test vectors against reference implementations"
 
 **Reality**:
+
 - ✅ We have 30,000+ test proofs
 - ❌ We have NEVER run differential fuzzing
 - ❌ NO fuzzing harness exists
 - ❌ NO comparison against snarkjs/arkworks
 
 **What's Needed**:
+
 - [ ] Setup fuzzing infrastructure (cargo-fuzz)
 - [ ] Compare against snarkjs (reference JS implementation)
 - [ ] Compare against arkworks (reference Rust)
@@ -253,6 +273,7 @@ $ ls apps/web/
 **Claimed**: "Automated testing, building, and deployment"
 
 **Reality**:
+
 - ✅ Basic GitHub Actions likely exists (repo structure suggests it)
 - ❌ NO automated deployment
 - ❌ NO gas benchmarking in CI
@@ -260,6 +281,7 @@ $ ls apps/web/
 - ❌ NO contract verification automation
 
 **What's Needed**:
+
 - [ ] Add comprehensive test suite to CI
 - [ ] Automated WASM builds
 - [ ] Gas benchmark tracking over time
@@ -276,11 +298,13 @@ $ ls apps/web/
 **Claimed**: "Docker-based verification of on-chain bytecode"
 
 **Reality**:
+
 - ❌ NO Docker setup
 - ❌ NO build verification scripts
 - ❌ Cannot verify deployed bytecode matches source
 
 **What's Needed**:
+
 - [ ] Create Dockerfile for deterministic builds
 - [ ] Document build process
 - [ ] Create bytecode verification script
@@ -295,28 +319,33 @@ $ ls apps/web/
 ### 1. **The Size Problem** 🔴 SHOW STOPPER
 
 **Facts**:
+
 - Full verifier WASM: **143KB**
 - Arbitrum contract limit: **24KB**
 - **Ratio: 6x TOO LARGE**
 
 **Why It Happened**:
+
 - arkworks dependencies pull in massive crypto libraries
 - BN254 pairing operations require extensive code
 - no_std doesn't mean small, just means no OS dependencies
 
 **Attempted Solutions**:
+
 - ❌ Tried optimization flags: `opt-level = "z"`, `lto = "fat"` → still 143KB
 - ❌ Stripped symbols → minimal reduction
 - ❌ Tried newer Stylus SDK versions → API incompatibilities
 
 **ONLY Working Solution**:
 ✅ **Attestor Pattern** (already deployed):
+
 - 7.2KB attestor contract (ON-CHAIN) ← DEPLOYED
 - 143KB verifier runs OFF-CHAIN
 - Cost: ~$0.10 per proof attestation
 - Trade-off: Requires trusted signer
 
 **This fundamentally changes the architecture**:
+
 - ❌ Cannot be "fully on-chain"
 - ✅ Hybrid model works but needs off-chain service
 - ⚠️ Adds operational complexity
@@ -327,6 +356,7 @@ $ ls apps/web/
 ### 2. **Testing Gap** 🔴 CRITICAL
 
 **What We DON'T Have**:
+
 ```bash
 $ find packages/contracts/test -name "*.sol"
 # 0 files
@@ -335,6 +365,7 @@ $ find packages/contracts/test -name "*.sol"
 **Zero Solidity integration tests**. This is UNACCEPTABLE for production.
 
 **What's Missing**:
+
 - ❌ No test deployment scripts
 - ❌ No proof verification tests
 - ❌ No gas measurement tests
@@ -342,12 +373,14 @@ $ find packages/contracts/test -name "*.sol"
 - ❌ No attack vector testing
 
 **Why This Matters**:
+
 - Can't verify contract behavior
 - Can't catch regressions
 - Can't prove security claims
 - Can't benchmark gas costs
 
 **Minimum Viable Testing**:
+
 - [ ] 50+ Foundry tests covering:
   - Valid proof verification
   - Invalid proof rejection
@@ -365,16 +398,19 @@ $ find packages/contracts/test -name "*.sol"
 ### 3. **No User-Facing Components** 🟡 HIGH PRIORITY
 
 **Reality Check**:
+
 - Contract exists: ✅
 - Can users interact with it: ❌
 
 **Missing Components**:
+
 1. **SDK** (0% complete) → Can't build apps
 2. **Frontend** (0% complete) → Can't demo to users
 3. **Documentation** (50% complete) → Hard to use
 4. **Deployment scripts** (20% complete) → Manual process
 
 **Impact**:
+
 - Cannot ship to users
 - Cannot gather feedback
 - Cannot prove value proposition
@@ -386,17 +422,17 @@ $ find packages/contracts/test -name "*.sol"
 
 ## 📈 Actual vs Claimed Progress
 
-| Feature | README Claims | Reality | Gap |
-|---------|---------------|---------|-----|
-| Multi-Proof Support | ✅ Complete | ❌ 10% (Groth16 only) | **90% gap** |
-| Batch Verification | ✅ Complete | ⚠️ 40% (code exists, untested) | **60% gap** |
-| Gas Optimization | ✅ 78% reduction | ❌ Unverified claim | **100% gap** |
-| TypeScript SDK | ✅ Complete | ❌ 0% (empty folder) | **100% gap** |
-| Demo App | ✅ Complete | ❌ 0% (empty folder) | **100% gap** |
-| Formal Verification | ✅ Complete | ❌ 0% (doesn't exist) | **100% gap** |
-| Differential Fuzzing | ✅ 1M+ tests | ❌ 0% (not run) | **100% gap** |
-| CI/CD | ✅ Complete | ⚠️ 20% (basic only) | **80% gap** |
-| Production Ready | ✅ YES | ❌ NO | **MISLEADING** |
+| Feature              | README Claims    | Reality                        | Gap            |
+| -------------------- | ---------------- | ------------------------------ | -------------- |
+| Multi-Proof Support  | ✅ Complete      | ❌ 10% (Groth16 only)          | **90% gap**    |
+| Batch Verification   | ✅ Complete      | ⚠️ 40% (code exists, untested) | **60% gap**    |
+| Gas Optimization     | ✅ 78% reduction | ❌ Unverified claim            | **100% gap**   |
+| TypeScript SDK       | ✅ Complete      | ❌ 0% (empty folder)           | **100% gap**   |
+| Demo App             | ✅ Complete      | ❌ 0% (empty folder)           | **100% gap**   |
+| Formal Verification  | ✅ Complete      | ❌ 0% (doesn't exist)          | **100% gap**   |
+| Differential Fuzzing | ✅ 1M+ tests     | ❌ 0% (not run)                | **100% gap**   |
+| CI/CD                | ✅ Complete      | ⚠️ 20% (basic only)            | **80% gap**    |
+| Production Ready     | ✅ YES           | ❌ NO                          | **MISLEADING** |
 
 **Average Completion**: ~35%
 
@@ -527,9 +563,11 @@ $ find packages/contracts/test -name "*.sol"
 ## 💰 Cost & Timeline to Production
 
 ### Minimum Viable Product (MVP)
+
 **Goal**: Working attestor system with basic UI
 
 **Scope**:
+
 - ✅ Attestor (DONE)
 - ✅ Proof corpus (DONE)
 - [ ] Off-chain verifier service
@@ -543,9 +581,11 @@ $ find packages/contracts/test -name "*.sol"
 **Cost**: $80k-$100k (at $100/hour)
 
 ### Full Production System
+
 **Goal**: Complete universal verifier as specified
 
 **Scope**:
+
 - All MVP features
 - PLONK support
 - STARK support
@@ -594,12 +634,14 @@ $ find packages/contracts/test -name "*.sol"
 ### Current State Assessment
 
 **What We Have**:
+
 - Solid cryptographic foundation (Groth16)
 - Working attestor contract (deployed)
 - Good architecture documentation
 - Extensive proof test corpus
 
 **What We DON'T Have**:
+
 - Deployable full verifier (size problem)
 - User-facing components (SDK, UI)
 - Integration tests
@@ -610,9 +652,11 @@ $ find packages/contracts/test -name "*.sol"
 ### Path Forward: 3 Options
 
 #### Option 1: PIVOT TO ATTESTOR (Recommended) ✅
+
 **Accept Reality**: Full on-chain verification is impossible due to size limits
 
 **What to Build**:
+
 1. Off-chain verification service (Node.js + Rust WASM)
 2. SDK for attestor interaction
 3. Demo UI showing attestation flow
@@ -624,20 +668,24 @@ $ find packages/contracts/test -name "*.sol"
 **Outcome**: Working product, realistic claims
 
 **Pros**:
+
 - ✅ Actually achievable
 - ✅ Builds on deployed contract
 - ✅ Still demonstrates ZK verification
 - ✅ Cost-effective (~$0.10/proof)
 
 **Cons**:
+
 - ❌ Not "fully on-chain"
 - ❌ Requires trusted signer
 - ❌ Operational complexity
 
 #### Option 2: WAIT FOR STYLUS IMPROVEMENTS ⏸️
+
 **Hope**: Arbitrum increases size limit or Stylus gets better optimization
 
 **What to Do**:
+
 1. Monitor Stylus developments
 2. Keep codebase maintained
 3. Build non-blocking features (SDK, UI)
@@ -648,18 +696,22 @@ $ find packages/contracts/test -name "*.sol"
 **Outcome**: Uncertain
 
 **Pros**:
+
 - ✅ Could eventually deploy full verifier
 - ✅ Preserves "fully on-chain" vision
 
 **Cons**:
+
 - ❌ No guarantee limit will change
 - ❌ Dead time waiting
 - ❌ Competitors ship first
 
 #### Option 3: START OVER WITH DIFFERENT APPROACH ❌
+
 **Radical**: Abandon Stylus, try different tech
 
 **Alternatives**:
+
 - Pure Solidity (slow, expensive)
 - Halo2 on zkEVM (different chain)
 - Optimistic rollup with fraud proofs
@@ -670,10 +722,12 @@ $ find packages/contracts/test -name "*.sol"
 **Outcome**: Unknown
 
 **Pros**:
+
 - ✅ Fresh start
 - ✅ Might avoid size limits
 
 **Cons**:
+
 - ❌ Throws away all Stylus work
 - ❌ High risk
 - ❌ Expensive
@@ -688,6 +742,7 @@ $ find packages/contracts/test -name "*.sol"
 **We are NOT production-ready**.
 
 We have a solid foundation but:
+
 - 65% of planned features are MISSING
 - The main verifier CANNOT be deployed
 - We have ZERO integration tests
@@ -695,6 +750,7 @@ We have a solid foundation but:
 - Our performance claims are UNVERIFIED
 
 **BUT** we're not hopeless:
+
 - The attestor pattern WORKS
 - The crypto code is SOLID
 - The architecture is SOUND
@@ -703,6 +759,7 @@ We have a solid foundation but:
 ### What Success Looks Like (Realistic)
 
 **In 2-3 months**:
+
 - ✅ Working attestor-based system
 - ✅ Off-chain verifier service running
 - ✅ TypeScript SDK published to npm
@@ -747,14 +804,14 @@ We have a solid foundation but:
 
 ## 📝 Final Grade Breakdown
 
-| Category | Weight | Score | Weighted |
-|----------|--------|-------|----------|
-| **Core Crypto** | 25% | 85% | 21.25% |
-| **Smart Contracts** | 20% | 40% | 8% |
-| **Integration** | 20% | 5% | 1% |
-| **Testing** | 15% | 10% | 1.5% |
-| **SDK/Tools** | 10% | 0% | 0% |
-| **Documentation** | 10% | 70% | 7% |
+| Category            | Weight | Score | Weighted |
+| ------------------- | ------ | ----- | -------- |
+| **Core Crypto**     | 25%    | 85%   | 21.25%   |
+| **Smart Contracts** | 20%    | 40%   | 8%       |
+| **Integration**     | 20%    | 5%    | 1%       |
+| **Testing**         | 15%    | 10%   | 1.5%     |
+| **SDK/Tools**       | 10%    | 0%    | 0%       |
+| **Documentation**   | 10%    | 70%   | 7%       |
 
 **Overall**: **38.75% Complete**
 

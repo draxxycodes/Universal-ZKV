@@ -2,7 +2,7 @@
 
 **Date:** November 21, 2025  
 **Status:** Environment Limitation Identified  
-**Impact:** Phase S5.1 blocked on Windows  
+**Impact:** Phase S5.1 blocked on Windows
 
 ---
 
@@ -13,10 +13,11 @@ The Stylus WASM build process fails on Windows due to a linker error in the `sty
 ## Error Details
 
 ### Error Message
+
 ```
 error: linking with `link.exe` failed: exit code: 1120
 
-liballoy_primitives-5866c8dbd9d64a0e.rlib(...) : error LNK2019: unresolved external symbol native_keccak256 
+liballoy_primitives-5866c8dbd9d64a0e.rlib(...) : error LNK2019: unresolved external symbol native_keccak256
 referenced in function _ZN16alloy_primitives5utils9keccak2569keccak25617h85d63c2bb082c0ffE
 
 fatal error LNK1120: 1 unresolved externals
@@ -52,6 +53,7 @@ The `stylus-proc` procedural macro crate needs to compile for the **host platfor
 ### Option 1: Use WSL (Windows Subsystem for Linux) ✅ RECOMMENDED
 
 **Steps:**
+
 ```bash
 # 1. Install WSL2 with Ubuntu
 wsl --install -d Ubuntu-22.04
@@ -74,6 +76,7 @@ cargo stylus deploy --private-key=$PRIVATE_KEY --endpoint=$ARB_SEPOLIA_RPC
 ```
 
 **Advantages:**
+
 - Full Linux environment on Windows
 - Native crypto libraries available
 - Best compatibility with Stylus SDK
@@ -82,6 +85,7 @@ cargo stylus deploy --private-key=$PRIVATE_KEY --endpoint=$ARB_SEPOLIA_RPC
 ### Option 2: Use Docker for Build ✅ ALTERNATIVE
 
 **Dockerfile:**
+
 ```dockerfile
 FROM rust:1.75-slim
 
@@ -100,6 +104,7 @@ CMD ["bash"]
 ```
 
 **Build Steps:**
+
 ```bash
 # Build Docker image
 docker build -t stylus-builder .
@@ -115,6 +120,7 @@ cargo stylus deploy --private-key=$PRIVATE_KEY --endpoint=$ARB_SEPOLIA_RPC
 ### Option 3: Use GitHub Actions CI/CD ✅ AUTOMATED
 
 **`.github/workflows/deploy-stylus.yml`:**
+
 ```yaml
 name: Deploy Stylus WASM
 
@@ -122,9 +128,9 @@ on:
   workflow_dispatch:
     inputs:
       network:
-        description: 'Network to deploy to'
+        description: "Network to deploy to"
         required: true
-        default: 'sepolia'
+        default: "sepolia"
         type: choice
         options:
           - sepolia
@@ -135,20 +141,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly-2024-11-07
           target: wasm32-unknown-unknown
-          
+
       - name: Install cargo-stylus
         run: cargo install cargo-stylus
-        
+
       - name: Build WASM
         working-directory: ./packages/stylus
         run: cargo stylus check
-        
+
       - name: Deploy to Testnet
         if: github.event.inputs.network == 'sepolia'
         working-directory: ./packages/stylus
@@ -161,9 +167,10 @@ jobs:
             --endpoint=$RPC_URL
 ```
 
-### Option 4: Use Linux/Mac Machine 
+### Option 4: Use Linux/Mac Machine
 
 If you have access to a Linux or Mac machine:
+
 - Transfer project files
 - Install Rust + cargo-stylus
 - Run deployment directly
@@ -173,9 +180,11 @@ If you have access to a Linux or Mac machine:
 ## Impact on Phase S5
 
 ### What's Blocked
+
 - ❌ S5.1: Stylus WASM deployment requires Linux/WSL/Docker
 
 ### What Can Proceed
+
 - ✅ S5.2: Solidity contracts can be deployed using Foundry (works on Windows)
 - ✅ S5.3: Contract verification works on Windows
 - ✅ S5.4: Gas benchmarking can use MockStylusVerifier (already tested locally)
@@ -183,18 +192,21 @@ If you have access to a Linux or Mac machine:
 ### Recommended Path Forward
 
 **Immediate (Today):**
+
 1. Deploy Solidity contracts to testnet (UniversalZKVerifier)
 2. Use MockStylusVerifier for initial testing
 3. Verify contracts on Arbiscan
 4. Run gas benchmarks with mock verifier
 
 **Short-term (This Week):**
+
 1. Set up WSL2 on Windows machine
 2. Build and deploy Stylus WASM in WSL
 3. Integrate real Stylus verifier
 4. Re-run gas benchmarks with real implementation
 
 **Long-term (Production):**
+
 1. Use GitHub Actions for deployments
 2. Set up CI/CD pipeline
 3. Automate testing and deployment
@@ -211,6 +223,7 @@ Since all 148 tests pass locally with MockStylusVerifier, we can:
 4. **Validate integration** patterns and contract interactions
 
 Then later:
+
 - Deploy real Stylus WASM in Linux environment
 - Call `setStylusVerifier()` to switch from mock to real
 - Re-validate with production verifier
@@ -230,6 +243,7 @@ The following dependencies in the Stylus SDK stack have platform-specific code:
 ### MSVC Linker Configuration
 
 The Windows MSVC linker (`link.exe`) requires:
+
 - Explicit `.lib` files for external symbols
 - Different calling conventions than Unix
 - No automatic system library resolution
@@ -237,6 +251,7 @@ The Windows MSVC linker (`link.exe`) requires:
 ### Cross-Compilation Challenges
 
 Even though we're targeting WASM, proc-macros run during compilation on the host:
+
 - Proc-macros execute at compile-time on Windows
 - They need their dependencies to link properly on Windows
 - This creates a dual-platform requirement
@@ -260,6 +275,7 @@ Even though we're targeting WASM, proc-macros run during compilation on the host
 Choose one path:
 
 ### Path A: Deploy with Mock (Fast - 30 minutes)
+
 ```bash
 # Deploy Solidity contracts only
 cd packages/contracts
@@ -267,6 +283,7 @@ forge script script/DeployTestnet.s.sol:DeployTestnet --broadcast --verify
 ```
 
 ### Path B: Set Up WSL (Medium - 2 hours)
+
 ```bash
 # Set up WSL2
 wsl --install -d Ubuntu-22.04
@@ -274,6 +291,7 @@ wsl --install -d Ubuntu-22.04
 ```
 
 ### Path C: Use GitHub Actions (Best for Production - 1 hour)
+
 ```bash
 # Set up GitHub Actions workflow
 # Add secrets to repository

@@ -9,6 +9,7 @@
 ## Objective
 
 Implement a production-grade PLONK zero-knowledge proof verifier for Arbitrum Stylus with:
+
 - KZG polynomial commitment verification using pairing checks
 - Fiat-Shamir transcript for non-interactive challenge generation
 - PLONK gate constraint verification (arithmetic and custom gates)
@@ -41,6 +42,7 @@ packages/stylus/plonk/
 **Purpose**: Polynomial commitment scheme using pairings for opening proof verification
 
 **Core Functions**:
+
 ```rust
 pub fn verify_kzg_opening(
     commitment: &G1Affine,
@@ -52,6 +54,7 @@ pub fn verify_kzg_opening(
 ```
 
 **Verification Equation**:
+
 ```
 e(C - yG₁, G₂) == e(π, τG₂ - zG₂)
 
@@ -64,6 +67,7 @@ where:
 ```
 
 **Optimizations**:
+
 - Batch opening verification with linear combination
 - Point validation (on curve + subgroup check) with early exit
 - Pairing batching saves ~80k gas per additional polynomial
@@ -71,6 +75,7 @@ where:
 **Gas Cost**: ~130k gas per opening, ~50k per additional in batch
 
 **Security Features**:
+
 - All G1/G2 points validated before use
 - Subgroup membership check prevents small-subgroup attacks
 - Zero/infinity point rejection
@@ -80,6 +85,7 @@ where:
 **Purpose**: Convert interactive proof to non-interactive using cryptographic hash
 
 **Core Structure**:
+
 ```rust
 pub struct Transcript {
     hasher: Keccak256,
@@ -88,12 +94,14 @@ pub struct Transcript {
 ```
 
 **Challenge Generation Process**:
+
 1. Initialize with protocol label (domain separation)
 2. Absorb verification key, public inputs, proof commitments
 3. Squeeze deterministic challenges (β, γ, α, ζ, v, u)
 4. Each challenge updates internal state
 
 **Standardized Labels** (from PLONK spec):
+
 ```rust
 pub const VK_DOMAIN: &[u8] = b"plonk_vk";
 pub const PUBLIC_INPUT: &[u8] = b"plonk_public_input";
@@ -107,6 +115,7 @@ pub const ZETA_CHALLENGE: &[u8] = b"plonk_zeta";
 ```
 
 **Security Properties**:
+
 - Deterministic: Same inputs → same challenges
 - Domain separated: Different protocols → different challenges
 - Order sensitive: Absorb order affects output
@@ -119,6 +128,7 @@ pub const ZETA_CHALLENGE: &[u8] = b"plonk_zeta";
 **Purpose**: Manage Powers of Tau universal trusted setup parameters
 
 **SRS Structure**:
+
 ```rust
 pub struct Srs {
     pub g1_powers: Vec<G1Affine>,  // [G₁, τG₁, τ²G₁, ..., τⁿG₁]
@@ -131,48 +141,57 @@ pub struct Srs {
 **Supported Degrees**:
 | Degree | Size (Gates) | G1 Points | Gas Cost (Storage) |
 |--------|--------------|-----------|-------------------|
-| 2^10   | 1,024        | 1,025     | ~500k            |
-| 2^12   | 4,096        | 4,097     | ~1.2M            |
-| 2^14   | 16,384       | 16,385    | ~3.5M            |
-| 2^16   | 65,536       | 65,537    | ~12M             |
-| 2^18   | 262,144      | 262,145   | ~40M             |
-| 2^20   | 1,048,576    | 1,048,577 | ~150M            |
+| 2^10 | 1,024 | 1,025 | ~500k |
+| 2^12 | 4,096 | 4,097 | ~1.2M |
+| 2^14 | 16,384 | 16,385 | ~3.5M |
+| 2^16 | 65,536 | 65,537 | ~12M |
+| 2^18 | 262,144 | 262,145 | ~40M |
+| 2^20 | 1,048,576 | 1,048,577 | ~150M |
 
 **SRS Registry**:
+
 ```rust
 pub struct SrsRegistry {
     srs_map: BTreeMap<u8, Srs>,
 }
 ```
+
 - Stores multiple SRS for different circuit sizes
 - Prevents duplicate registration
 - Validates SRS consistency before storage
 
 **Consistency Verification**:
+
 ```rust
 // Pairing check: e(τG₁, G₂) == e(G₁, τG₂)
 pub fn verify_consistency(&self) -> Result<bool, crate::Error>
 ```
+
 - Gas cost: ~260k (2 pairings)
 - Validates SRS generated with consistent τ
 
 **Hash-Based Commitment**:
+
 ```rust
 // Keccak256(g1_powers || g2_powers)
 pub fn compute_hash(g1_powers: &[G1Affine], g2_powers: &[G2Affine]) -> [u8; 32]
 ```
+
 - Enables verification against known trusted setup output
 - Prevents SRS tampering
 
 **Multi-Scalar Multiplication**:
+
 ```rust
 // Computes: Σᵢ scalars[i] * g1_powers[i]
 pub fn msm_g1(&self, scalars: &[Fr]) -> Result<G1Affine, crate::Error>
 ```
+
 - Used for polynomial evaluation at τ
-- Gas cost: ~50k + 6k*n
+- Gas cost: ~50k + 6k\*n
 
 **Security Features**:
+
 - All points validated (on curve + subgroup check)
 - Size enforcement (must match degree)
 - Consistency pairing check
@@ -185,6 +204,7 @@ pub fn msm_g1(&self, scalars: &[Fr]) -> Result<G1Affine, crate::Error>
 **Purpose**: Main PLONK proof verification algorithm
 
 **Proof Structure**:
+
 ```rust
 pub struct PlonkProof {
     pub wire_commitments: [G1Affine; 3],        // [a], [b], [c]
@@ -199,6 +219,7 @@ pub struct PlonkProof {
 ```
 
 **Verification Key**:
+
 ```rust
 pub struct PlonkVerificationKey {
     pub n: usize,                                // Circuit size (power of 2)
@@ -230,12 +251,14 @@ pub fn verify_plonk_proof(
    - Validate VK (power-of-2 size, valid points, ω^n = 1)
 
 2. **Initialize Transcript**
+
    ```rust
    let mut transcript = Transcript::new(labels::PLONK_PROTOCOL);
    transcript.absorb_bytes(labels::VK_DOMAIN, &encode_vk_for_transcript(vk));
    ```
 
 3. **Absorb Public Inputs**
+
    ```rust
    for input in public_inputs {
        transcript.absorb_field(labels::PUBLIC_INPUT, input);
@@ -243,6 +266,7 @@ pub fn verify_plonk_proof(
    ```
 
 4. **Generate β, γ Challenges** (for permutation argument)
+
    ```rust
    transcript.absorb_point(labels::WIRE_COMMITMENT, &proof.wire_commitments[0]);
    transcript.absorb_point(labels::WIRE_COMMITMENT, &proof.wire_commitments[1]);
@@ -252,12 +276,14 @@ pub fn verify_plonk_proof(
    ```
 
 5. **Generate α Challenge** (for constraint batching)
+
    ```rust
    transcript.absorb_point(labels::PERMUTATION_COMMITMENT, &proof.permutation_commitment);
    let alpha = transcript.squeeze_challenge(labels::ALPHA_CHALLENGE);
    ```
 
 6. **Generate ζ Challenge** (evaluation point)
+
    ```rust
    for commitment in &proof.quotient_commitments {
        transcript.absorb_point(labels::QUOTIENT_COMMITMENT, commitment);
@@ -266,6 +292,7 @@ pub fn verify_plonk_proof(
    ```
 
 7. **Generate v Challenge** (for batching openings)
+
    ```rust
    // Absorb all evaluations
    for eval in &proof.wire_evals { transcript.absorb_field(labels::WIRE_EVAL, eval); }
@@ -275,6 +302,7 @@ pub fn verify_plonk_proof(
    ```
 
 8. **Compute Auxiliary Values**
+
    ```rust
    let pi_zeta = compute_public_input_eval(public_inputs, zeta, vk.omega, vk.n)?;
    let zh_zeta = zeta.pow(&[vk.n as u64]) - Fr::one();  // Z_H(ζ)
@@ -282,9 +310,10 @@ pub fn verify_plonk_proof(
    ```
 
 9. **Verify Gate Constraints**
+
    ```rust
    // Arithmetic gate: q_L·a + q_R·b + q_O·c + q_M·a·b + q_C + PI
-   let gate_constraint = 
+   let gate_constraint =
        ql_zeta * a_zeta +
        qr_zeta * b_zeta +
        qo_zeta * c_zeta +
@@ -294,9 +323,10 @@ pub fn verify_plonk_proof(
    ```
 
 10. **Verify Permutation Constraint**
+
     ```rust
     // (a + β·ζ + γ)(b + β·k₁·ζ + γ)(c + β·k₂·ζ + γ)·z(ζ)
-    let perm_num = 
+    let perm_num =
         (a_zeta + beta * zeta + gamma) *
         (b_zeta + beta * vk.k1 * zeta + gamma) *
         (c_zeta + beta * vk.k2 * zeta + gamma) *
@@ -304,18 +334,20 @@ pub fn verify_plonk_proof(
     ```
 
 11. **Batch Verify KZG Openings**
+
     ```rust
     // Batch opening at ζ: wires, selectors, z(ζ)
     verify_kzg_batch_opening(&commitments_zeta, &evals_zeta, zeta, &proof.opening_proof_zeta, srs)?;
-    
+
     // Single opening at ζω: z(ζω)
-    verify_kzg_opening(&proof.permutation_commitment, zeta_omega, proof.permutation_evals[1], 
+    verify_kzg_opening(&proof.permutation_commitment, zeta_omega, proof.permutation_evals[1],
                        &proof.opening_proof_omega, srs)?;
     ```
 
 **Polynomial Evaluations**:
 
 1. **Public Input Polynomial**:
+
    ```rust
    // PI(X) = -Σᵢ public_inputs[i] · Lᵢ(X)
    // where Lᵢ(X) = (ω^i / n) · Z_H(X) / (X - ω^i)
@@ -323,6 +355,7 @@ pub fn verify_plonk_proof(
    ```
 
 2. **First Lagrange Polynomial**:
+
    ```rust
    // L₁(X) = (X^n - 1) / (n · (X - 1))
    // Special case: L₁(1) = 1
@@ -338,23 +371,25 @@ pub fn verify_plonk_proof(
 
 **Gas Cost Breakdown**:
 
-| Operation | Gas Cost | Count | Total |
-|-----------|----------|-------|-------|
-| Field multiplications | ~20 | ~50 | ~1k |
-| Field additions | ~5 | ~100 | ~500 |
-| Pairing checks | ~130k | 6 | ~780k |
-| Point validation | ~2k | 14 | ~28k |
-| Keccak256 hashing | ~6k | ~20 | ~120k |
-| Storage reads | ~2.1k | ~10 | ~21k |
-| **Total** | | | **~950k** |
+| Operation             | Gas Cost | Count | Total     |
+| --------------------- | -------- | ----- | --------- |
+| Field multiplications | ~20      | ~50   | ~1k       |
+| Field additions       | ~5       | ~100  | ~500      |
+| Pairing checks        | ~130k    | 6     | ~780k     |
+| Point validation      | ~2k      | 14    | ~28k      |
+| Keccak256 hashing     | ~6k      | ~20   | ~120k     |
+| Storage reads         | ~2.1k    | ~10   | ~21k      |
+| **Total**             |          |       | **~950k** |
 
 **Optimizations**:
+
 - Batch opening verification (saves ~80k per polynomial)
 - Precomputed domain (ω powers cached)
 - Early validation failures
 - Minimal storage reads
 
 **Security Validations**:
+
 - ✅ VK validation (power-of-2 size, valid points, ω^n = 1)
 - ✅ Public input count match
 - ✅ All G1/G2 points validated
@@ -412,12 +447,14 @@ pub fn verify_plonk_proof(
    - Multiple verifications with same SRS
 
 **Test Execution**:
+
 ```bash
 cd packages/stylus/plonk
 cargo test --all-features
 ```
 
 **Expected Output**:
+
 ```
 running 31 tests
 test tests::test_srs_generation_and_validation ... ok
@@ -469,6 +506,7 @@ strip = "symbols"
 ```
 
 ### Library Versions:
+
 - **stylus-sdk**: 0.6 (Arbitrum Stylus WASM framework)
 - **halo2_proofs**: 0.3 (PLONK implementation library)
 - **halo2curves**: 0.7.0 (BN254 curve arithmetic)
@@ -485,17 +523,20 @@ strip = "symbols"
 ### Cryptographic Primitives
 
 **Elliptic Curve**: BN254 (Barreto-Naehrig with 254-bit prime)
+
 - **Base field**: F_p where p = 21888242871839275222246405745257275088696311157297823662689037894645226208583
 - **Scalar field**: F_r where r = 21888242871839275222246405745257275088548364400416034343698204186575808495617
 - **Embedding degree**: k = 12 (enables efficient pairings)
 - **Security level**: ~100 bits (post-zkSNARK attacks)
 
 **Pairing Type**: Optimal Ate pairing
+
 - **Groups**: G₁ (E(F_p)), G₂ (E(F_p²)), G_T (F_p¹²)
 - **Pairing function**: e: G₁ × G₂ → G_T
 - **Cost**: ~130k gas per pairing
 
 **Hash Function**: Keccak256
+
 - **Output**: 256-bit digest
 - **Security**: 128-bit collision resistance
 - **EVM native**: Yes (Ethereum precompile at address 0x09)
@@ -507,26 +548,31 @@ strip = "symbols"
 **Proof System Type**: zkSNARK (Zero-Knowledge Succinct Non-Interactive Argument of Knowledge)
 
 **Setup**: Universal (Powers of Tau ceremony)
+
 - One-time ceremony for all circuits up to max degree
 - Updateable (additional participants can contribute)
 - Transparent (no toxic waste if ≥1 honest participant)
 
 **Constraint System**: Gate-based arithmetic circuit
+
 - **Gates**: Addition, multiplication, custom
 - **Wires**: Left (a), right (b), output (c)
 - **Selectors**: q_L, q_R, q_O, q_M, q_C
 
 **Copy Constraints**: Permutation argument
+
 - Uses β, γ challenges for randomization
 - Accumulator polynomial z(X) for permutation check
 - Grand product argument: ∏(a + β·id + γ) / ∏(a + β·σ + γ)
 
 **Polynomial Identities**:
+
 1. **Gate constraint**: q_L·a + q_R·b + q_O·c + q_M·a·b + q_C + PI = 0
 2. **Permutation**: z(X)·∏(a + β·ζ^i + γ) = z(ωX)·∏(a + β·σ_i + γ)
 3. **First row**: L₁(X)·(z(X) - 1) = 0
 
 **Quotient Polynomial**: t(X) = (constraints) / Z_H(X)
+
 - Split into t_lo, t_mid, t_hi for degree reduction
 - Verified at random point ζ
 
@@ -535,11 +581,13 @@ strip = "symbols"
 **Commitment**: [p(X)] = Σᵢ pᵢ · [X^i] = Σᵢ pᵢ · τⁱG₁
 
 **Opening Proof**: Prove p(z) = y
+
 1. Compute witness polynomial: w(X) = (p(X) - y) / (X - z)
 2. Commitment to witness: π = [w(X)]
 3. Verification: e(C - yG₁, G₂) = e(π, τG₂ - zG₂)
 
 **Batch Opening**: Multiple polynomials at same point
+
 - Linear combination with random challenge v
 - Single pairing check for all polynomials
 - Gas savings: ~80k per additional polynomial
@@ -547,14 +595,17 @@ strip = "symbols"
 ### Domain and Polynomial Evaluations
 
 **Multiplicative Domain**: H = {1, ω, ω², ..., ω^(n-1)}
+
 - ω is primitive n-th root of unity
 - ω^n = 1, ω^i ≠ 1 for 0 < i < n
 
 **Vanishing Polynomial**: Z_H(X) = X^n - 1
+
 - Zero on all elements of H
 - Used to enforce constraints hold everywhere in domain
 
 **Lagrange Basis**: L_i(X) such that L_i(ω^j) = δᵢⱼ
+
 - L_i(X) = (ω^i / n) · Z_H(X) / (X - ω^i)
 - Used for public input encoding
 
@@ -563,6 +614,7 @@ strip = "symbols"
 ### PLONK Verification Costs
 
 **Base Verification** (~950k gas):
+
 ```
 Transcript operations:     ~120k (Keccak256 hashing)
 Field arithmetic:          ~1.5k (multiplications, additions)
@@ -605,16 +657,17 @@ Storage reads:             ~21k (VK, SRS)
 
 ### SRS Storage Costs
 
-| Degree | Gates | G1 Points | Storage Gas | USD (at 50 gwei, $3k ETH) |
-|--------|-------|-----------|-------------|---------------------------|
-| 2^10   | 1,024 | 1,025 | ~500k | $75 |
-| 2^12   | 4,096 | 4,097 | ~1.2M | $180 |
-| 2^14   | 16,384 | 16,385 | ~3.5M | $525 |
-| 2^16   | 65,536 | 65,537 | ~12M | $1,800 |
-| 2^18   | 262,144 | 262,145 | ~40M | $6,000 |
-| 2^20   | 1,048,576 | 1,048,577 | ~150M | $22,500 |
+| Degree | Gates     | G1 Points | Storage Gas | USD (at 50 gwei, $3k ETH) |
+| ------ | --------- | --------- | ----------- | ------------------------- |
+| 2^10   | 1,024     | 1,025     | ~500k       | $75                       |
+| 2^12   | 4,096     | 4,097     | ~1.2M       | $180                      |
+| 2^14   | 16,384    | 16,385    | ~3.5M       | $525                      |
+| 2^16   | 65,536    | 65,537    | ~12M        | $1,800                    |
+| 2^18   | 262,144   | 262,145   | ~40M        | $6,000                    |
+| 2^20   | 1,048,576 | 1,048,577 | ~150M       | $22,500                   |
 
 **Optimization Strategy**:
+
 1. Store only frequently used SRS on-chain (2^10 to 2^14)
 2. Use off-chain storage + Merkle proof for large SRS
 3. Lazy loading: Load SRS chunks on demand
@@ -624,12 +677,14 @@ Storage reads:             ~21k (VK, SRS)
 ### Threat Model
 
 **Adversarial Capabilities**:
+
 1. Can submit arbitrary proofs
 2. Can manipulate public inputs
 3. Cannot break discrete log or pairing assumptions
 4. Cannot tamper with trusted setup (≥1 honest participant)
 
 **Security Goals**:
+
 1. **Soundness**: Invalid statements rejected with overwhelming probability
 2. **Zero-Knowledge**: Proof reveals nothing beyond validity
 3. **Succinctness**: Verification faster than re-execution
@@ -637,54 +692,66 @@ Storage reads:             ~21k (VK, SRS)
 ### Implemented Mitigations
 
 #### 1. Point Validation
+
 ```rust
 fn validate_g1_point(point: &G1Affine) -> bool {
     point.is_on_curve() && point.is_in_correct_subgroup_assuming_on_curve()
 }
 ```
+
 - **Prevents**: Small-subgroup attacks, invalid curve points
 - **Cost**: ~2k gas per point
 - **Applied to**: All 14 proof/VK commitments
 
 #### 2. Subgroup Check
+
 ```rust
 // BN254-specific: Check r·P = ∞
 point.is_in_correct_subgroup_assuming_on_curve()
 ```
+
 - **Prevents**: Points in wrong subgroup breaking pairing
 - **Cost**: ~1k gas (scalar multiplication)
 - **Applied to**: All G1, G2 points
 
 #### 3. Pairing Equation Verification
+
 ```rust
 e(C - yG₁, G₂) == e(π, τG₂ - zG₂)
 ```
+
 - **Prevents**: Accepting invalid openings
 - **Cost**: ~260k gas (2 pairings)
 - **Applied to**: All KZG openings
 
 #### 4. Transcript Domain Separation
+
 ```rust
 transcript.absorb_bytes(labels::PLONK_PROTOCOL, &protocol_id);
 ```
+
 - **Prevents**: Cross-protocol replay attacks
 - **Cost**: ~6k gas (Keccak256)
 - **Applied to**: All challenge generations
 
 #### 5. Input Validation
+
 ```rust
 if public_inputs.len() != vk.num_public_inputs {
     return Err(Error::InvalidPublicInput);
 }
 ```
+
 - **Prevents**: Incorrect public input encoding
 - **Cost**: ~50 gas
 - **Applied to**: All verifications
 
 #### 6. VK Validation
+
 ```rust
 vk.validate()?;  // Check n is power of 2, ω^n = 1, points valid
 ```
+
 - **Prevents**: Malformed verification keys
 - **Cost**: ~10k gas
 - **Applied to**: On VK registration and verification
@@ -710,6 +777,7 @@ vk.validate()?;  // Check n is power of 2, ω^n = 1, points valid
 ### Audit Recommendations
 
 **Critical Areas**:
+
 1. ✅ Pairing equation implementation (KZG verification)
 2. ✅ Point validation (subgroup checks)
 3. ✅ Transcript challenge generation (Fiat-Shamir)
@@ -718,11 +786,13 @@ vk.validate()?;  // Check n is power of 2, ω^n = 1, points valid
 6. ⚠️ Permutation argument (needs formal verification)
 
 **Testing Gaps**:
+
 - No cryptographically valid proof/VK pairs (would require full PLONK prover)
 - No adversarial proof fuzzing
 - No formal verification of constraint equations
 
 **Mitigation**:
+
 - Use test vectors from halo2 test suite
 - Integration test with real PLONK prover (circom-plonk, halo2)
 - Formal verification of constraint algebra (future work)
@@ -745,16 +815,16 @@ impl MyContract {
     ) -> Result<bool, Vec<u8>> {
         // Deserialize proof
         let proof: PlonkProof = deserialize_proof(&proof_bytes)?;
-        
+
         // Load VK from storage
         let vk = self.verification_keys.get(circuit_id)?;
-        
+
         // Get SRS from registry
         let srs = self.srs_registry.get(SrsDegree::D1024)?;
-        
+
         // Verify proof
         let valid = verify_plonk_proof(&proof, &vk, &public_inputs, &srs)?;
-        
+
         Ok(valid)
     }
 }
@@ -774,15 +844,15 @@ impl MyContract {
     ) -> Result<(), Vec<u8>> {
         // Create SRS
         let srs = Srs::new(g1_powers, g2_powers, degree)?;
-        
+
         // Verify hash against known ceremony output
         if !srs.verify_hash(&expected_hash) {
             return Err(b"SRS hash mismatch".to_vec());
         }
-        
+
         // Register in registry
         self.srs_registry.register(srs)?;
-        
+
         Ok(())
     }
 }
@@ -898,6 +968,7 @@ test result: ok. 31 passed; 0 failed; 0 ignored
 ### Code Documentation
 
 **Coverage**:
+
 - ✅ Module-level documentation for all 5 modules
 - ✅ Function-level documentation with examples
 - ✅ Struct/enum documentation with field descriptions
@@ -906,21 +977,22 @@ test result: ok. 31 passed; 0 failed; 0 ignored
 - ✅ Mathematical notation for algorithms
 
 **Example**:
+
 ```rust
 /// Verify a PLONK proof
-/// 
+///
 /// # Arguments
 /// * `proof` - The PLONK proof to verify
 /// * `vk` - Verification key for the circuit
 /// * `public_inputs` - Public inputs to the circuit
 /// * `srs` - Structured reference string (Powers of Tau)
-/// 
+///
 /// # Returns
 /// `true` if the proof is valid, `false` otherwise
-/// 
+///
 /// # Gas Cost
 /// ~1.2M gas (6 pairings + field operations)
-/// 
+///
 /// # Security
 /// - Validates all curve points
 /// - Checks pairing equations
@@ -940,6 +1012,7 @@ $ cargo doc --no-deps --open
 ```
 
 **Generated Documentation**:
+
 - Module overview with architecture diagram
 - Function signatures with type information
 - Security considerations per function
@@ -1116,9 +1189,10 @@ Task 3.1 successfully implements a production-grade PLONK verifier with:
 ✅ **Efficiency**: Gas-optimized with batch opening verification  
 ✅ **Correctness**: 31/31 tests passing  
 ✅ **Documentation**: Extensive inline and architectural docs  
-✅ **Integration**: Ready for main contract integration  
+✅ **Integration**: Ready for main contract integration
 
 **Key Achievements**:
+
 - 2,300+ lines of production Rust code
 - 31 comprehensive tests (100% pass rate)
 - KZG commitments with pairing-based verification
@@ -1127,6 +1201,7 @@ Task 3.1 successfully implements a production-grade PLONK verifier with:
 - ~950k gas verification cost (2x Groth16, but universal setup)
 
 **Production Readiness**: ⚠️ 85%
+
 - ✅ Core implementation complete
 - ✅ Comprehensive tests
 - ✅ Security validations

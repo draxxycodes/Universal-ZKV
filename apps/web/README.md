@@ -43,6 +43,7 @@ apps/web/
 ## 🎯 Features
 
 ### Landing Page (`/`)
+
 - Hero section with 3 proof systems
 - Feature comparison table
 - Live network statistics
@@ -50,6 +51,7 @@ apps/web/
 - Call-to-action buttons
 
 ### Interactive Demo (`/demo`)
+
 - Complete workflow: Generate → Verify → Attest
 - Real-time progress tracking
 - Gas cost display
@@ -57,6 +59,7 @@ apps/web/
 - Proof system selector (Groth16/PLONK/STARK)
 
 ### Gas Comparison (`/benchmarks`)
+
 - Interactive charts (Groth16 vs PLONK vs STARK)
 - Cost calculator
 - Benchmark tables
@@ -64,6 +67,7 @@ apps/web/
 - Detailed gas metrics
 
 ### Attestation Explorer (`/attestations`)
+
 - Search by proof hash
 - Recent attestations list
 - Network statistics
@@ -87,15 +91,18 @@ PRIVATE_KEY=your_private_key
 ## 📦 Dependencies
 
 ### Core
+
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
 
 ### Web3
+
 - **wagmi v2** - React hooks for Ethereum
 - **viem** - Ethereum utilities
 
 ### UI
+
 - **lucide-react** - Icons
 - **react-hot-toast** - Notifications
 - **recharts** - Charts
@@ -103,14 +110,16 @@ PRIVATE_KEY=your_private_key
 ## 🎨 Design System
 
 ### Colors
+
 ```css
---groth16: #3b82f6;  /* Blue */
---plonk: #8b5cf6;    /* Purple */
---stark: #ec4899;    /* Pink */
+--groth16: #3b82f6; /* Blue */
+--plonk: #8b5cf6; /* Purple */
+--stark: #ec4899; /* Pink */
 --arbitrum: #28a0f0; /* Arbitrum blue */
 ```
 
 ### Typography
+
 - Font: Inter, system-ui, sans-serif
 - Responsive sizing with Tailwind
 
@@ -145,9 +154,11 @@ pnpm start
 ## 📖 API Routes
 
 ### `POST /api/generate`
+
 Generate proofs using complete-workflow script
 
 **Request**:
+
 ```json
 {
   "proofType": "groth16" | "plonk" | "stark"
@@ -155,9 +166,11 @@ Generate proofs using complete-workflow script
 ```
 
 ### `POST /api/verify`
+
 Verify proofs locally
 
 **Response**:
+
 ```json
 {
   "verified": true,
@@ -166,9 +179,11 @@ Verify proofs locally
 ```
 
 ### `POST /api/attest`
+
 Submit attestation to Arbitrum
 
 **Response**:
+
 ```json
 {
   "txHash": "0x789...",

@@ -14,6 +14,7 @@ Task 5 successfully standardizes all UZKV circuits to output the **PublicStateme
 ### 1. New Circuits (3 files)
 
 #### Poseidon with Statement
+
 - **File**: `packages/circuits/src/poseidon_with_statement.circom` (69 lines)
 - **Purpose**: Prove knowledge of Poseidon hash preimage
 - **Constraints**: ~200
@@ -22,6 +23,7 @@ Task 5 successfully standardizes all UZKV circuits to output the **PublicStateme
 - **Use Cases**: Privacy-preserving identity, commitment schemes
 
 #### EdDSA with Statement
+
 - **File**: `packages/circuits/src/eddsa_with_statement.circom` (73 lines)
 - **Purpose**: Verify EdDSA signatures in zero-knowledge
 - **Constraints**: ~2,600
@@ -30,6 +32,7 @@ Task 5 successfully standardizes all UZKV circuits to output the **PublicStateme
 - **Use Cases**: Anonymous authentication, private voting, credential verification
 
 #### Merkle with Statement
+
 - **File**: `packages/circuits/src/merkle_with_statement.circom` (99 lines)
 - **Purpose**: Prove Merkle tree membership (20 levels = 1M+ leaves)
 - **Constraints**: ~4,100
@@ -40,12 +43,14 @@ Task 5 successfully standardizes all UZKV circuits to output the **PublicStateme
 ### 2. Supporting Scripts (2 files)
 
 #### Input Generator
+
 - **File**: `packages/circuits/scripts/generate-statement-inputs.cjs` (109 lines)
 - **Purpose**: Generate test inputs for PublicStatement circuits
 - **Output**: Circuit inputs + metadata with PublicStatement encoding
 - **Usage**: `pnpm run statement:inputs`
 
 #### Compilation Pipeline
+
 - **File**: `packages/circuits/scripts/compile-statement-circuits.sh` (94 lines)
 - **Purpose**: Automated compilation for all 3 circuits
 - **Steps**: Circom compile → R1CS export → Groth16 setup → VKey export
@@ -54,6 +59,7 @@ Task 5 successfully standardizes all UZKV circuits to output the **PublicStateme
 ### 3. Documentation
 
 #### Complete Implementation Guide
+
 - **File**: `docs/PUBLICSTATEMENT-CIRCUITS.md` (610 lines)
 - **Sections**:
   - PublicStatement structure and encoding
@@ -69,6 +75,7 @@ Task 5 successfully standardizes all UZKV circuits to output the **PublicStateme
 ### 4. Package Updates
 
 #### Package.json
+
 - **File**: `packages/circuits/package.json`
 - **Changes**: Added 2 new scripts
   - `compile:statement`: Compile PublicStatement circuits
@@ -91,11 +98,13 @@ pub struct PublicStatement {
 ## Key Features
 
 ### ✅ Universal Format
+
 - All circuits output identical 5-field structure
 - Seamless integration with UniversalProof protocol
 - Consistent verification logic across all proof types
 
 ### ✅ Replay Protection
+
 - Deterministic nullifiers prevent double-spending/voting/claiming
 - Circuit-specific nullifier generation:
   - Poseidon: `Poseidon(hash, public_key)`
@@ -104,11 +113,13 @@ pub struct PublicStatement {
 - 128-bit collision resistance (Poseidon + BN254)
 
 ### ✅ Interoperability
+
 - Works with existing UniversalProof encoding
 - Compatible with Stylus contract verification
 - SDK integration ready
 
 ### ✅ Backward Compatible
+
 - Legacy circuits remain functional
 - No breaking changes to existing proofs
 - Gradual migration path
@@ -118,6 +129,7 @@ pub struct PublicStatement {
 ### Nullifier Generation Pattern
 
 All circuits follow this pattern:
+
 ```circom
 component nullifierHasher = Poseidon(2);
 nullifierHasher.inputs[0] <== circuit_specific_value;
@@ -126,6 +138,7 @@ nullifier <== nullifierHasher.out;
 ```
 
 This ensures:
+
 - ✅ Uniqueness per user and action
 - ✅ Determinism (same inputs → same nullifier)
 - ✅ Privacy (reveals nothing about private inputs)
@@ -134,28 +147,31 @@ This ensures:
 ### Public Input Declaration
 
 All circuits use:
+
 ```circom
 component main {public [merkle_root, public_key, nullifier, value, extra]} = CircuitWithStatement();
 ```
 
 This enforces:
+
 - ✅ All 5 fields are public inputs
 - ✅ Prover cannot hide or modify them
 - ✅ Verifier checks they match the proof
 
 ### Constraint Efficiency
 
-| Circuit | Base | Nullifier | Total |
-|---------|------|-----------|-------|
-| Poseidon | ~150 | +50 | ~200 |
-| EdDSA | ~2,500 | +50 | ~2,600 |
-| Merkle | ~4,000 | +50 | ~4,100 |
+| Circuit  | Base   | Nullifier | Total  |
+| -------- | ------ | --------- | ------ |
+| Poseidon | ~150   | +50       | ~200   |
+| EdDSA    | ~2,500 | +50       | ~2,600 |
+| Merkle   | ~4,000 | +50       | ~4,100 |
 
 Nullifier generation adds minimal overhead (~50 constraints per circuit).
 
 ## Migration Path
 
 ### Old Format (Circuit-Specific)
+
 ```circom
 // OLD: poseidon_test.circom
 signal input preimage[2];
@@ -163,6 +179,7 @@ signal output expectedHash;  // Single field
 ```
 
 ### New Format (PublicStatement)
+
 ```circom
 // NEW: poseidon_with_statement.circom
 signal input preimage[2];
@@ -174,6 +191,7 @@ signal output extra;
 ```
 
 ### Migration Steps
+
 1. ✅ Create new circuits with PublicStatement outputs (DONE)
 2. ⏳ Compile and test new circuits (NEXT)
 3. ⏳ Generate proofs with new format
@@ -185,6 +203,7 @@ signal output extra;
 ### Immediate (Task 5 Continuation)
 
 1. **Compile Circuits**
+
    ```bash
    cd packages/circuits
    chmod +x scripts/compile-statement-circuits.sh
@@ -192,11 +211,13 @@ signal output extra;
    ```
 
 2. **Generate Test Inputs**
+
    ```bash
    pnpm run statement:inputs
    ```
 
 3. **Generate Test Proofs**
+
    ```bash
    # For each circuit
    cd build/poseidon_with_statement/poseidon_with_statement_js
@@ -233,17 +254,20 @@ signal output extra;
 ## Performance Expectations
 
 ### Proving Time (Apple M1 Pro)
+
 - Poseidon: ~45ms
 - EdDSA: ~198ms
 - Merkle: ~342ms
 
 ### Verification Gas (Arbitrum Stylus)
+
 - Groth16 verification: ~280k gas
 - PublicStatement decode: ~5k gas
 - Nullifier check: ~2.1k gas (cold) / ~100 gas (warm)
 - **Total**: ~287k gas per proof
 
 ### Proof Size
+
 - Groth16 proof: 256 bytes (fixed)
 - PublicStatement: 116+ bytes (variable)
 - **UniversalProof total**: ~400 bytes
@@ -251,18 +275,21 @@ signal output extra;
 ## Security Properties
 
 ### Circuit Level
+
 - ✅ All signals properly constrained
 - ✅ No under-constrained arithmetic
 - ✅ Field element range checks
 - ✅ Path indices bounded [0, 1] for Merkle
 
 ### Nullifier Level
+
 - ✅ Deterministic generation (same inputs → same nullifier)
 - ✅ Unique per user and action
 - ✅ Collision-resistant (Poseidon 128-bit security)
 - ✅ Privacy-preserving (reveals nothing about private inputs)
 
 ### Protocol Level
+
 - ✅ PublicStatement enforced as public inputs
 - ✅ Prover cannot hide or modify public fields
 - ✅ Verifier checks match proof
@@ -286,6 +313,7 @@ packages/sdk/package-lock.json                                   [auto-generated
 ## Production Readiness
 
 ### ✅ Completed
+
 - Circuit implementations with PublicStatement format
 - Nullifier generation logic
 - Compilation pipeline
@@ -293,6 +321,7 @@ packages/sdk/package-lock.json                                   [auto-generated
 - Comprehensive documentation
 
 ### ⏳ Pending
+
 - Circuit compilation and testing
 - Proof generation validation
 - SDK integration
@@ -301,6 +330,7 @@ packages/sdk/package-lock.json                                   [auto-generated
 - Security audit of nullifier logic
 
 ### 📋 Remaining Tasks
+
 - Task 6: Attestor trust model documentation
 - Task 7: Audit-prep documentation
 - Task 8: High-level SDK helpers

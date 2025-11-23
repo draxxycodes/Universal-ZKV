@@ -32,6 +32,7 @@ pub struct PublicStatement {
 **Purpose**: Prove knowledge of Poseidon hash preimage with standardized outputs
 
 **Private Inputs**:
+
 - `preimage[2]`: Two field elements to hash
 - `merkle_root_in`: State tree root (or 0 if unused)
 - `public_key_in`: User's public key
@@ -39,6 +40,7 @@ pub struct PublicStatement {
 - `extra_in`: Additional data (0 if unused)
 
 **Public Outputs** (PublicStatement):
+
 - `merkle_root`: Passed through from merkle_root_in
 - `public_key`: Passed through from public_key_in
 - `nullifier`: Poseidon(hash(preimage), public_key_in)
@@ -48,6 +50,7 @@ pub struct PublicStatement {
 **Constraints**: ~200 (Poseidon hash + nullifier generation)
 
 **Use Cases**:
+
 - Privacy-preserving identity commitments
 - Anonymous credential systems
 - Nullifier generation for privacy protocols
@@ -59,6 +62,7 @@ pub struct PublicStatement {
 **Purpose**: Verify EdDSA signatures with standardized outputs
 
 **Private Inputs**:
+
 - `Ax, Ay`: Public key coordinates
 - `S, R8x, R8y`: Signature components
 - `M`: Message to verify
@@ -67,6 +71,7 @@ pub struct PublicStatement {
 - `extra_in`: Additional data (0 if unused)
 
 **Public Outputs** (PublicStatement):
+
 - `merkle_root`: Passed through from merkle_root_in
 - `public_key`: Ax (public key X coordinate)
 - `nullifier`: Poseidon(M, Ax)
@@ -76,6 +81,7 @@ pub struct PublicStatement {
 **Constraints**: ~2,600 (EdDSA verification + nullifier generation)
 
 **Use Cases**:
+
 - Anonymous authentication
 - Private voting systems
 - Credential verification
@@ -88,6 +94,7 @@ pub struct PublicStatement {
 **Purpose**: Prove Merkle tree membership with standardized outputs
 
 **Private Inputs**:
+
 - `leaf`: Leaf value to prove
 - `pathElements[20]`: Sibling nodes (20 levels = 1M+ leaves)
 - `pathIndices[20]`: Path directions (0=left, 1=right)
@@ -96,6 +103,7 @@ pub struct PublicStatement {
 - `extra_in`: Additional data (0 if unused)
 
 **Public Outputs** (PublicStatement):
+
 - `merkle_root`: Computed root from Merkle proof
 - `public_key`: Passed through from public_key_in
 - `nullifier`: Poseidon(leaf, public_key_in)
@@ -105,6 +113,7 @@ pub struct PublicStatement {
 **Constraints**: ~4,100 (20 levels × 200 per level + nullifier)
 
 **Use Cases**:
+
 - Private airdrops (prevent double-claiming)
 - Anonymous voting (eligibility proof)
 - Privacy-preserving NFT ownership
@@ -114,13 +123,14 @@ pub struct PublicStatement {
 
 All circuits generate **deterministic nullifiers** to prevent replay attacks:
 
-| Circuit | Nullifier Formula | Purpose |
-|---------|-------------------|---------|
-| Poseidon | Poseidon(hash, public_key) | Unique per preimage + user |
-| EdDSA | Poseidon(message, public_key) | Unique per message + signer |
-| Merkle | Poseidon(leaf, public_key) | Unique per claim + claimer |
+| Circuit  | Nullifier Formula             | Purpose                     |
+| -------- | ----------------------------- | --------------------------- |
+| Poseidon | Poseidon(hash, public_key)    | Unique per preimage + user  |
+| EdDSA    | Poseidon(message, public_key) | Unique per message + signer |
+| Merkle   | Poseidon(leaf, public_key)    | Unique per claim + claimer  |
 
 **Properties**:
+
 - ✅ Deterministic: Same inputs → same nullifier
 - ✅ Unique: Different inputs → different nullifiers
 - ✅ Privacy-preserving: Reveals nothing about private inputs
@@ -129,6 +139,7 @@ All circuits generate **deterministic nullifiers** to prevent replay attacks:
 ## Compilation
 
 ### Prerequisites
+
 ```bash
 # Install circom
 cargo install --git https://github.com/iden3/circom.git
@@ -142,12 +153,14 @@ mv powersOfTau28_hez_final_16.ptau packages/circuits/powers_of_tau/
 ```
 
 ### Compile All Circuits
+
 ```bash
 cd packages/circuits
 pnpm run compile:statement
 ```
 
 This generates:
+
 - `build/{circuit}/{circuit}.r1cs` - R1CS constraint system
 - `build/{circuit}/{circuit}_js/{circuit}.wasm` - WASM witness generator
 - `build/{circuit}/{circuit}_groth16.zkey` - Groth16 proving key
@@ -155,24 +168,27 @@ This generates:
 
 ### Circuit Sizes
 
-| Circuit | Constraints | Proving Time | Proof Size | Public Inputs |
-|---------|-------------|--------------|------------|---------------|
-| poseidon_with_statement | ~200 | <50ms | 256 bytes | 5 fields |
-| eddsa_with_statement | ~2,600 | ~200ms | 256 bytes | 5 fields |
-| merkle_with_statement | ~4,100 | ~350ms | 256 bytes | 5 fields |
+| Circuit                 | Constraints | Proving Time | Proof Size | Public Inputs |
+| ----------------------- | ----------- | ------------ | ---------- | ------------- |
+| poseidon_with_statement | ~200        | <50ms        | 256 bytes  | 5 fields      |
+| eddsa_with_statement    | ~2,600      | ~200ms       | 256 bytes  | 5 fields      |
+| merkle_with_statement   | ~4,100      | ~350ms       | 256 bytes  | 5 fields      |
 
 ## Input Generation
 
 ### Generate Test Inputs
+
 ```bash
 pnpm run statement:inputs
 ```
 
 This creates:
+
 - `inputs/poseidon_statement_valid.json` - Circuit input
 - `inputs/poseidon_statement_valid_metadata.json` - PublicStatement metadata
 
 ### Example Input Format
+
 ```json
 {
   "preimage": ["12345", "67890"],
@@ -191,6 +207,7 @@ This creates:
 ## Proof Generation
 
 ### Generate Proof
+
 ```bash
 # Calculate witness
 cd build/poseidon_with_statement/poseidon_with_statement_js
@@ -205,6 +222,7 @@ snarkjs groth16 prove \
 ```
 
 ### Verify Proof
+
 ```bash
 snarkjs groth16 verify \
   build/poseidon_with_statement/poseidon_with_statement_groth16_vkey.json \
@@ -215,8 +233,9 @@ snarkjs groth16 verify \
 ## Integration with UniversalProof
 
 ### SDK Usage
+
 ```typescript
-import { PublicStatement, UniversalProof } from '@uzkv/sdk';
+import { PublicStatement, UniversalProof } from "@uzkv/sdk";
 
 // Create PublicStatement from circuit outputs
 const publicStatement = new PublicStatement({
@@ -230,18 +249,17 @@ const publicStatement = new PublicStatement({
 // Encode as UniversalProof
 const universalProof = new UniversalProof({
   proofType: ProofType.Groth16,
-  programId: 'poseidon_with_statement',
+  programId: "poseidon_with_statement",
   publicInputs: publicStatement.encode(),
   proof: groth16ProofBytes,
 });
 
 // Submit to Stylus contract
-const result = await contract.verifyUniversal(
-  universalProof.encode()
-);
+const result = await contract.verifyUniversal(universalProof.encode());
 ```
 
 ### Stylus Verification
+
 ```rust
 // In Stylus contract
 let proof = UniversalProof::decode(&proof_bytes)?;
@@ -262,6 +280,7 @@ used_nullifiers.insert(public_statement.nullifier);
 ## Migration from Legacy Circuits
 
 ### Old Format (Circuit-Specific)
+
 ```circom
 // OLD: poseidon_test.circom
 signal input preimage[2];
@@ -269,6 +288,7 @@ signal output expectedHash;  // Single output field
 ```
 
 ### New Format (PublicStatement)
+
 ```circom
 // NEW: poseidon_with_statement.circom
 signal input preimage[2];
@@ -280,6 +300,7 @@ signal output extra;
 ```
 
 ### Migration Steps
+
 1. ✅ Create new circuits with PublicStatement outputs
 2. ⏳ Compile and test new circuits
 3. ⏳ Generate proofs with new format
@@ -289,6 +310,7 @@ signal output extra;
 ## Testing Strategy
 
 ### Unit Tests (Circuit Level)
+
 ```bash
 # Test each circuit with valid inputs
 snarkjs groth16 fullprove \
@@ -303,6 +325,7 @@ snarkjs groth16 verify vkey.json public.json proof.json
 ```
 
 ### Integration Tests (SDK Level)
+
 ```typescript
 describe('PublicStatement Circuits', () => {
   it('should encode PublicStatement correctly', () => {
@@ -320,6 +343,7 @@ describe('PublicStatement Circuits', () => {
 ```
 
 ### End-to-End Tests (Stylus Level)
+
 ```bash
 # Deploy Stylus contract
 cargo stylus deploy --private-key $PRIVATE_KEY
@@ -334,21 +358,25 @@ cast call $CONTRACT_ADDRESS "isNullifierUsed(bytes32)" $NULLIFIER
 ## Security Considerations
 
 ### Nullifier Uniqueness
+
 - ✅ Each circuit generates unique nullifiers per user/action
 - ✅ Prevents double-spending, double-voting, double-claiming
 - ✅ Poseidon hash ensures collision resistance (128-bit security)
 
 ### Field Element Ranges
+
 - ✅ All field elements < BN254 scalar field modulus
 - ✅ `value` fits in u128 (16 bytes)
 - ✅ `extra` has dynamic length validation
 
 ### Public Input Validation
+
 - ✅ All 5 PublicStatement fields are public inputs
 - ✅ Prover cannot hide or modify public inputs
 - ✅ Verifier checks public inputs match proof
 
 ### Circuit Safety
+
 - ✅ No under-constrained signals
 - ✅ All arithmetic checked for overflows
 - ✅ Path indices bounded [0, 1] for Merkle circuits
@@ -356,6 +384,7 @@ cast call $CONTRACT_ADDRESS "isNullifierUsed(bytes32)" $NULLIFIER
 ## Performance Benchmarks
 
 ### Proving Time (Apple M1 Pro)
+
 ```
 poseidon_with_statement:  45ms
 eddsa_with_statement:    198ms
@@ -363,6 +392,7 @@ merkle_with_statement:   342ms
 ```
 
 ### Verification Time (On-chain)
+
 ```
 Groth16 verification: ~280k gas
 PublicStatement decode: ~5k gas
@@ -371,6 +401,7 @@ Total: ~287k gas per proof
 ```
 
 ### Proof Size
+
 ```
 Groth16 proof: 256 bytes (fixed)
 PublicStatement: 116+ bytes (variable)
@@ -392,16 +423,19 @@ UniversalProof total: ~400 bytes
 ## Next Steps
 
 1. **Compile Circuits** (Task 5.1)
+
    ```bash
    pnpm run compile:statement
    ```
 
 2. **Generate Test Inputs** (Task 5.2)
+
    ```bash
    pnpm run statement:inputs
    ```
 
 3. **Generate Proofs** (Task 5.3)
+
    ```bash
    # Generate Poseidon proof
    snarkjs groth16 fullprove ...

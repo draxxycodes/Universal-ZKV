@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * SDK Integration Helper for PublicStatement Circuits
- * 
+ *
  * This script provides utilities to:
  * 1. Convert circuit outputs to PublicStatement format
  * 2. Encode PublicStatement for UniversalProof
@@ -15,10 +15,10 @@ const path = require("path");
 class PublicStatement {
   constructor({ merkle_root, public_key, nullifier, value, extra }) {
     this.merkle_root = merkle_root; // 32 bytes
-    this.public_key = public_key;   // 32 bytes
-    this.nullifier = nullifier;     // 32 bytes
-    this.value = value;             // u128 (16 bytes)
-    this.extra = extra;             // Vec<u8>
+    this.public_key = public_key; // 32 bytes
+    this.nullifier = nullifier; // 32 bytes
+    this.value = value; // u128 (16 bytes)
+    this.extra = extra; // Vec<u8>
   }
 
   /**
@@ -72,7 +72,7 @@ class PublicStatement {
  */
 function createPublicStatementFromMetadata(metadataPath) {
   const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
-  
+
   return new PublicStatement({
     merkle_root: metadata.publicStatement.merkle_root,
     public_key: metadata.publicStatement.public_key,
@@ -87,17 +87,24 @@ function createPublicStatementFromMetadata(metadataPath) {
  */
 class UniversalProof {
   constructor({ proofType, programId, publicInputs, proof }) {
-    this.proofType = proofType;       // u8 (0=Groth16, 1=PLONK, 2=STARK)
-    this.programId = programId;       // String
+    this.proofType = proofType; // u8 (0=Groth16, 1=PLONK, 2=STARK)
+    this.programId = programId; // String
     this.publicInputs = publicInputs; // Buffer (PublicStatement encoded)
-    this.proof = proof;               // Buffer (proof bytes)
+    this.proof = proof; // Buffer (proof bytes)
   }
 
   encode() {
     // Calculate total size
     const programIdBytes = Buffer.from(this.programId, "utf8");
-    const totalSize = 1 + 4 + programIdBytes.length + 4 + this.publicInputs.length + 4 + this.proof.length;
-    
+    const totalSize =
+      1 +
+      4 +
+      programIdBytes.length +
+      4 +
+      this.publicInputs.length +
+      4 +
+      this.proof.length;
+
     const buffer = Buffer.alloc(totalSize);
     let offset = 0;
 
@@ -143,16 +150,23 @@ async function main() {
   console.log("=== PublicStatement SDK Integration Test ===\n");
 
   // Load generated metadata
-  const metadataPath = path.join(__dirname, "..", "inputs", "poseidon_statement_valid_metadata.json");
-  
+  const metadataPath = path.join(
+    __dirname,
+    "..",
+    "inputs",
+    "poseidon_statement_valid_metadata.json",
+  );
+
   if (!fs.existsSync(metadataPath)) {
-    console.error("❌ Metadata not found. Run: node scripts/generate-statement-inputs.cjs");
+    console.error(
+      "❌ Metadata not found. Run: node scripts/generate-statement-inputs.cjs",
+    );
     process.exit(1);
   }
 
   console.log("1. Creating PublicStatement from metadata...");
   const publicStatement = createPublicStatementFromMetadata(metadataPath);
-  
+
   console.log("   ✅ PublicStatement created");
   console.log(`   - merkle_root: ${publicStatement.merkle_root}`);
   console.log(`   - public_key: ${publicStatement.public_key}`);
@@ -168,7 +182,7 @@ async function main() {
   console.log("\n3. Creating mock UniversalProof...");
   // Mock proof data (256 bytes for Groth16)
   const mockProof = Buffer.alloc(256);
-  
+
   const universalProof = new UniversalProof({
     proofType: 0, // Groth16
     programId: "poseidon_with_statement",
@@ -177,7 +191,9 @@ async function main() {
   });
 
   const universalProofEncoded = universalProof.encode();
-  console.log(`   ✅ UniversalProof encoded: ${universalProofEncoded.length} bytes`);
+  console.log(
+    `   ✅ UniversalProof encoded: ${universalProofEncoded.length} bytes`,
+  );
   console.log(`   - Proof type: Groth16 (0)`);
   console.log(`   - Program ID: poseidon_with_statement`);
   console.log(`   - Public inputs: ${encoded.length} bytes`);
@@ -189,12 +205,12 @@ async function main() {
 
   fs.writeFileSync(
     path.join(outputDir, "public_statement_encoded.hex"),
-    publicStatement.toHex()
+    publicStatement.toHex(),
   );
 
   fs.writeFileSync(
     path.join(outputDir, "universal_proof_mock.hex"),
-    universalProof.toHex()
+    universalProof.toHex(),
   );
 
   console.log("   ✅ Saved to outputs/");
@@ -203,11 +219,15 @@ async function main() {
 
   console.log("\n✅ SDK Integration Test Complete!\n");
   console.log("Next steps:");
-  console.log("  1. Install circom: cargo install --git https://github.com/iden3/circom.git");
+  console.log(
+    "  1. Install circom: cargo install --git https://github.com/iden3/circom.git",
+  );
   console.log("  2. Compile circuits: ./scripts/compile-statement-circuits.sh");
   console.log("  3. Generate real proofs using compiled circuits");
   console.log("  4. Replace mock proof with real Groth16 proof");
-  console.log("  5. Test with Stylus contract: verifyUniversal(universalProofBytes)");
+  console.log(
+    "  5. Test with Stylus contract: verifyUniversal(universalProofBytes)",
+  );
 }
 
 if (require.main === module) {
@@ -217,4 +237,8 @@ if (require.main === module) {
   });
 }
 
-module.exports = { PublicStatement, UniversalProof, createPublicStatementFromMetadata };
+module.exports = {
+  PublicStatement,
+  UniversalProof,
+  createPublicStatementFromMetadata,
+};

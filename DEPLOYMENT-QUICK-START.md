@@ -1,6 +1,7 @@
 # UZKV Deployment to Arbitrum Sepolia - Quick Guide
 
 ## ✅ Prerequisites Complete
+
 - [x] cargo-stylus installed (v0.6.3)
 - [x] WASM built (178KB - needs optimization but deployable)
 - [x] Rust toolchain ready
@@ -10,6 +11,7 @@
 ### Step 1: Get Testnet ETH
 
 Get Arbitrum Sepolia ETH from faucets:
+
 - https://faucet.quicknode.com/arbitrum/sepolia
 - https://www.alchemy.com/faucets/arbitrum-sepolia
 - https://arbitrum.faucet.dev
@@ -19,6 +21,7 @@ You'll need ~0.01 ETH for deployment.
 ### Step 2: Set Your Private Key
 
 **Option A: Environment Variable (Recommended for testing)**
+
 ```bash
 export PRIVATE_KEY="0xyour_private_key_here"
 ```
@@ -48,11 +51,13 @@ chmod +x deploy-sepolia.sh
 ### Step 4: Save Contract Address
 
 The deployment will output:
+
 ```
 deployed code at address 0xYOUR_CONTRACT_ADDRESS
 ```
 
 Save this address! You'll need it for:
+
 - SDK configuration
 - Frontend integration
 - VK registration
@@ -62,6 +67,7 @@ Save this address! You'll need it for:
 Visit: https://sepolia.arbiscan.io/address/YOUR_CONTRACT_ADDRESS
 
 You should see:
+
 - ✅ Contract creation transaction
 - ✅ WASM bytecode stored
 - ✅ Ready to receive calls
@@ -113,10 +119,13 @@ cast logs \
 ## 🔍 Troubleshooting
 
 ### Error: "WASM too large"
+
 Your WASM is 178KB. Stylus limit is 128KB for initial deployment.
 
 **Solutions:**
+
 1. **Optimize build** (try this first):
+
 ```bash
 cargo build --target wasm32-unknown-unknown --release
 wasm-opt -Oz target/wasm32-unknown-unknown/release/uzkv_stylus.wasm -o optimized.wasm
@@ -127,7 +136,9 @@ wasm-opt -Oz target/wasm32-unknown-unknown/release/uzkv_stylus.wasm -o optimized
 3. **Remove unused features**: Comment out PLONK/STARK if only using Groth16
 
 ### Error: "Insufficient gas"
+
 Increase gas limit:
+
 ```bash
 cargo stylus deploy \
   --gas-limit 30000000 \
@@ -135,10 +146,13 @@ cargo stylus deploy \
 ```
 
 ### Error: "Nonce too low"
+
 Someone else used your nonce. Just retry - it will auto-increment.
 
 ### Error: "Connection refused"
+
 Make sure you're using the Sepolia RPC:
+
 ```
 --endpoint https://sepolia-rollup.arbitrum.io/rpc
 ```
@@ -154,6 +168,7 @@ Make sure you're using the Sepolia RPC:
 Current: **178KB** → Target: **<128KB**
 
 Quick wins:
+
 1. Remove unused proof systems (PLONK/STARK if not needed)
 2. Optimize vendored dependencies
 3. Use `wasm-opt` tool
@@ -181,16 +196,16 @@ https://sepolia.arbiscan.io/tx/0x...
 After deployment, update your SDK:
 
 ```typescript
-import { UZKVClient } from '@uzkv/sdk';
+import { UZKVClient } from "@uzkv/sdk";
 
 const client = new UZKVClient({
-  rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
-  contractAddress: '0xYOUR_CONTRACT_ADDRESS',
+  rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+  contractAddress: "0xYOUR_CONTRACT_ADDRESS",
 });
 
 // Verify a proof
 const result = await client.verifyUniversal(universalProof);
-console.log('Proof valid:', result);
+console.log("Proof valid:", result);
 ```
 
 ## ✨ Success Checklist
@@ -208,6 +223,7 @@ console.log('Proof valid:', result);
 ## 🆘 Need Help?
 
 If deployment fails:
+
 1. Check `deploy-output.log` for detailed errors
 2. Verify you have enough Sepolia ETH
 3. Try with a fresh wallet
@@ -216,6 +232,7 @@ If deployment fails:
 ## 🎉 You're Ready!
 
 Once deployed, your UZKV contract will:
+
 - ✅ Accept UniversalProof format
 - ✅ Verify Groth16 proofs on-chain
 - ✅ Support PLONK/STARK (when implemented)

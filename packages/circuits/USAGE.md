@@ -5,6 +5,7 @@ This guide shows how to use the circuit infrastructure for proof generation.
 ## Prerequisites
 
 Ensure you have:
+
 - ✅ circom v2.2.3+ installed
 - ✅ snarkjs v0.7.5+ installed
 - ✅ Powers of Tau files generated (see below)
@@ -77,7 +78,7 @@ template Multiplier() {
     signal input a;
     signal input b;
     signal output c;
-    
+
     c <== a * b;
 }
 
@@ -100,6 +101,7 @@ snarkjs r1cs info build/multiplier.r1cs
 ```
 
 **Expected output:**
+
 ```
 [INFO]  snarkJS: Curve: bn-128
 [INFO]  snarkJS: # of Wires: 4
@@ -199,6 +201,7 @@ snarkjs groth16 verify \
 ```
 
 **Expected output:**
+
 ```
 [INFO]  snarkJS: OK!
 ```
@@ -349,11 +352,11 @@ packages/circuits/
 
 Based on Arbitrum Stylus benchmarks:
 
-| System | Gas Cost | vs Groth16 | vs PLONK |
-|--------|----------|------------|----------|
-| **Groth16** | ~450k | baseline | - |
-| **PLONK** | ~750k | +67% | baseline |
-| **STARK (simple)** | ~289k | **-35%** | **-61%** |
+| System             | Gas Cost | vs Groth16 | vs PLONK |
+| ------------------ | -------- | ---------- | -------- |
+| **Groth16**        | ~450k    | baseline   | -        |
+| **PLONK**          | ~750k    | +67%       | baseline |
+| **STARK (simple)** | ~289k    | **-35%**   | **-61%** |
 
 **Recommendation:** Use Groth16 for production circuits on Stylus for best gas efficiency.
 
@@ -362,6 +365,7 @@ Based on Arbitrum Stylus benchmarks:
 ## Troubleshooting
 
 ### "Powers of Tau file not found"
+
 ```bash
 # Generate production PTAU (RECOMMENDED)
 cd packages/circuits/ptau
@@ -372,6 +376,7 @@ snarkjs powersoftau prepare phase2 powersOfTau28_hez_0001.ptau powersOfTau28_hez
 ```
 
 ### "Not enough constraints in Powers of Tau"
+
 ```bash
 # Ensure you're using powersOfTau28_hez_final.ptau (268M constraints)
 # This should handle virtually all production circuits
@@ -380,6 +385,7 @@ snarkjs powersoftau new bn128 29 pot29_0000.ptau  # 536M constraints (rarely nee
 ```
 
 ### "Proof verification failed"
+
 ```bash
 # Ensure witness matches circuit
 snarkjs wtns check build/multiplier.r1cs build/witness.wtns

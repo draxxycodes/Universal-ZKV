@@ -14,6 +14,7 @@
 **Context:** Building REAL proof generation infrastructure with circuits suitable for production deployment on Arbitrum Stylus.
 
 **Constraints:**
+
 - ✅ Industry-grade implementation (no shortcuts)
 - ✅ Uses maximum specifications (powersOfTau28_hez_final.ptau - 268M constraints)
 - ✅ Standard cryptographic primitives
@@ -31,6 +32,7 @@
 **Purpose:** Prove knowledge of a preimage that hashes to a specific value without revealing the preimage.
 
 **Technical Specifications:**
+
 - **Constraints:** ~150 (highly optimized)
 - **Security Level:** 128-bit (Poseidon over BN254)
 - **Hash Function:** Poseidon permutation (SNARK-friendly)
@@ -41,12 +43,14 @@
   - `valid`: 1 if hash matches, 0 otherwise
 
 **Production Features:**
+
 - ✅ Uses standard Poseidon construction from circomlib
 - ✅ Implements proper IsZero check for validation
 - ✅ Optimized constraint count
 - ✅ Clear signal naming and documentation
 
 **Use Cases:**
+
 - Privacy-preserving identity systems
 - Commitment schemes
 - Nullifier generation for anonymous transactions
@@ -61,6 +65,7 @@
 **Purpose:** Verify EdDSA signatures in zero-knowledge for anonymous authentication.
 
 **Technical Specifications:**
+
 - **Constraints:** ~2,500
 - **Security Level:** 128-bit (EdDSA over Baby Jubjub)
 - **Signature Scheme:** EdDSA with MiMC hash
@@ -72,12 +77,14 @@
   - `valid`: 1 if signature is valid
 
 **Production Features:**
+
 - ✅ Uses EdDSAMiMCVerifier from circomlib
 - ✅ Compatible with Ethereum's alt_bn128 precompiles
 - ✅ Baby Jubjub curve (efficient subgroup of BN254)
 - ✅ Constraint-optimized signature verification
 
 **Use Cases:**
+
 - Anonymous authentication systems
 - Private voting mechanisms
 - Credential verification without revealing identity
@@ -92,6 +99,7 @@
 **Purpose:** Prove a leaf exists in a Merkle tree without revealing the leaf or path.
 
 **Technical Specifications:**
+
 - **Constraints:** ~4,000 (20 levels)
 - **Tree Depth:** 20 levels (1,048,576 max leaves)
 - **Security Level:** 128-bit (MiMC7 hash)
@@ -105,6 +113,7 @@
   - `valid`: 1 if leaf is in tree
 
 **Production Features:**
+
 - ✅ Uses MultiMux1 for efficient path selection
 - ✅ MiMC7 hash (collision-resistant, SNARK-friendly)
 - ✅ Production-grade depth (20 levels = 1M+ leaves)
@@ -112,6 +121,7 @@
 - ✅ Redundant security checks
 
 **Use Cases:**
+
 - Private airdrops (claim without revealing address)
 - Anonymous voting (prove eligibility)
 - ZK-rollups (state inclusion proofs)
@@ -121,14 +131,15 @@
 
 ## 📊 Constraint Analysis
 
-| Circuit | Constraints | Public Inputs | Private Inputs | Efficiency |
-|---------|-------------|---------------|----------------|-----------|
-| Poseidon Hash | ~150 | 1 | 2 | ⭐⭐⭐⭐⭐ Excellent |
-| EdDSA Signature | ~2,500 | 3 | 3 | ⭐⭐⭐⭐ Very Good |
-| Merkle Tree (20) | ~4,000 | 1 | 41 | ⭐⭐⭐⭐ Very Good |
-| **Total** | **~6,650** | **5** | **46** | **Well optimized** |
+| Circuit          | Constraints | Public Inputs | Private Inputs | Efficiency           |
+| ---------------- | ----------- | ------------- | -------------- | -------------------- |
+| Poseidon Hash    | ~150        | 1             | 2              | ⭐⭐⭐⭐⭐ Excellent |
+| EdDSA Signature  | ~2,500      | 3             | 3              | ⭐⭐⭐⭐ Very Good   |
+| Merkle Tree (20) | ~4,000      | 1             | 41             | ⭐⭐⭐⭐ Very Good   |
+| **Total**        | **~6,650**  | **5**         | **46**         | **Well optimized**   |
 
 **Headroom Analysis:**
+
 - Max constraints (powersOfTau28_hez_final.ptau): 268,435,456
 - Used constraints: ~6,650
 - Headroom: 268,428,806 (99.9975% available)
@@ -159,6 +170,7 @@ packages/circuits/
 ### Dependencies
 
 **circomlib Templates Used:**
+
 - `circuits/poseidon.circom` - Poseidon hash
 - `circuits/eddsamimc.circom` - EdDSA verification
 - `circuits/bitify.circom` - Bit manipulation
@@ -167,6 +179,7 @@ packages/circuits/
 - `circuits/comparators.circom` - IsZero check
 
 **Installation:**
+
 ```bash
 npm install -g circomlib
 ```
@@ -184,6 +197,7 @@ chmod +x scripts/compile-circuits.sh
 ```
 
 **Output:**
+
 - R1CS files for constraint system
 - WASM witness generators
 - Symbol files for debugging
@@ -224,6 +238,7 @@ snarkjs r1cs info build/merkle_proof.r1cs | grep Constraints
 ```
 
 **Expected Output:**
+
 ```
 # of Constraints: 150        # Poseidon
 # of Constraints: 2500       # EdDSA (approximate)
@@ -255,6 +270,7 @@ node build/poseidon_test_js/generate_witness.js \
 ## 🔐 Security Considerations
 
 ### Poseidon Hash
+
 - ✅ Standardized construction (SNARK-friendly)
 - ✅ 128-bit security level
 - ✅ Collision-resistant
@@ -262,6 +278,7 @@ node build/poseidon_test_js/generate_witness.js \
 - ⚠️ No external audit (use established circomlib version)
 
 ### EdDSA Verification
+
 - ✅ Baby Jubjub curve (Ethereum-compatible)
 - ✅ MiMC hash (SNARK-optimized)
 - ✅ Signature unforgeability
@@ -269,6 +286,7 @@ node build/poseidon_test_js/generate_witness.js \
 - ⚠️ Requires trusted key generation
 
 ### Merkle Tree
+
 - ✅ MiMC7 hash (91 rounds)
 - ✅ Path hiding (privacy-preserving)
 - ✅ Collision-resistant
@@ -281,13 +299,14 @@ node build/poseidon_test_js/generate_witness.js \
 
 **Groth16 Verification Costs (on-chain):**
 
-| Circuit | Constraints | Est. Proof Gen | Est. Verify Gas | Use Case |
-|---------|-------------|----------------|-----------------|----------|
-| Poseidon | 150 | ~0.5s | ~250k | High-throughput |
-| EdDSA | 2,500 | ~2s | ~280k | Standard auth |
-| Merkle | 4,000 | ~3s | ~300k | Privacy-first |
+| Circuit  | Constraints | Est. Proof Gen | Est. Verify Gas | Use Case        |
+| -------- | ----------- | -------------- | --------------- | --------------- |
+| Poseidon | 150         | ~0.5s          | ~250k           | High-throughput |
+| EdDSA    | 2,500       | ~2s            | ~280k           | Standard auth   |
+| Merkle   | 4,000       | ~3s            | ~300k           | Privacy-first   |
 
 **Notes:**
+
 - Proof generation times on modern CPU (single core)
 - Verification gas includes Stylus overhead (~200k base)
 - Actual costs may vary based on public input count
@@ -352,16 +371,19 @@ node build/poseidon_test_js/generate_witness.js \
 ## 🔄 Next Steps
 
 **Immediate:**
+
 1. ✅ Compile all circuits using `./scripts/compile-circuits.sh`
 2. ✅ Verify constraint counts match specifications
 3. ✅ Commit circuits to repository
 
 **Task 3.5.3 (Next):**
+
 - Generate circuit-specific proving/verification keys
 - Perform multi-party trusted setup ceremony
 - Export verification keys for Solidity integration
 
 **Task 3.5.4 (Week 7):**
+
 - Mass proof generation (10,000+ proofs per circuit)
 - Create diverse test dataset
 - Generate malformed proofs for negative testing
@@ -406,7 +428,7 @@ Circuits use maximum specifications:
 
 ---
 
-*Completed by: AI Assistant*  
-*Date: November 20, 2025*  
-*Project: Universal ZK-Proof Verifier (UZKV)*  
-*Phase: 3.5 - Production Circuit Infrastructure*
+_Completed by: AI Assistant_  
+_Date: November 20, 2025_  
+_Project: Universal ZK-Proof Verifier (UZKV)_  
+_Phase: 3.5 - Production Circuit Infrastructure_

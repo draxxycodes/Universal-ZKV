@@ -10,7 +10,9 @@
 ### Status: ⏳ IN PROGRESS (60% complete)
 
 ### Objective
+
 Generate 600+ PLONK proofs (target: 750 total) across all three circuits for comprehensive testing:
+
 - 500+ valid proofs (200 per circuit)
 - 100+ invalid proofs (50 per circuit)
 
@@ -19,6 +21,7 @@ Generate 600+ PLONK proofs (target: 750 total) across all three circuits for com
 #### 1. Tool Development (✅ 100%)
 
 **EdDSA Signature Generator** (`generate-eddsa-signatures.cjs`, 200 lines):
+
 - Generates EdDSA signatures using MiMC signing (matching EdDSAMiMCVerifier circuit)
 - Supports 80/20 valid/invalid split
 - Invalid types: wrong_public_key, tampered_message, tampered_signature
@@ -26,6 +29,7 @@ Generate 600+ PLONK proofs (target: 750 total) across all three circuits for com
 - **Tested**: 5/5 signatures generated successfully
 
 **Fast Merkle Proof Generator** (`generate-merkle-proofs-fast.cjs`, 200 lines):
+
 - Optimized sparse tree implementation
 - Direct path computation (no full tree storage)
 - Uses MiMC7 hash matching circuit
@@ -34,29 +38,34 @@ Generate 600+ PLONK proofs (target: 750 total) across all three circuits for com
 - **Tested**: 5/5 proofs generated successfully in seconds
 
 **Test Corpus Orchestrator** (`generate-test-corpus.cjs`, 200 lines):
+
 - Master script coordinating 6-step generation process
 - Color-coded progress output
 - Generates comprehensive catalog with metadata
 - **Currently running in background** (PID 5227)
 
 **Poseidon Generator Updates** (`generate-test-inputs.cjs`):
+
 - Added invalid input generation (wrong hash outputs)
 - Supports 80/20 valid/invalid split
 
 #### 2. Circuit Compatibility Issues Resolved (✅ 100%)
 
 **Issue 1: EdDSA Signing Method**
+
 - **Problem**: Used `eddsa.signPoseidon()` → "offset out of bounds" error
 - **Root Cause**: Circuit uses EdDSAMiMCVerifier, not EdDSAPoseidon
 - **Solution**: Changed to `eddsa.signMiMC(prvKey, message)`
 - **Status**: ✅ Resolved
 
 **Issue 2: EdDSA Message Format**
+
 - **Problem**: Variable-length messages caused buffer errors
 - **Solution**: Fixed 32-byte Buffer: `crypto.randomBytes(32)`
 - **Status**: ✅ Resolved
 
 **Issue 3: Merkle Performance Bottleneck**
+
 - **Problem**: Original generator built full 2^20 = 1M node trees (very slow)
 - **User Feedback**: "no downgrade" - maintain quality
 - **Solution**: Created optimized fast version with:
@@ -68,6 +77,7 @@ Generate 600+ PLONK proofs (target: 750 total) across all three circuits for com
 #### 3. Input Generation (✅ 100%)
 
 All 750 inputs successfully generated:
+
 - ✅ Poseidon: 250 inputs (200 valid + 50 invalid)
 - ✅ EdDSA: 250 inputs (200 valid + 50 invalid)
 - ✅ Merkle: 250 inputs (200 valid + 50 invalid)
@@ -75,6 +85,7 @@ All 750 inputs successfully generated:
 #### 4. Proof Generation (⏳ ~40% complete)
 
 **Current Progress** (as of latest check):
+
 - ✅ Batch 1: 50 Poseidon proofs COMPLETE
 - ✅ Batch 2: 50 Poseidon proofs COMPLETE
 - 🔄 Batch 3: ~7-50 Poseidon proofs IN PROGRESS
@@ -86,7 +97,8 @@ All 750 inputs successfully generated:
 
 **Estimated Time Remaining**: 30-60 minutes
 
-**Process Status**: 
+**Process Status**:
+
 - Background process running (PID 5227)
 - No errors encountered
 - Generation rate: ~1-2 proofs per second
@@ -158,6 +170,7 @@ packages/circuits/
 ### Status: ✅ TEST SUITE CREATED (Awaiting Task 2.8 completion)
 
 ### Objective
+
 Create comprehensive integration test suite and performance benchmarks for PLONK verification service.
 
 ### Work Completed
@@ -165,6 +178,7 @@ Create comprehensive integration test suite and performance benchmarks for PLONK
 #### 1. Test Structure (✅ 100%)
 
 Created 4 comprehensive test files:
+
 ```
 packages/plonk-service/test/
 ├── integration/
@@ -183,6 +197,7 @@ Total: 1250+ lines of test coverage
 **File**: `test/integration/verify.test.ts` (300+ lines)
 
 **Coverage**:
+
 - ✅ Single proof verification (all 3 circuits)
 - ✅ Valid proof acceptance tests
 - ✅ Invalid proof rejection tests
@@ -196,6 +211,7 @@ Total: 1250+ lines of test coverage
 - ✅ Large payload handling
 
 **Key Test Cases**:
+
 ```typescript
 // Valid proof verification
 POST /verify { circuitType, proof, publicSignals }
@@ -219,6 +235,7 @@ Measure 10 verifications per circuit type
 **File**: `test/integration/attestor.test.ts` (200+ lines)
 
 **Coverage**:
+
 - ✅ Attestation submission after verification
 - ✅ Attestation status queries by proof hash
 - ✅ Attestation event retrieval
@@ -228,6 +245,7 @@ Measure 10 verifications per circuit type
 - ✅ Attestor health check
 
 **Key Test Cases**:
+
 ```typescript
 // Verify with attestation
 POST /verify { ..., submitAttestation: true }
@@ -247,6 +265,7 @@ GET /attestation/events?limit=10&circuitType=poseidon_test
 **File**: `test/e2e/workflow.test.ts` (350+ lines)
 
 **Coverage**:
+
 - ✅ Complete Poseidon workflow (input → proof → verify)
 - ✅ Complete EdDSA workflow (signature → proof → verify)
 - ✅ Complete Merkle workflow (merkle proof → PLONK proof → verify)
@@ -255,11 +274,12 @@ GET /attestation/events?limit=10&circuitType=poseidon_test
 - ✅ Full workflow performance benchmarks (10 iterations)
 
 **Workflow Example**:
+
 ```bash
 # Step 1: Generate input
 node scripts/generate-test-inputs.cjs 1
 
-# Step 2: Generate PLONK proof  
+# Step 2: Generate PLONK proof
 node scripts/plonk-cli.cjs generate poseidon_test input.json output/
 
 # Step 3: Verify via API
@@ -273,6 +293,7 @@ POST /verify { circuitType, proof, publicSignals }
 **File**: `test/performance/profiling.test.ts` (400+ lines)
 
 **Coverage**:
+
 - ✅ Single proof verification latency (n=100 per circuit)
 - ✅ Batch verification performance (sizes: 10, 50)
 - ✅ Batch efficiency analysis (1, 5, 10, 20, 50 proofs)
@@ -283,6 +304,7 @@ POST /verify { circuitType, proof, publicSignals }
 - ✅ Maximum throughput measurement (10 seconds, concurrency=20)
 
 **Metrics Collected**:
+
 - Min/Max/Mean/Median latency
 - P95/P99 percentiles
 - Standard deviation
@@ -291,6 +313,7 @@ POST /verify { circuitType, proof, publicSignals }
 - Batch efficiency ratios
 
 **Report Generation**:
+
 ```json
 {
   "timestamp": "2025-01-27T...",
@@ -317,6 +340,7 @@ POST /verify { circuitType, proof, publicSignals }
 **File**: `task-2.9-integration-tests-benchmarking.md`
 
 **Contents**:
+
 - Complete test suite overview
 - Test coverage breakdown
 - Running instructions
@@ -329,12 +353,14 @@ POST /verify { circuitType, proof, publicSignals }
 ### Test Execution (⏳ Pending Task 2.8)
 
 **Prerequisites**:
+
 - ✅ Test suite created (1250+ lines)
 - ⏳ Task 2.8 corpus generation complete (750 proofs)
 - ✅ WASM verifier built
 - ✅ Dependencies installed
 
 **To Run Tests** (after Task 2.8):
+
 ```bash
 cd packages/plonk-service
 
@@ -343,7 +369,7 @@ pnpm test
 
 # Specific suites
 pnpm test integration
-pnpm test e2e  
+pnpm test e2e
 pnpm test performance
 
 # With coverage
@@ -358,16 +384,19 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 ### Expected Performance Targets
 
 **Poseidon** (601 constraints):
+
 - Single verification: < 1000ms
 - Batch 50: < 20s
 - Throughput: > 10 verifications/sec
 
 **EdDSA** (23,793 constraints):
+
 - Single verification: < 1500ms
 - Batch 50: < 30s
 - Throughput: > 5 verifications/sec
 
 **Merkle** (12,886 constraints):
+
 - Single verification: < 1200ms
 - Batch 50: < 25s
 - Throughput: > 8 verifications/sec
@@ -391,7 +420,7 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 
 1. ✅ **Task 2.1**: PLONK Design Documentation
 2. ✅ **Task 2.2**: KZG Polynomial Commitment
-3. ✅ **Task 2.3**: Fiat-Shamir Transcript  
+3. ✅ **Task 2.3**: Fiat-Shamir Transcript
 4. ✅ **Task 2.4**: PLONK Verifier Core
 5. ✅ **Task 2.5**: Size Optimization & Gate Decision
 6. ✅ **Task 2.6**: Off-Chain Verification Service
@@ -407,6 +436,7 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 **Current Status**: ~85% complete
 
 **Remaining Work**:
+
 - Task 2.8: 30-60 minutes (auto-completing)
 - Task 2.9: 2-3 hours (run tests + analyze results + document)
 
@@ -467,10 +497,11 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 ### Immediate (Auto-completing)
 
 1. **Monitor Task 2.8** corpus generation:
+
    ```bash
    # Check progress
    ps aux | grep generate-test-corpus
-   
+
    # Count completed proofs
    find packages/circuits/proofs/plonk -name "proof.json" | wc -l
    ```
@@ -481,6 +512,7 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
    - Sample verify 5-10 random proofs
 
 3. **Run Task 2.9 tests**:
+
    ```bash
    cd packages/plonk-service
    pnpm test
@@ -513,6 +545,7 @@ node --expose-gc ./node_modules/.bin/vitest test/performance/profiling.test.ts
 ## Files Created This Session
 
 ### Task 2.8 (Corpus Generation)
+
 ```
 packages/circuits/scripts/
 ├── generate-eddsa-signatures.cjs (200 lines)
@@ -529,6 +562,7 @@ packages/circuits/proofs/plonk/poseidon_test/batch/
 ```
 
 ### Task 2.9 (Integration Tests)
+
 ```
 packages/plonk-service/test/
 ├── integration/

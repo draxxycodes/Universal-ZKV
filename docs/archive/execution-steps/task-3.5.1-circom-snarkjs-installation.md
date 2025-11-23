@@ -40,6 +40,7 @@ circom --version
 ```
 
 **Build Details:**
+
 - Compilation target: x86_64-pc-windows-msvc
 - Build type: Release (optimized)
 - Warnings: 6 (non-critical - unused fields, lifetime syntaxes)
@@ -79,6 +80,7 @@ snarkjs powersoftau verify pot15_final.ptau
 ```
 
 **Verification Output:**
+
 ```
 [INFO]  snarkJS: Powers Of tau file OK!
 [INFO]  snarkJS: Contribution #1: First contribution
@@ -86,6 +88,7 @@ snarkjs powersoftau verify pot15_final.ptau
 ```
 
 **File Sizes:**
+
 - pot15_0000.ptau: 13 MB (initial)
 - pot15_0001.ptau: 13 MB (after contribution)
 - pot15_final.ptau: 37 MB (ready for phase 2)
@@ -113,6 +116,7 @@ $ snarkjs powersoftau verify pot15_final.ptau
 ```
 
 **Hash Information:**
+
 - First Contribution Hash: `eca6f514 b89180fc fc6bf9f8 81a5670c...`
 - Next Challenge Hash: `0e468771 db8a717b d2e43e1a 09068d46...`
 - Response Hash: `de584cba 05afc7a9 8ccc8dce 2d9dcace...`
@@ -134,6 +138,7 @@ packages/circuits/ptau/
 ### circom Installation Details
 
 **Compilation Process:**
+
 - Total dependencies: 114 packages
 - Build time: ~63 seconds
 - Key dependencies:
@@ -143,6 +148,7 @@ packages/circuits/ptau/
   - wast v39.0.0 (WASM text format)
 
 **Internal Modules:**
+
 - `circom_algebra` - Field arithmetic
 - `program_structure` - AST definitions
 - `constraint_writers` - R1CS output
@@ -160,6 +166,7 @@ packages/circuits/ptau/
 **Phase 2:** Circuit-specific (requires pot15_final.ptau)
 
 **Why 2^15 instead of 2^28?**
+
 - Development/testing: 32k constraints sufficient for test circuits
 - File size: 37 MB vs 2+ GB for larger ceremonies
 - Download issues: Hermez S3 bucket Access Denied
@@ -167,6 +174,7 @@ packages/circuits/ptau/
 
 **FFT Processing:**
 The prepare phase2 command performed extensive FFT (Fast Fourier Transform) operations:
+
 - alphaTauG1: FFT levels 10-15 (mixing and joining phases)
 - betaTauG1: FFT levels 0-15 (complete transformation)
 - Processing: 16 parallel workers per level
@@ -177,6 +185,7 @@ The prepare phase2 command performed extensive FFT (Fast Fourier Transform) oper
 ## Production Considerations
 
 ### Current Setup (Development)
+
 - ✅ 2^15 constraints (32,768 max)
 - ✅ Sufficient for:
   - Simple Groth16 circuits
@@ -188,11 +197,12 @@ The prepare phase2 command performed extensive FFT (Fast Fourier Transform) oper
 **For production circuits requiring more constraints:**
 
 1. **Download pre-trusted ceremony:**
+
    ```bash
    # Try alternative sources
    curl -L -o powersOfTau28_hez_final_21.ptau \
      https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_21.ptau
-   
+
    # Or use Polygon Hermez GitHub releases
    # Or use SnarkJS ceremony files from GitHub
    ```
@@ -207,6 +217,7 @@ The prepare phase2 command performed extensive FFT (Fast Fourier Transform) oper
    ```
 
 **Constraint Requirements:**
+
 - Groth16 verifier: ~1,000-2,000 constraints
 - PLONK verifier: ~5,000-10,000 constraints
 - STARK verifier: ~50,000-100,000 constraints

@@ -13,26 +13,26 @@ This crate implements traits and implementations for polynomials, FFT-friendly s
 The `polynomial` module provides the following traits for defining polynomials in coefficient form:
 
 - [`Polynomial`](./src/polynomial/mod.rs#L16):
-Requires implementors to support common operations on polynomials,
-such as `Add`, `Sub`, `Zero`, evaluation at a point, degree, etc,
-and defines methods to serialize to and from the coefficient representation of the polynomial.
+  Requires implementors to support common operations on polynomials,
+  such as `Add`, `Sub`, `Zero`, evaluation at a point, degree, etc,
+  and defines methods to serialize to and from the coefficient representation of the polynomial.
 - [`DenseUVPolynomial`](./src/polynomial/mod.rs#L43) :
-Specifies that a `Polynomial` is actually a *univariate* polynomial.
+  Specifies that a `Polynomial` is actually a _univariate_ polynomial.
 - [`DenseMVPolynomial`](./src/polynomial/mod.rs#L59):
-Specifies that a `Polynomial` is actually a *multivariate* polynomial.
+  Specifies that a `Polynomial` is actually a _multivariate_ polynomial.
 
 This crate also provides the following data structures that implement these traits:
 
 - [`univariate/DensePolynomial`](./src/polynomial/univariate/dense.rs#L22):
-Represents degree `d` univariate polynomials via a list of `d + 1` coefficients.
-This struct implements the [`DenseUVPolynomial`](./src/polynomial/mod.rs#L43) trait.
+  Represents degree `d` univariate polynomials via a list of `d + 1` coefficients.
+  This struct implements the [`DenseUVPolynomial`](./src/polynomial/mod.rs#L43) trait.
 - [`univariate/SparsePolynomial`](./src/polynomial/univariate/sparse.rs#L15):
-Represents degree `d` univariate polynomials via a list containing all non-zero monomials.
-This should only be used when most coefficients of the polynomial are zero.
-This struct implements the [`Polynomial`](./src/polynomial/mod.rs#L16) trait
-(but *not* the `DenseUVPolynomial` trait).
+  Represents degree `d` univariate polynomials via a list containing all non-zero monomials.
+  This should only be used when most coefficients of the polynomial are zero.
+  This struct implements the [`Polynomial`](./src/polynomial/mod.rs#L16) trait
+  (but _not_ the `DenseUVPolynomial` trait).
 - [`multivariate/SparsePolynomial`](./src/polynomial/multivariate/sparse.rs#L21):
-Represents multivariate polynomials via a list containing all non-zero monomials.
+  Represents multivariate polynomials via a list containing all non-zero monomials.
 
 This crate also provides the [`univariate/DenseOrSparsePolynomial`](./src/polynomial/univariate/mod.rs#L16) enum, which allows the user to abstract over the type of underlying univariate polynomial (dense or sparse).
 
@@ -63,20 +63,19 @@ assert_eq!(poly.evaluate(&vec![Fq::from(2), Fq::from(3), Fq::from(6)]), Fq::from
 The `evaluations` module provides data structures to represent univariate polynomials in lagrange form.
 
 - [`univariate/Evaluations`](./src/evaluations/univariate/mod.rs#L18)
-Represents a univariate polynomial in evaluation form, which can be used for FFT.
+  Represents a univariate polynomial in evaluation form, which can be used for FFT.
 
 The `evaluations` module also provides the following traits for defining multivariate polynomials in lagrange form:
 
 - [`multivariate/multilinear/MultilinearExtension`](./src/evaluations/multivariate/multilinear/mod.rs#L23)
-Specifies a multilinear polynomial evaluated over boolean hypercube.
-  
+  Specifies a multilinear polynomial evaluated over boolean hypercube.
+
 This crate provides some data structures to implement these traits.
 
 - [`multivariate/multilinear/DenseMultilinearExtension`](./src/evaluations/multivariate/multilinear/dense.rs#L17)
-Represents multilinear extension via a list of evaluations over boolean hypercube.
-  
+  Represents multilinear extension via a list of evaluations over boolean hypercube.
 - [`multivariate/multilinear/SparseMultilinearExtension`](./src/evaluations/multivariate/multilinear/sparse.rs#L20)
-Represents multilinear extension via a list of non-zero evaluations over boolean hypercube.
+  Represents multilinear extension via a list of non-zero evaluations over boolean hypercube.
 
 ### Example
 
@@ -90,7 +89,7 @@ use ark_poly::{
 use ark_std::One;
 
 // Create a multivariate polynomial in 3 variables:
-// f(x_0, x_1, x_2) = 2*x_0^3 + x_0*x_2 + x_1*x_2 
+// f(x_0, x_1, x_2) = 2*x_0^3 + x_0*x_2 + x_1*x_2
 let f = SparsePolynomial::from_coefficients_vec(
     3,
     vec![
@@ -106,7 +105,7 @@ let f = SparsePolynomial::from_coefficients_vec(
 // ...
 // f(1, 1, 1) = 2*1^3 + 1*1 + 1*1 = 4
 let g: DenseMultilinearExtension<Fq> = DenseMultilinearExtension::from_evaluations_vec(
-    3, 
+    3,
     vec![
         Fq::from(0),
         Fq::from(2),
