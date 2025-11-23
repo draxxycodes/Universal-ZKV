@@ -36,126 +36,115 @@ export default function DemoPage() {
       setProgressDetails([]);
       toast.loading("Starting workflow...", { id: "workflow" });
 
-      // Step 1: Generate proofs
-      setCurrentStep("Running generate-all-proofs.cjs...");
-      
-      const generateRes = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ proofType }),
+      // Generate unique session ID
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Connect to Server-Sent Events stream
+      const eventSource = new EventSource(
+        `/api/workflow?sessionId=${sessionId}&proofType=${proofType}`,
+      );
+
+      eventSource.addEventListener("status", (e) => {
+        const data = JSON.parse(e.data);
+        setStatus(data.phase);
+        setCurrentStep(
+          `${data.phase.charAt(0).toUpperCase() + data.phase.slice(1)}... ${data.progress}%`,
+        );
+
+        if (data.phase === "generating") {
+          toast.loading("Generating proofs...", { id: "workflow" });
+        } else if (data.phase === "verifying") {
+          toast.loading("Verifying with UZKV...", { id: "workflow" });
+        } else if (data.phase === "attesting") {
+          toast.loading("Attesting on-chain...", { id: "workflow" });
+        }
       });
 
-      if (!generateRes.ok) throw new Error("Generation failed");
-      const generateData = await generateRes.json();
+      eventSource.addEventListener("log", (e) => {
+        const data = JSON.parse(e.data);
+        setProgressDetails((prev) => [
+          ...prev,
+          {
+            title: data.message.includes("📦")
+              ? "Section"
+              : data.message.includes("🔄")
+                ? "Processing"
+                : data.message.includes("✅")
+                  ? "Success"
+                  : data.message.includes("⏳")
+                    ? "Waiting"
+                    : data.message.includes("🔑")
+                      ? "Hash"
+                      : data.message.includes("🔗")
+                        ? "Link"
+                        : "Info",
+            description: data.message,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+      });
 
-      // Parse the actual script output
-      if (generateData.lines) {
-        const details: StepDetail[] = [];
-        generateData.lines.forEach((line: string) => {
-          if (line.includes('===') || line.includes('────') || !line.trim()) return;
-          
-          details.push({
-            title: line.includes('📦') ? line.trim() : 
-                   line.includes('🔄') ? line.trim() : 
-                   line.includes('✅') ? 'Success' : 
-                   line.includes('📄') ? 'Output' : 'Progress',
-            description: line.trim(),
-            timestamp: new Date().toLocaleTimeString()
-          });
+      eventSource.addEventListener("transaction", (e) => {
+        const data = JSON.parse(e.data);
+        toast.success(`Transaction confirmed: ${data.txHash.slice(0, 10)}...`, {
+          duration: 3000,
         });
-        setProgressDetails(details);
-      }
-
-      setStatus("verifying");
-      toast.loading("Verifying proofs with UZKV...", { id: "workflow" });
-      setCurrentStep("Running verify-with-uzkv.cjs...");
-
-      // Step 2: Verify proofs
-      const verifyRes = await fetch("/api/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ proofType }),
       });
 
-      if (!verifyRes.ok) throw new Error("Verification failed");
-      const verifyData = await verifyRes.json();
+      eventSource.addEventListener("complete", (e) => {
+        const data = JSON.parse(e.data);
+        setStatus("complete");
+        setCurrentStep("All steps completed successfully!");
+        toast.success("Complete workflow finished!", { id: "workflow" });
 
-      // Parse the actual verification output
-      if (verifyData.lines) {
-        const verifyDetails: StepDetail[] = [];
-        verifyData.lines.forEach((line: string) => {
-          if (line.includes('===') || line.includes('────') || !line.trim()) return;
-          
-          verifyDetails.push({
-            title: line.includes('📦') ? line.trim() : 
-                   line.includes('🔄') ? line.trim() : 
-                   line.includes('✅') ? 'Verified' : 
-                   line.includes('⚡') ? 'Gas Estimate' : 'Verification',
-            description: line.trim(),
-            timestamp: new Date().toLocaleTimeString()
-          });
+        // Set final results from the workflow session
+        setResults({
+          proofType,
+          verified: data.verificationResults?.verified || true,
+          circuitsVerified: data.verificationResults?.circuitsVerified || 3,
+          gasUsed: data.verificationResults?.gasEstimate || 0,
+          txHash: data.attestationResults?.[0] || "",
+          txHashes: data.attestationResults || [],
+          explorerUrl: data.attestationResults?.[0]
+            ? `https://sepolia.arbiscan.io/tx/${data.attestationResults[0]}`
+            : "",
+          attestorContract: "0x36e937ebcf56c5dec6ecb0695001becc87738177",
+          network: "arbitrum-sepolia",
+          counts: {
+            generated: data.generatedProofs || {},
+            verified: data.verificationResults || {},
+            attested: data.attestationResults?.length || 0,
+          },
+          timestamp: new Date().toISOString(),
+          totalSteps: progressDetails.length + 1,
         });
-        setProgressDetails(prev => [...prev, ...verifyDetails]);
-      }
 
-      setStatus("attesting");
-      toast.loading("Attesting on Arbitrum Sepolia...", { id: "workflow" });
-      setCurrentStep("Running attest-proofs.cjs...");
-
-      // Step 3: Attest (optional, requires wallet)
-      const attestRes = await fetch("/api/attest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ proofType }),
+        eventSource.close();
       });
 
-      const attestData = await attestRes.json();
-
-      // Parse the actual attestation output
-      if (attestData.success && attestData.lines) {
-        const attestDetails: StepDetail[] = [];
-        attestData.lines.forEach((line: string) => {
-          if (line.includes('===') || line.includes('────') || !line.trim()) return;
-          
-          attestDetails.push({
-            title: line.includes('📦') ? line.trim() : 
-                   line.includes('🔄') ? line.trim() : 
-                   line.includes('✅') ? 'Attested!' : 
-                   line.includes('🔑') ? 'Proof Hash' :
-                   line.includes('⏳') ? 'Waiting' :
-                   line.includes('🔗') ? 'Explorer Link' : 'Attestation',
-            description: line.trim(),
-            timestamp: new Date().toLocaleTimeString()
-          });
-        });
-        setProgressDetails(prev => [...prev, ...attestDetails]);
-      }
-
-      setStatus("complete");
-      setResults({
-        proofType,
-        verified: verifyData.verified,
-        circuitsVerified: verifyData.circuitsVerified || 3,
-        gasUsed: verifyData.gasEstimate || 0,
-        txHash: attestData.txHash,
-        txHashes: attestData.txHashes || [],
-        explorerUrl: attestData.explorerUrl,
-        attestorContract: attestData.attestorContract,
-        network: attestData.network,
-        counts: {
-          generated: generateData.counts,
-          verified: verifyData.counts,
-          attested: attestData.counts
-        },
-        timestamp: new Date().toISOString(),
-        totalSteps: progressDetails.length + 1
+      eventSource.addEventListener("error", (e: any) => {
+        const data = e.data
+          ? JSON.parse(e.data)
+          : { error: "Stream connection error" };
+        console.error("Workflow error:", data.error);
+        setError(data.error);
+        setStatus("error");
+        toast.error(data.error, { id: "workflow" });
+        eventSource.close();
       });
 
-      toast.success("Workflow complete!", { id: "workflow" });
+      eventSource.onerror = (err) => {
+        console.error("EventSource error:", err);
+        setError("Connection to workflow stream failed");
+        setStatus("error");
+        toast.error("Connection failed", { id: "workflow" });
+        eventSource.close();
+      };
     } catch (err: any) {
+      console.error("Workflow error:", err);
+      setError(err.message);
       setStatus("error");
-      setError(err.message || "Workflow failed");
-      toast.error(err.message || "Workflow failed", { id: "workflow" });
+      toast.error(err.message, { id: "workflow" });
     }
   };
 
@@ -350,22 +339,24 @@ export default function DemoPage() {
                   <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
-                <span className="text-sm text-neutral-400">Terminal Output</span>
-                {status !== 'complete' && status !== 'error' && (
+                <span className="text-sm text-neutral-400">
+                  Terminal Output
+                </span>
+                {status !== "complete" && status !== "error" && (
                   <Loader2 className="w-4 h-4 animate-spin text-green-400 ml-auto" />
                 )}
               </div>
               <div className="bg-black rounded-lg p-4 max-h-96 overflow-y-auto text-sm space-y-1">
                 {progressDetails.map((detail, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className="text-green-400 animate-fadeIn leading-relaxed"
                     style={{ animationDelay: `${idx * 0.05}s` }}
                   >
                     {detail.description}
                   </div>
                 ))}
-                {currentStep && status !== 'complete' && (
+                {currentStep && status !== "complete" && (
                   <div className="text-yellow-400 flex items-center gap-2 animate-pulse">
                     <span>▶</span> {currentStep}
                   </div>
@@ -421,13 +412,15 @@ export default function DemoPage() {
                 <CheckCircle className="w-8 h-8 text-green-400" />
                 <h2 className="text-2xl font-bold">Workflow Complete!</h2>
               </div>
-              
+
               {/* Summary Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
                   <p className="text-xs text-neutral-400 mb-1">Generated</p>
                   <p className="text-2xl font-bold text-green-400">
-                    {results.counts?.generated?.groth16 || 0}G + {results.counts?.generated?.plonk || 0}P + {results.counts?.generated?.stark || 0}S
+                    {results.counts?.generated?.groth16 || 0}G +{" "}
+                    {results.counts?.generated?.plonk || 0}P +{" "}
+                    {results.counts?.generated?.stark || 0}S
                   </p>
                 </div>
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
@@ -453,7 +446,9 @@ export default function DemoPage() {
               {/* Network Info */}
               {results.network && (
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a] mb-6">
-                  <p className="text-sm text-neutral-400 mb-2">Network Information</p>
+                  <p className="text-sm text-neutral-400 mb-2">
+                    Network Information
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm font-mono">
                     <div>
                       <span className="text-neutral-500">Network:</span>{" "}
@@ -461,7 +456,9 @@ export default function DemoPage() {
                     </div>
                     <div>
                       <span className="text-neutral-500">Attestor:</span>{" "}
-                      <span className="text-blue-400">{results.attestorContract}</span>
+                      <span className="text-blue-400">
+                        {results.attestorContract}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -470,7 +467,9 @@ export default function DemoPage() {
               {/* Transaction Hashes */}
               {results.txHashes && results.txHashes.length > 0 && (
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
-                  <p className="text-sm text-neutral-400 mb-3">Transaction Hashes ({results.txHashes.length})</p>
+                  <p className="text-sm text-neutral-400 mb-3">
+                    Transaction Hashes ({results.txHashes.length})
+                  </p>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {results.txHashes.map((hash: string, idx: number) => (
                       <a
@@ -482,8 +481,18 @@ export default function DemoPage() {
                       >
                         <span className="text-neutral-500">{idx + 1}.</span>
                         <span className="flex-1">{hash}</span>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
                         </svg>
                       </a>
                     ))}
@@ -494,17 +503,29 @@ export default function DemoPage() {
                     rel="noopener noreferrer"
                     className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-semibold"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
                     </svg>
                     View Attestor Contract
                   </a>
                 </div>
               )}
-              
-              {results.txHash === 'already-attested' && (
+
+              {results.txHash === "already-attested" && (
                 <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
-                  <p className="text-sm text-yellow-400">ℹ️ These proofs were already attested on-chain</p>
+                  <p className="text-sm text-yellow-400">
+                    ℹ️ These proofs were already attested on-chain
+                  </p>
                 </div>
               )}
               <button
