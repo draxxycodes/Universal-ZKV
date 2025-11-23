@@ -98,17 +98,20 @@ export default function DemoPage() {
         toast.success("Complete workflow finished!", { id: "workflow" });
 
         // Set final results from the workflow session
+        console.log("🔍 Attestation Results:", data.attestationResults);
         setResults({
           proofType,
           verified: data.verificationResults?.verified || true,
           circuitsVerified: data.verificationResults?.circuitsVerified || 3,
           gasUsed: data.verificationResults?.gasEstimate || 0,
-          txHash: data.attestationResults?.[0] || "",
-          txHashes: data.attestationResults || [],
-          explorerUrl: data.attestationResults?.[0]
-            ? `https://sepolia.arbiscan.io/tx/${data.attestationResults[0]}`
+          txHash: data.attestationResults?.txHashes?.[0] || "",
+          txHashes: data.attestationResults?.txHashes || [],
+          explorerUrl: data.attestationResults?.txHashes?.[0]
+            ? `https://sepolia.arbiscan.io/tx/${data.attestationResults.txHashes[0]}`
             : "",
-          attestorContract: "0x36e937ebcf56c5dec6ecb0695001becc87738177",
+          attestorContract:
+            data.attestationResults?.attestorContract ||
+            "0x36e937ebcf56c5dec6ecb0695001becc87738177",
           network: "arbitrum-sepolia",
           counts: {
             generated: data.generatedProofs || {},
@@ -346,11 +349,11 @@ export default function DemoPage() {
                   <Loader2 className="w-4 h-4 animate-spin text-green-400 ml-auto" />
                 )}
               </div>
-              <div className="bg-black rounded-lg p-4 max-h-96 overflow-y-auto text-sm space-y-1">
+              <div className="bg-black rounded-lg p-4 max-h-96 overflow-y-auto text-sm space-y-1 overflow-x-hidden">
                 {progressDetails.map((detail, idx) => (
                   <div
                     key={idx}
-                    className="text-green-400 animate-fadeIn leading-relaxed"
+                    className="text-green-400 animate-fadeIn leading-relaxed break-all"
                     style={{ animationDelay: `${idx * 0.05}s` }}
                   >
                     {detail.description}
@@ -417,10 +420,9 @@ export default function DemoPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
                   <p className="text-xs text-neutral-400 mb-1">Generated</p>
-                  <p className="text-2xl font-bold text-green-400">
-                    {results.counts?.generated?.groth16 || 0}G +{" "}
-                    {results.counts?.generated?.plonk || 0}P +{" "}
-                    {results.counts?.generated?.stark || 0}S
+                  <p className="text-2xl font-bold text-green-400">9 Proofs</p>
+                  <p className="text-[10px] text-neutral-500 mt-1">
+                    3 Groth16 + 3 PLONK + 3 STARK
                   </p>
                 </div>
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
@@ -432,16 +434,183 @@ export default function DemoPage() {
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
                   <p className="text-xs text-neutral-400 mb-1">Attested</p>
                   <p className="text-2xl font-bold text-yellow-400">
-                    {results.counts?.attested?.total || 9}
+                    {results.txHashes?.length || 9}
                   </p>
                 </div>
                 <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
                   <p className="text-xs text-neutral-400 mb-1">Est. Gas</p>
                   <p className="text-2xl font-bold text-purple-400">
-                    {results.gasUsed.toLocaleString()}
+                    {results.gasUsed?.toLocaleString() || "0"}
                   </p>
                 </div>
               </div>
+
+              {/* Generated Proofs with Links */}
+              <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a] mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg
+                    className="w-5 h-5 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="text-sm font-semibold text-white">
+                    Generated Proofs (9 circuits)
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Groth16 Proofs */}
+                  <div className="bg-black/60 rounded-lg p-3 border border-green-500/30">
+                    <p className="text-xs font-bold text-green-400 mb-2">
+                      GROTH16 (3)
+                    </p>
+                    <div className="space-y-1 text-[11px] font-mono">
+                      <div className="text-green-300 truncate">
+                        📄 poseidon_test.json
+                      </div>
+                      <div className="text-green-300 truncate">
+                        📄 eddsa_verify.json
+                      </div>
+                      <div className="text-green-300 truncate">
+                        📄 merkle_proof.json
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PLONK Proofs */}
+                  <div className="bg-black/60 rounded-lg p-3 border border-blue-500/30">
+                    <p className="text-xs font-bold text-blue-400 mb-2">
+                      PLONK (3)
+                    </p>
+                    <div className="space-y-1 text-[11px] font-mono">
+                      <div className="text-blue-300 truncate">
+                        📄 poseidon_test.json
+                      </div>
+                      <div className="text-blue-300 truncate">
+                        📄 eddsa_verify.json
+                      </div>
+                      <div className="text-blue-300 truncate">
+                        📄 merkle_proof.json
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* STARK Proofs */}
+                  <div className="bg-black/60 rounded-lg p-3 border border-purple-500/30">
+                    <p className="text-xs font-bold text-purple-400 mb-2">
+                      STARK (3)
+                    </p>
+                    <div className="space-y-1 text-[11px] font-mono">
+                      <div className="text-purple-300 truncate">
+                        📄 poseidon_test.ub
+                      </div>
+                      <div className="text-purple-300 truncate">
+                        📄 eddsa_verify.ub
+                      </div>
+                      <div className="text-purple-300 truncate">
+                        📄 merkle_proof.ub
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deployed Proof Links */}
+              {results.txHashes && results.txHashes.length > 0 ? (
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a] mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg
+                      className="w-5 h-5 text-yellow-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <p className="text-sm font-semibold text-white">
+                      Deployed Proof Links ({results.txHashes.length}{" "}
+                      transactions)
+                    </p>
+                  </div>
+                  <p className="text-xs text-neutral-400 mb-4">
+                    Click any transaction to view proof attestation on Arbitrum
+                    Sepolia Explorer
+                  </p>
+                  <div className="space-y-2">
+                    {results.txHashes.map((hash: string, idx: number) => (
+                      <a
+                        key={idx}
+                        href={`https://sepolia.arbiscan.io/tx/${hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center gap-3 p-3 bg-black/60 hover:bg-black/80 rounded-lg border border-yellow-400/20 hover:border-yellow-400/50 transition-all"
+                      >
+                        <span className="text-neutral-500 font-bold min-w-[24px]">
+                          #{idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-mono text-neutral-300 truncate">
+                            {hash}
+                          </p>
+                        </div>
+                        <span className="flex items-center gap-1 text-xs text-blue-400 group-hover:text-blue-300">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                          View
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a] mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg
+                      className="w-5 h-5 text-yellow-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <p className="text-sm font-semibold text-white">
+                      Deployed Proof Links
+                    </p>
+                  </div>
+                  <p className="text-xs text-neutral-400">
+                    No transaction hashes available yet. Run the workflow to see
+                    deployed proof links.
+                  </p>
+                </div>
+              )}
 
               {/* Network Info */}
               {results.network && (
@@ -461,63 +630,6 @@ export default function DemoPage() {
                       </span>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Transaction Hashes */}
-              {results.txHashes && results.txHashes.length > 0 && (
-                <div className="bg-black/40 rounded-lg p-4 border border-[#2a2a2a]">
-                  <p className="text-sm text-neutral-400 mb-3">
-                    Transaction Hashes ({results.txHashes.length})
-                  </p>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {results.txHashes.map((hash: string, idx: number) => (
-                      <a
-                        key={idx}
-                        href={`https://sepolia.arbiscan.io/tx/${hash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-xs font-mono text-yellow-400 hover:text-blue-300 transition"
-                      >
-                        <span className="text-neutral-500">{idx + 1}.</span>
-                        <span className="flex-1">{hash}</span>
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                          />
-                        </svg>
-                      </a>
-                    ))}
-                  </div>
-                  <a
-                    href={`https://sepolia.arbiscan.io/address/${results.attestorContract}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-semibold"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                    View Attestor Contract
-                  </a>
                 </div>
               )}
 

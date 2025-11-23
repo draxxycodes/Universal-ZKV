@@ -255,11 +255,9 @@ async function attestProofs(
           sendEvent("log", { message: line.trim() });
           await WorkflowManager.addLog(sessionId, line.trim());
 
-          // Parse transaction hashes
-          const txMatch = line.match(
-            /(?:Transaction sent|Attested! TX):\s*(0x[a-fA-F0-9]{64})/,
-          );
-          if (txMatch) {
+          // Parse transaction hashes (only capture "Attested! TX" to avoid duplicates)
+          const txMatch = line.match(/Attested! TX:\s*(0x[a-fA-F0-9]{64})/);
+          if (txMatch && !txHashes.includes(txMatch[1])) {
             txHashes.push(txMatch[1]);
             sendEvent("transaction", { txHash: txMatch[1] });
           }
