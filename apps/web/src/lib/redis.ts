@@ -52,14 +52,14 @@ export const WorkflowManager = {
       startTime: Date.now(),
       lastUpdate: Date.now(),
     };
-    await redis.set(`workflow:${sessionId}`, JSON.stringify(state), {
+    await redis.set(`workflow:${sessionId}`, state, {
       ex: 3600,
     }); // 1 hour TTL
   },
 
   async getSession(sessionId: string): Promise<WorkflowState | null> {
-    const data = await redis.get<string>(`workflow:${sessionId}`);
-    return data ? JSON.parse(data) : null;
+    const data = await redis.get<WorkflowState>(`workflow:${sessionId}`);
+    return data;
   },
 
   async updateSession(
@@ -74,7 +74,7 @@ export const WorkflowManager = {
       ...updates,
       lastUpdate: Date.now(),
     };
-    await redis.set(`workflow:${sessionId}`, JSON.stringify(updated), {
+    await redis.set(`workflow:${sessionId}`, updated, {
       ex: 3600,
     });
   },
@@ -85,7 +85,7 @@ export const WorkflowManager = {
 
     state.logs.push(log);
     state.lastUpdate = Date.now();
-    await redis.set(`workflow:${sessionId}`, JSON.stringify(state), {
+    await redis.set(`workflow:${sessionId}`, state, {
       ex: 3600,
     });
   },

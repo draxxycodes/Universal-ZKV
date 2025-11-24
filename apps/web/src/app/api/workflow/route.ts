@@ -126,7 +126,8 @@ async function generateProofs(
     await log("✓ Proofs ready for verification");
   } catch (error: any) {
     console.error("Generate proofs error:", error);
-    throw new Error(`Proof generation failed: ${error.message}`);
+    const errorMessage = error?.message || String(error);
+    throw new Error(`Proof generation failed: ${errorMessage}`);
   }
 }
 

@@ -40,9 +40,10 @@ export async function getProofFiles(): Promise<ProofFiles> {
     }
 
     return proofFiles;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error reading proof files:", error);
-    throw error;
+    const errorMessage = error?.message || String(error);
+    throw new Error(`Failed to read proof files: ${errorMessage}`);
   }
 }
 
