@@ -2,14 +2,8 @@ import fs from "fs";
 import path from "path";
 import { ethers } from "ethers";
 
-const CIRCUITS_DIR = path.join(
-  process.cwd(),
-  "..",
-  "..",
-  "packages",
-  "circuits",
-);
-const DEPLOY_DIR = path.join(CIRCUITS_DIR, "proofs", "deployment");
+// On Vercel, proof files are in public/proofs directory
+const DEPLOY_DIR = path.join(process.cwd(), "public", "proofs");
 
 export interface ProofFiles {
   groth16: string[];
