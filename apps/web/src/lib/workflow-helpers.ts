@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { ethers } from "ethers";
 
 // On Vercel, proof files are in public/proofs directory
@@ -125,6 +126,17 @@ export async function attestProofs(
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
+    // Create contract instance (matches working local script)
+    const ATTESTOR_ABI = [
+      "function attestProof(bytes32 proofHash) external",
+      "function isAttested(bytes32 proofHash) external view returns (bool)",
+    ];
+    const attestor = new ethers.Contract(
+      ATTESTOR_ADDRESS,
+      ATTESTOR_ABI,
+      wallet,
+    );
+
     await log(`📦 Attesting ${proofType.toUpperCase()} Proofs:`);
 
     // Get proof files
@@ -142,41 +154,68 @@ export async function attestProofs(
       await log("──────────────────────────────────────────────────");
 
       try {
-        // Read proof file
-        const proofData = fs.readFileSync(proofPath, "utf8");
-        const proofHash = ethers.keccak256(ethers.toUtf8Bytes(proofData));
+        // Calculate proof hash using SHA-256 (matches working local script)
+        let proofHash: string;
 
-        await log(`🔑 Proof hash: ${proofHash.substring(0, 20)}...`);
+        if (proofFile.endsWith("_stark_proof.ub")) {
+          // STARK binary proof
+          const proofBuf = fs.readFileSync(proofPath);
+          proofHash = crypto
+            .createHash("sha256")
+            .update(proofBuf)
+            .digest("hex");
+        } else {
+          // Groth16/PLONK JSON proofs
+          const proof = JSON.parse(fs.readFileSync(proofPath, "utf8"));
+          const publicPath = proofPath.replace("_proof.json", "_public.json");
+          const publicInputs = JSON.parse(fs.readFileSync(publicPath, "utf8"));
+
+          const dataStr = JSON.stringify({ proof, publicInputs });
+          proofHash = crypto.createHash("sha256").update(dataStr).digest("hex");
+        }
+
+        await log(`🔑 Proof hash: 0x${proofHash.substring(0, 16)}...`);
+
+        // Check if already attested
+        try {
+          const isAttested = await attestor.isAttested("0x" + proofHash);
+          if (isAttested) {
+            await log(`ℹ️  Already attested (skipped)`);
+            continue;
+          }
+        } catch (checkError) {
+          // If check fails, continue with attestation attempt
+          await log(`⚠️  Could not check attestation status, proceeding...`);
+        }
+
         await log(`📤 Submitting to Attestor...`);
 
-        // Send attestation transaction
-        // Contract call: attestor.attest_proof(proofHash)
-        const tx = await wallet.sendTransaction({
-          to: ATTESTOR_ADDRESS,
-          data: ethers.concat([
-            ethers.id("attest_proof(bytes32)").substring(0, 10),
-            ethers.zeroPadValue(proofHash, 32),
-          ]),
-          gasLimit: 300000,
+        // Send transaction using contract instance (matches working local script)
+        const tx = await attestor.attestProof("0x" + proofHash, {
+          gasLimit: 100000,
+          type: 0, // Legacy transaction
         });
 
         await log(`⏳ Transaction sent: ${tx.hash}`);
         onTransaction?.(tx.hash);
 
         await log(`⏳ Waiting for confirmation...`);
-        await tx.wait();
+        const receipt = await tx.wait(1);
 
-        await log(`✅ Attested! TX: ${tx.hash}`);
-        await log(`🔗 https://sepolia.arbiscan.io/tx/${tx.hash}`);
-
-        txHashes.push(tx.hash);
+        if (receipt.status === 1) {
+          await log(`✅ Attested! TX: ${receipt.hash}`);
+          await log(`🔗 https://sepolia.arbiscan.io/tx/${receipt.hash}`);
+          txHashes.push(receipt.hash);
+        } else {
+          await log(`❌ Transaction failed`);
+        }
       } catch (error: any) {
         await log(`❌ Failed to attest ${proofFile}: ${error.message}`);
         console.error(error);
       }
     }
 
-    await log("\n=== Attestation Summary ===");
+    await log("=== Attestation Summary ===");
     await log(`✅ Successfully attested ${txHashes.length} proofs`);
 
     return txHashes;
