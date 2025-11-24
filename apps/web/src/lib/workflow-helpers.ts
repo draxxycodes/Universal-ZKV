@@ -150,11 +150,11 @@ export async function attestProofs(
         await log(`📤 Submitting to Attestor...`);
 
         // Send attestation transaction
-        // Simple contract call: attestor.attest(proofHash)
+        // Contract call: attestor.attest_proof(proofHash)
         const tx = await wallet.sendTransaction({
           to: ATTESTOR_ADDRESS,
           data: ethers.concat([
-            ethers.id("attest(bytes32)").substring(0, 10),
+            ethers.id("attest_proof(bytes32)").substring(0, 10),
             ethers.zeroPadValue(proofHash, 32),
           ]),
           gasLimit: 300000,
