@@ -1,23 +1,9 @@
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
 
-// Create Redis client with connection pooling
+// Create Redis client using Upstash REST API (works in serverless)
 const redis = new Redis({
-  host: process.env.REDIS_HOST || "localhost",
-  port: parseInt(process.env.REDIS_PORT || "6379"),
-  password: process.env.REDIS_PASSWORD,
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  maxRetriesPerRequest: 3,
-});
-
-redis.on("error", (err) => {
-  console.error("Redis Client Error:", err);
-});
-
-redis.on("connect", () => {
-  console.log("Redis Client Connected");
+  url: process.env.UPSTASH_REDIS_REST_URL || "",
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
 });
 
 export default redis;
@@ -66,11 +52,13 @@ export const WorkflowManager = {
       startTime: Date.now(),
       lastUpdate: Date.now(),
     };
-    await redis.setex(`workflow:${sessionId}`, 3600, JSON.stringify(state)); // 1 hour TTL
+    await redis.set(`workflow:${sessionId}`, JSON.stringify(state), {
+      ex: 3600,
+    }); // 1 hour TTL
   },
 
   async getSession(sessionId: string): Promise<WorkflowState | null> {
-    const data = await redis.get(`workflow:${sessionId}`);
+    const data = await redis.get<string>(`workflow:${sessionId}`);
     return data ? JSON.parse(data) : null;
   },
 
@@ -86,7 +74,9 @@ export const WorkflowManager = {
       ...updates,
       lastUpdate: Date.now(),
     };
-    await redis.setex(`workflow:${sessionId}`, 3600, JSON.stringify(updated));
+    await redis.set(`workflow:${sessionId}`, JSON.stringify(updated), {
+      ex: 3600,
+    });
   },
 
   async addLog(sessionId: string, log: string): Promise<void> {
@@ -95,7 +85,9 @@ export const WorkflowManager = {
 
     state.logs.push(log);
     state.lastUpdate = Date.now();
-    await redis.setex(`workflow:${sessionId}`, 3600, JSON.stringify(state));
+    await redis.set(`workflow:${sessionId}`, JSON.stringify(state), {
+      ex: 3600,
+    });
   },
 
   async storeProofs(

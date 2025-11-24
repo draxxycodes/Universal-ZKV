@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.56.0",
+    "@upstash/redis": "^1.35.6",
     "clsx": "^2.1.0",
     "ioredis": "^5.8.2",
     "lucide-react": "^0.445.0",
