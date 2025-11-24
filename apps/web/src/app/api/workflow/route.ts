@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import { WorkflowManager } from "@/lib/redis";
-import { spawn } from "child_process";
-import path from "path";
+import {
+  getProofFiles,
+  verifyProofs as verifyProofsHelper,
+  attestProofs as attestProofsHelper,
+} from "@/lib/workflow-helpers";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
@@ -79,70 +82,27 @@ async function generateProofs(
   proofType: string,
   sendEvent: (event: string, data: any) => void,
 ): Promise<void> {
-  const projectRoot = path.join(process.cwd(), "..", "..");
-  const scriptPath = path.join(
-    projectRoot,
-    "scripts",
-    "generate-all-proofs.cjs",
-  );
-
-  return new Promise((resolve, reject) => {
-    const child = spawn("node", [scriptPath], {
-      cwd: projectRoot,
-      shell: true,
-    });
-
-    let stdout = "";
-    const proofFiles = {
-      groth16: [] as string[],
-      plonk: [] as string[],
-      stark: [] as string[],
+  try {
+    const log = (message: string) => {
+      sendEvent("log", { message });
+      WorkflowManager.addLog(sessionId, message);
     };
 
-    child.stdout.on("data", async (data) => {
-      const text = data.toString();
-      stdout += text;
+    log("=== Loading Pre-Generated Proofs ===");
 
-      // Send each line as it comes
-      const lines = text.split("\n");
-      for (const line of lines) {
-        if (line.trim()) {
-          sendEvent("log", { message: line.trim() });
-          await WorkflowManager.addLog(sessionId, line.trim());
+    // Get proof files from deployment directory
+    const proofFiles = await getProofFiles();
 
-          // Parse proof files
-          if (line.includes("_groth16_proof.json")) {
-            proofFiles.groth16.push(line.trim());
-          } else if (line.includes("_plonk_proof.json")) {
-            proofFiles.plonk.push(line.trim());
-          } else if (line.includes("_stark_proof.ub")) {
-            proofFiles.stark.push(line.trim());
-          }
-        }
-      }
-    });
+    log(`✓ Found ${proofFiles.groth16.length} Groth16 proofs`);
+    log(`✓ Found ${proofFiles.plonk.length} PLONK proofs`);
+    log(`✓ Found ${proofFiles.stark.length} STARK proofs`);
 
-    child.stderr.on("data", async (data) => {
-      const text = data.toString();
-      sendEvent("log", { message: `ERROR: ${text}`, type: "error" });
-      await WorkflowManager.addLog(sessionId, `ERROR: ${text}`);
-    });
-
-    child.on("close", async (code) => {
-      if (code !== 0) {
-        reject(new Error(`Generation failed with code ${code}`));
-      } else {
-        await WorkflowManager.storeProofs(sessionId, proofFiles);
-        resolve();
-      }
-    });
-
-    // Timeout after 60 seconds
-    setTimeout(() => {
-      child.kill();
-      reject(new Error("Generation timeout"));
-    }, 60000);
-  });
+    // Store proof files in session
+    await WorkflowManager.storeProofs(sessionId, proofFiles);
+    log("✓ Proofs ready for verification");
+  } catch (error: any) {
+    throw new Error(`Proof generation failed: ${error.message}`);
+  }
 }
 
 async function verifyProofs(
@@ -150,68 +110,24 @@ async function verifyProofs(
   proofType: string,
   sendEvent: (event: string, data: any) => void,
 ): Promise<void> {
-  const projectRoot = path.join(process.cwd(), "..", "..");
-  const scriptPath = path.join(projectRoot, "scripts", "verify-with-uzkv.cjs");
+  try {
+    const log = (message: string) => {
+      sendEvent("log", { message });
+      WorkflowManager.addLog(sessionId, message);
+    };
 
-  return new Promise((resolve, reject) => {
-    const child = spawn("node", [scriptPath], {
-      cwd: projectRoot,
-      shell: true,
-    });
+    // Use the helper function to verify proofs
+    const results = await verifyProofsHelper(proofType, log);
 
-    let stdout = "";
-    let verifiedCount = 0;
-    let gasEstimate = 0;
+    log(
+      `✓ Verification complete: ${results.circuitsVerified} circuits verified`,
+    );
+    log(`✓ Estimated gas: ${results.gasEstimate}`);
 
-    child.stdout.on("data", async (data) => {
-      const text = data.toString();
-      stdout += text;
-
-      const lines = text.split("\n");
-      for (const line of lines) {
-        if (line.trim()) {
-          sendEvent("log", { message: line.trim() });
-          await WorkflowManager.addLog(sessionId, line.trim());
-
-          // Parse verification results
-          if (line.includes("✅") && line.includes("Verified")) {
-            verifiedCount++;
-          }
-          if (line.includes("gas")) {
-            const match = line.match(/(\d+)k?\s*gas/i);
-            if (match) {
-              gasEstimate =
-                parseInt(match[1]) * (line.includes("k") ? 1000 : 1);
-            }
-          }
-        }
-      }
-    });
-
-    child.stderr.on("data", async (data) => {
-      const text = data.toString();
-      sendEvent("log", { message: `ERROR: ${text}`, type: "error" });
-      await WorkflowManager.addLog(sessionId, `ERROR: ${text}`);
-    });
-
-    child.on("close", async (code) => {
-      if (code !== 0) {
-        reject(new Error(`Verification failed with code ${code}`));
-      } else {
-        await WorkflowManager.storeVerificationResults(sessionId, {
-          verified: verifiedCount > 0,
-          circuitsVerified: verifiedCount,
-          gasEstimate,
-        });
-        resolve();
-      }
-    });
-
-    setTimeout(() => {
-      child.kill();
-      reject(new Error("Verification timeout"));
-    }, 30000);
-  });
+    await WorkflowManager.storeVerificationResults(sessionId, results);
+  } catch (error: any) {
+    throw new Error(`Verification failed: ${error.message}`);
+  }
 }
 
 async function attestProofs(
@@ -233,60 +149,29 @@ async function attestProofs(
     return;
   }
 
-  const projectRoot = path.join(process.cwd(), "..", "..");
-  const scriptPath = path.join(projectRoot, "scripts", "attest-proofs.cjs");
+  try {
+    const log = (message: string) => {
+      sendEvent("log", { message });
+      WorkflowManager.addLog(sessionId, message);
+    };
 
-  return new Promise((resolve, reject) => {
-    const child = spawn("node", [scriptPath], {
-      cwd: projectRoot,
-      shell: true,
+    const onTransaction = (txHash: string) => {
+      sendEvent("transaction", { txHash });
+    };
+
+    // Use the helper function to attest proofs
+    const txHashes = await attestProofsHelper(proofType, log, onTransaction);
+
+    log(`✓ Attestation complete: ${txHashes.length} proofs attested`);
+
+    await WorkflowManager.storeAttestationResults(sessionId, {
+      txHashes,
+      network: "Arbitrum Sepolia",
+      attestorContract:
+        process.env.NEXT_PUBLIC_ATTESTOR_ADDRESS ||
+        "0x36e937ebcf56c5dec6ecb0695001becc87738177",
     });
-
-    let stdout = "";
-    const txHashes: string[] = [];
-
-    child.stdout.on("data", async (data) => {
-      const text = data.toString();
-      stdout += text;
-
-      const lines = text.split("\n");
-      for (const line of lines) {
-        if (line.trim()) {
-          sendEvent("log", { message: line.trim() });
-          await WorkflowManager.addLog(sessionId, line.trim());
-
-          // Parse transaction hashes (only capture "Attested! TX" to avoid duplicates)
-          const txMatch = line.match(/Attested! TX:\s*(0x[a-fA-F0-9]{64})/);
-          if (txMatch && !txHashes.includes(txMatch[1])) {
-            txHashes.push(txMatch[1]);
-            sendEvent("transaction", { txHash: txMatch[1] });
-          }
-        }
-      }
-    });
-
-    child.stderr.on("data", async (data) => {
-      const text = data.toString();
-      sendEvent("log", { message: `ERROR: ${text}`, type: "error" });
-      await WorkflowManager.addLog(sessionId, `ERROR: ${text}`);
-    });
-
-    child.on("close", async (code) => {
-      if (code !== 0 && txHashes.length === 0) {
-        reject(new Error(`Attestation failed with code ${code}`));
-      } else {
-        await WorkflowManager.storeAttestationResults(sessionId, {
-          txHashes,
-          network: "Arbitrum Sepolia",
-          attestorContract: "0x36e937ebcf56c5dec6ecb0695001becc87738177",
-        });
-        resolve();
-      }
-    });
-
-    setTimeout(() => {
-      child.kill();
-      reject(new Error("Attestation timeout"));
-    }, 120000); // 2 minutes for blockchain transactions
-  });
+  } catch (error: any) {
+    throw new Error(`Attestation failed: ${error.message}`);
+  }
 }
