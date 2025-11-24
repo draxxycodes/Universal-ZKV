@@ -76,6 +76,9 @@ packages/contracts/lib/
 packages/circuits/proofs/
 packages/plonk-service/proofs/
 
+# Exclude website-proofs pool (9000 files - regenerate locally)
+packages/circuits/website-proofs/
+
 # Exclude proof metadata and catalogs
 packages/circuits/proof-catalog.json
 packages/circuits/test-corpus-catalog.json

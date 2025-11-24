@@ -3,7 +3,16 @@ import path from "path";
 import crypto from "crypto";
 import { ethers } from "ethers";
 
-// On Vercel, proof files are in public/proofs directory
+// Use website-proofs directory with 9,000 proofs (1,000 per circuit per type)
+// This allows us to randomly select fresh proofs each workflow run
+const WEBSITE_PROOFS_DIR = path.join(
+  process.cwd(),
+  "..",
+  "..",
+  "packages",
+  "circuits",
+  "website-proofs",
+);
 const DEPLOY_DIR = path.join(process.cwd(), "public", "proofs");
 
 export interface ProofFiles {
@@ -13,39 +22,74 @@ export interface ProofFiles {
 }
 
 /**
- * Read pre-generated proof files from deployment directory
- * Replaces generate-all-proofs.cjs
+ * Select 3 random proofs from the website-proofs pool (1 per circuit)
+ * This ensures we always use fresh, un-attested proofs
+ */
+function selectRandomProofs(
+  proofType: "groth16" | "plonk" | "stark",
+): string[] {
+  const circuits = ["eddsa_verify", "merkle_proof", "poseidon_test"];
+  const selectedProofs: string[] = [];
+
+  try {
+    // Check if website-proofs directory exists
+    const proofDir = fs.existsSync(WEBSITE_PROOFS_DIR)
+      ? WEBSITE_PROOFS_DIR
+      : DEPLOY_DIR;
+
+    const allFiles = fs.readdirSync(proofDir);
+
+    for (const circuit of circuits) {
+      let matchingFiles: string[];
+
+      if (proofType === "stark") {
+        // STARK proofs are .ub files
+        matchingFiles = allFiles.filter(
+          (f) => f.startsWith(`${circuit}_stark_`) && f.endsWith(".ub"),
+        );
+      } else {
+        // Groth16/PLONK proofs are .json files
+        matchingFiles = allFiles.filter(
+          (f) =>
+            f.startsWith(`${circuit}_${proofType}_`) &&
+            f.endsWith("_proof.json"),
+        );
+      }
+
+      if (matchingFiles.length > 0) {
+        // Pick a random proof from available ones
+        const randomIndex = Math.floor(Math.random() * matchingFiles.length);
+        selectedProofs.push(matchingFiles[randomIndex]);
+      } else {
+        // Fallback to old naming convention if new format not found
+        const fallbackName =
+          proofType === "stark"
+            ? `${circuit}_stark_proof.ub`
+            : `${circuit}_${proofType}_proof.json`;
+        if (allFiles.includes(fallbackName)) {
+          selectedProofs.push(fallbackName);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(`Error selecting random ${proofType} proofs:`, error);
+  }
+
+  return selectedProofs;
+}
+
+/**
+ * Get random proof files from website-proofs pool
+ * Replaces generate-all-proofs.cjs - now we just select random ones each time
  */
 export async function getProofFiles(): Promise<ProofFiles> {
   const proofFiles: ProofFiles = {
-    groth16: [],
-    plonk: [],
-    stark: [],
+    groth16: selectRandomProofs("groth16"),
+    plonk: selectRandomProofs("plonk"),
+    stark: selectRandomProofs("stark"),
   };
 
-  try {
-    if (!fs.existsSync(DEPLOY_DIR)) {
-      throw new Error(`Deployment directory not found: ${DEPLOY_DIR}`);
-    }
-
-    const files = fs.readdirSync(DEPLOY_DIR);
-
-    for (const file of files) {
-      if (file.endsWith("_groth16_proof.json")) {
-        proofFiles.groth16.push(file);
-      } else if (file.endsWith("_plonk_proof.json")) {
-        proofFiles.plonk.push(file);
-      } else if (file.endsWith("_stark_proof.ub")) {
-        proofFiles.stark.push(file);
-      }
-    }
-
-    return proofFiles;
-  } catch (error: any) {
-    console.error("Error reading proof files:", error);
-    const errorMessage = error?.message || String(error);
-    throw new Error(`Failed to read proof files: ${errorMessage}`);
-  }
+  return proofFiles;
 }
 
 /**
@@ -147,7 +191,13 @@ export async function attestProofs(
 
     // Attest each proof
     for (const proofFile of filesForType) {
-      const proofPath = path.join(DEPLOY_DIR, proofFile);
+      // Check both website-proofs and public/proofs directories
+      const websiteProofPath = path.join(WEBSITE_PROOFS_DIR, proofFile);
+      const deployProofPath = path.join(DEPLOY_DIR, proofFile);
+      const proofPath = fs.existsSync(websiteProofPath)
+        ? websiteProofPath
+        : deployProofPath;
+
       const circuitName = proofFile.split("_")[0];
 
       await log(`🔄 ${circuitName}:`);

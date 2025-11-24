@@ -9,6 +9,7 @@ const path = require("path");
 
 const CIRCUITS_DIR = path.join(__dirname, "..", "packages", "circuits");
 const PROOFS_DIR = path.join(CIRCUITS_DIR, "proofs");
+const WEBSITE_PROOFS_DIR = path.join(CIRCUITS_DIR, "website-proofs");
 const DEPLOY_DIR = path.join(PROOFS_DIR, "deployment");
 const PUBLIC_DIR = path.join(__dirname, "..", "apps", "web", "public", "proofs");
 
@@ -16,8 +17,34 @@ console.log("=== Refreshing Deployment Proofs ===\n");
 
 const circuits = ["poseidon_test", "eddsa_verify", "merkle_proof"];
 
-// Select a random valid proof file for each circuit
-function getRandomProofFiles(circuit) {
+// Select a random proof file from website-proofs pool
+function getRandomProofFiles(circuit, proofType) {
+  // Try website-proofs directory first (1000 proofs available)
+  if (fs.existsSync(WEBSITE_PROOFS_DIR)) {
+    const files = fs.readdirSync(WEBSITE_PROOFS_DIR);
+    const matchingProofs = files.filter(
+      (f) =>
+        f.startsWith(`${circuit}_${proofType}_`) &&
+        f.endsWith("_proof.json") &&
+        !f.includes("public"),
+    );
+
+    if (matchingProofs.length > 0) {
+      // Pick random proof from the pool
+      const randomIndex = Math.floor(Math.random() * matchingProofs.length);
+      const proofFile = matchingProofs[randomIndex];
+      const baseName = proofFile.replace("_proof.json", "");
+
+      return {
+        proof: path.join(WEBSITE_PROOFS_DIR, `${baseName}_proof.json`),
+        public: path.join(WEBSITE_PROOFS_DIR, `${baseName}_public.json`),
+        baseName,
+        source: "website-proofs",
+      };
+    }
+  }
+
+  // Fallback to original valid directory
   const validDir = path.join(PROOFS_DIR, circuit, "valid");
 
   if (!fs.existsSync(validDir)) {
@@ -47,6 +74,7 @@ function getRandomProofFiles(circuit) {
     public: path.join(validDir, `${baseName}_public.json`),
     witness: path.join(validDir, `${baseName}_witness.json`),
     baseName,
+    source: "valid",
   };
 }
 
@@ -89,20 +117,40 @@ if (!fs.existsSync(PUBLIC_DIR)) {
   fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 }
 
-// Copy Groth16 proofs (random selection from corpus)
+// Check if website-proofs pool exists
+const hasWebsiteProofs = fs.existsSync(WEBSITE_PROOFS_DIR);
+if (hasWebsiteProofs) {
+  const websiteProofFiles = fs.readdirSync(WEBSITE_PROOFS_DIR);
+  const websiteProofCount = websiteProofFiles.filter((f) =>
+    f.endsWith(".json"),
+  ).length;
+  console.log(`✅ Using website-proofs pool (${websiteProofCount} files available)`);
+  console.log(
+    `💡 Run: node scripts/generate-website-proofs.cjs to create 9,000 proofs\n`,
+  );
+} else {
+  console.log("⚠️  website-proofs not found, using valid corpus");
+  console.log(
+    `💡 Tip: Run 'node scripts/generate-website-proofs.cjs' to create 1,000 proofs per type\n`,
+  );
+}
+
+// Copy Groth16 proofs (random selection from website-proofs or corpus)
 console.log("📦 Refreshing Groth16 Proofs:");
 console.log("─".repeat(50));
 
 for (const circuit of circuits) {
   console.log(`\n🔄 ${circuit}:`);
-  
-  const proofFiles = getRandomProofFiles(circuit);
+
+  const proofFiles = getRandomProofFiles(circuit, "groth16");
   if (!proofFiles) {
     console.log(`   ⚠️  Skipping ${circuit}`);
     continue;
   }
-  
-  console.log(`   📄 Selected: ${proofFiles.baseName}`);
+
+  console.log(
+    `   📄 Selected: ${proofFiles.baseName} (from ${proofFiles.source})`,
+  );
   copyProofFiles(circuit, proofFiles, "groth16");
 }
 
@@ -112,29 +160,59 @@ console.log("─".repeat(50));
 
 for (const circuit of circuits) {
   console.log(`\n🔄 ${circuit}:`);
-  
-  const proofFiles = getRandomProofFiles(circuit);
+
+  const proofFiles = getRandomProofFiles(circuit, "plonk");
   if (!proofFiles) {
     console.log(`   ⚠️  Skipping ${circuit}`);
     continue;
   }
-  
-  console.log(`   📄 Selected: ${proofFiles.baseName}`);
+
+  console.log(
+    `   📄 Selected: ${proofFiles.baseName} (from ${proofFiles.source})`,
+  );
   copyProofFiles(circuit, proofFiles, "plonk");
 }
 
-// Copy STARK proofs (they should already exist)
+// Copy STARK proofs (random selection from website-proofs or deployment)
 console.log("\n\n📦 STARK Proofs:");
 console.log("─".repeat(50));
-console.log("(STARK proofs remain unchanged - using existing .ub files)");
 
 for (const circuit of circuits) {
+  // Try website-proofs pool first
+  if (fs.existsSync(WEBSITE_PROOFS_DIR)) {
+    const files = fs.readdirSync(WEBSITE_PROOFS_DIR);
+    const starkProofs = files.filter(
+      (f) => f.startsWith(`${circuit}_stark_`) && f.endsWith(".ub"),
+    );
+
+    if (starkProofs.length > 0) {
+      // Pick random STARK proof from pool
+      const randomIndex = Math.floor(Math.random() * starkProofs.length);
+      const starkFile = starkProofs[randomIndex];
+
+      const sourceStark = path.join(WEBSITE_PROOFS_DIR, starkFile);
+      const deployStark = path.join(DEPLOY_DIR, `${circuit}_stark_proof.ub`);
+      const publicStark = path.join(PUBLIC_DIR, `${circuit}_stark_proof.ub`);
+
+      fs.copyFileSync(sourceStark, deployStark);
+      fs.copyFileSync(sourceStark, publicStark);
+
+      console.log(
+        `✅ ${circuit}: Copied ${starkFile} (from website-proofs pool)`,
+      );
+      continue;
+    }
+  }
+
+  // Fallback to existing deployment STARK proofs
   const deployStark = path.join(DEPLOY_DIR, `${circuit}_stark_proof.ub`);
   const publicStark = path.join(PUBLIC_DIR, `${circuit}_stark_proof.ub`);
-  
-  if (fs.existsSync(deployStark) && !fs.existsSync(publicStark)) {
+
+  if (fs.existsSync(deployStark)) {
     fs.copyFileSync(deployStark, publicStark);
-    console.log(`✅ Copied ${circuit}_stark_proof.ub to public`);
+    console.log(`✅ ${circuit}: Using existing STARK proof`);
+  } else {
+    console.log(`⚠️  ${circuit}: No STARK proof found`);
   }
 }
 
