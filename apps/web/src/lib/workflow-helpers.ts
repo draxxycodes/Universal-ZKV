@@ -52,26 +52,26 @@ export async function getProofFiles(): Promise<ProofFiles> {
  */
 export async function verifyProofs(
   proofType: string,
-  onLog?: (message: string) => void,
+  onLog?: (message: string) => void | Promise<void>,
 ): Promise<{
   verified: boolean;
   circuitsVerified: number;
   gasEstimate: number;
 }> {
   try {
-    const log = (msg: string) => {
+    const log = async (msg: string) => {
       console.log(msg);
-      onLog?.(msg);
+      await onLog?.(msg);
     };
 
-    log(`=== Verifying ${proofType.toUpperCase()} Proofs ===`);
+    await log(`=== Verifying ${proofType.toUpperCase()} Proofs ===`);
 
     // For now, return mock verification results
     // In production, this would call the actual contract
     const proofFiles = await getProofFiles();
     const filesForType = proofFiles[proofType as keyof ProofFiles] || [];
 
-    log(`Found ${filesForType.length} ${proofType} proofs`);
+    await log(`Found ${filesForType.length} ${proofType} proofs`);
 
     // Simulate verification delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -93,18 +93,18 @@ export async function verifyProofs(
  */
 export async function attestProofs(
   proofType: string,
-  onLog?: (message: string) => void,
+  onLog?: (message: string) => void | Promise<void>,
   onTransaction?: (txHash: string) => void,
 ): Promise<string[]> {
-  const log = (msg: string) => {
+  const log = async (msg: string) => {
     console.log(msg);
-    onLog?.(msg);
+    await onLog?.(msg);
   };
 
   try {
     // Check if private key is configured
     if (!process.env.PRIVATE_KEY) {
-      log("WARNING: PRIVATE_KEY not configured. Skipping attestation.");
+      await log("WARNING: PRIVATE_KEY not configured. Skipping attestation.");
       return [];
     }
 
@@ -115,16 +115,16 @@ export async function attestProofs(
       process.env.NEXT_PUBLIC_ATTESTOR_ADDRESS ||
       "0x36e937ebcf56c5dec6ecb0695001becc87738177";
 
-    log(`=== Proof Attestation on Arbitrum Sepolia ===`);
-    log(`📍 Attestor: ${ATTESTOR_ADDRESS}`);
-    log(`🌐 Network: Arbitrum Sepolia`);
-    log("──────────────────────────────────────────────────");
+    await log(`=== Proof Attestation on Arbitrum Sepolia ===`);
+    await log(`📍 Attestor: ${ATTESTOR_ADDRESS}`);
+    await log(`🌐 Network: Arbitrum Sepolia`);
+    await log("──────────────────────────────────────────────────");
 
     // Create provider and wallet
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-    log(`📦 Attesting ${proofType.toUpperCase()} Proofs:`);
+    await log(`📦 Attesting ${proofType.toUpperCase()} Proofs:`);
 
     // Get proof files
     const proofFiles = await getProofFiles();
@@ -137,16 +137,16 @@ export async function attestProofs(
       const proofPath = path.join(DEPLOY_DIR, proofFile);
       const circuitName = proofFile.split("_")[0];
 
-      log(`🔄 ${circuitName}:`);
-      log("──────────────────────────────────────────────────");
+      await log(`🔄 ${circuitName}:`);
+      await log("──────────────────────────────────────────────────");
 
       try {
         // Read proof file
         const proofData = fs.readFileSync(proofPath, "utf8");
         const proofHash = ethers.keccak256(ethers.toUtf8Bytes(proofData));
 
-        log(`🔑 Proof hash: ${proofHash.substring(0, 20)}...`);
-        log(`📤 Submitting to Attestor...`);
+        await log(`🔑 Proof hash: ${proofHash.substring(0, 20)}...`);
+        await log(`📤 Submitting to Attestor...`);
 
         // Send attestation transaction
         // Simple contract call: attestor.attest(proofHash)
@@ -159,24 +159,24 @@ export async function attestProofs(
           gasLimit: 300000,
         });
 
-        log(`⏳ Transaction sent: ${tx.hash}`);
+        await log(`⏳ Transaction sent: ${tx.hash}`);
         onTransaction?.(tx.hash);
 
-        log(`⏳ Waiting for confirmation...`);
+        await log(`⏳ Waiting for confirmation...`);
         await tx.wait();
 
-        log(`✅ Attested! TX: ${tx.hash}`);
-        log(`🔗 https://sepolia.arbiscan.io/tx/${tx.hash}`);
+        await log(`✅ Attested! TX: ${tx.hash}`);
+        await log(`🔗 https://sepolia.arbiscan.io/tx/${tx.hash}`);
 
         txHashes.push(tx.hash);
       } catch (error: any) {
-        log(`❌ Failed to attest ${proofFile}: ${error.message}`);
+        await log(`❌ Failed to attest ${proofFile}: ${error.message}`);
         console.error(error);
       }
     }
 
-    log("\n=== Attestation Summary ===");
-    log(`✅ Successfully attested ${txHashes.length} proofs`);
+    await log("\n=== Attestation Summary ===");
+    await log(`✅ Successfully attested ${txHashes.length} proofs`);
 
     return txHashes;
   } catch (error) {

@@ -83,23 +83,23 @@ async function generateProofs(
   sendEvent: (event: string, data: any) => void,
 ): Promise<void> {
   try {
-    const log = (message: string) => {
+    const log = async (message: string) => {
       sendEvent("log", { message });
-      WorkflowManager.addLog(sessionId, message);
+      await WorkflowManager.addLog(sessionId, message);
     };
 
-    log("=== Loading Pre-Generated Proofs ===");
+    await log("=== Loading Pre-Generated Proofs ===");
 
     // Get proof files from deployment directory
     const proofFiles = await getProofFiles();
 
-    log(`✓ Found ${proofFiles.groth16.length} Groth16 proofs`);
-    log(`✓ Found ${proofFiles.plonk.length} PLONK proofs`);
-    log(`✓ Found ${proofFiles.stark.length} STARK proofs`);
+    await log(`✓ Found ${proofFiles.groth16.length} Groth16 proofs`);
+    await log(`✓ Found ${proofFiles.plonk.length} PLONK proofs`);
+    await log(`✓ Found ${proofFiles.stark.length} STARK proofs`);
 
     // Store proof files in session
     await WorkflowManager.storeProofs(sessionId, proofFiles);
-    log("✓ Proofs ready for verification");
+    await log("✓ Proofs ready for verification");
   } catch (error: any) {
     throw new Error(`Proof generation failed: ${error.message}`);
   }
@@ -111,18 +111,18 @@ async function verifyProofs(
   sendEvent: (event: string, data: any) => void,
 ): Promise<void> {
   try {
-    const log = (message: string) => {
+    const log = async (message: string) => {
       sendEvent("log", { message });
-      WorkflowManager.addLog(sessionId, message);
+      await WorkflowManager.addLog(sessionId, message);
     };
 
     // Use the helper function to verify proofs
     const results = await verifyProofsHelper(proofType, log);
 
-    log(
+    await log(
       `✓ Verification complete: ${results.circuitsVerified} circuits verified`,
     );
-    log(`✓ Estimated gas: ${results.gasEstimate}`);
+    await log(`✓ Estimated gas: ${results.gasEstimate}`);
 
     await WorkflowManager.storeVerificationResults(sessionId, results);
   } catch (error: any) {
@@ -150,9 +150,9 @@ async function attestProofs(
   }
 
   try {
-    const log = (message: string) => {
+    const log = async (message: string) => {
       sendEvent("log", { message });
-      WorkflowManager.addLog(sessionId, message);
+      await WorkflowManager.addLog(sessionId, message);
     };
 
     const onTransaction = (txHash: string) => {
@@ -162,7 +162,7 @@ async function attestProofs(
     // Use the helper function to attest proofs
     const txHashes = await attestProofsHelper(proofType, log, onTransaction);
 
-    log(`✓ Attestation complete: ${txHashes.length} proofs attested`);
+    await log(`✓ Attestation complete: ${txHashes.length} proofs attested`);
 
     await WorkflowManager.storeAttestationResults(sessionId, {
       txHashes,
