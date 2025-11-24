@@ -32,11 +32,15 @@ export async function GET(req: NextRequest) {
         await WorkflowManager.createSession(sessionId, proofType);
 
         const sendEvent = (event: string, data: any) => {
-          controller.enqueue(
-            encoder.encode(
-              `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`,
-            ),
-          );
+          try {
+            controller.enqueue(
+              encoder.encode(
+                `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`,
+              ),
+            );
+          } catch (e: any) {
+            console.error("Failed to send event:", e);
+          }
         };
 
         // Phase 1: Generate Proofs
@@ -57,12 +61,28 @@ export async function GET(req: NextRequest) {
 
         controller.close();
       } catch (error: any) {
-        await WorkflowManager.setError(sessionId, error.message);
-        controller.enqueue(
-          encoder.encode(
-            `event: error\ndata: ${JSON.stringify({ error: error.message })}\n\n`,
-          ),
-        );
+        console.error("Workflow error:", error);
+        console.error("Error stack:", error.stack);
+        
+        try {
+          await WorkflowManager.setError(sessionId, error.message);
+        } catch (redisError: any) {
+          console.error("Redis error:", redisError);
+        }
+        
+        try {
+          controller.enqueue(
+            encoder.encode(
+              `event: error\ndata: ${JSON.stringify({ 
+                error: error.message,
+                stack: error.stack 
+              })}\n\n`,
+            ),
+          );
+        } catch (e: any) {
+          console.error("Failed to send error event:", e);
+        }
+        
         controller.close();
       }
     },
@@ -85,7 +105,11 @@ async function generateProofs(
   try {
     const log = async (message: string) => {
       sendEvent("log", { message });
-      await WorkflowManager.addLog(sessionId, message);
+      try {
+        await WorkflowManager.addLog(sessionId, message);
+      } catch (e: any) {
+        console.error("Failed to add log to Redis:", e);
+      }
     };
 
     await log("=== Loading Pre-Generated Proofs ===");
@@ -101,6 +125,7 @@ async function generateProofs(
     await WorkflowManager.storeProofs(sessionId, proofFiles);
     await log("✓ Proofs ready for verification");
   } catch (error: any) {
+    console.error("Generate proofs error:", error);
     throw new Error(`Proof generation failed: ${error.message}`);
   }
 }
