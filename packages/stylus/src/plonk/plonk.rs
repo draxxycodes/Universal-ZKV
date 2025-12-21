@@ -9,15 +9,15 @@
 //! Based on: "PLONK: Permutations over Lagrange-bases for Oecumenical Noninteractive arguments of Knowledge"
 //! by Gabizon, Williamson, and Ciobotaru (2019)
 
-use ark_bn254::{Bn254, Fr, G1Affine, G2Affine};
-use ark_ec::{AffineRepr, pairing::Pairing};
+use ark_bn254::{Fr, G1Affine};
+use ark_ec::AffineRepr;
 use ark_ff::{PrimeField, Field, One, Zero, BigInteger};
 use alloc::vec::Vec;
 
 use super::kzg::{verify_kzg_opening, verify_kzg_batch_opening};
 use super::transcript::{Transcript, labels};
 use super::srs::Srs;
-use super::{Error, Result};
+use super::Result;
 
 /// PLONK proof components
 /// 

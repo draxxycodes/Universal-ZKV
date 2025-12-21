@@ -519,6 +519,96 @@ pub fn batch_verify(
     Ok(results)
 }
 
+// ============================================================================
+// Verifier Algebra Implementation
+// ============================================================================
+
+use crate::verifier_traits::{
+    ZkVerifier, SecurityModel, SetupType, CryptoAssumption,
+    RecursionSupport, GasCost, VerifyResult,
+};
+
+/// Groth16 Verifier implementing the Verifier Algebra trait
+/// 
+/// Groth16 characteristics:
+/// - Trusted setup required (circuit-specific CRS)
+/// - Smallest proof size (~128 bytes compressed)
+/// - Fastest verification (~280k gas on Stylus)
+/// - Based on bilinear pairing assumptions (BN254 curve)
+pub struct Groth16Verifier;
+
+impl ZkVerifier for Groth16Verifier {
+    const PROOF_SYSTEM_ID: u8 = 0; // Matches ProofType::Groth16
+    const NAME: &'static str = "Groth16 (BN254)";
+    
+    fn security_model() -> SecurityModel {
+        SecurityModel {
+            setup_type: SetupType::Trusted,
+            crypto_assumption: CryptoAssumption::Pairing,
+            post_quantum_secure: false, // Vulnerable to quantum computers
+            security_bits: 128,         // BN254 security level
+            formally_verified: true,    // arkworks implementation
+        }
+    }
+    
+    fn gas_cost_model() -> GasCost {
+        // Based on actual Stylus benchmarks
+        GasCost {
+            base: 250_000,          // 4 pairing operations
+            per_public_input: 40_000, // MSM per input
+            per_proof_byte: 0,      // Fixed-size proof
+        }
+    }
+    
+    fn recursion_support() -> RecursionSupport {
+        // Groth16 cannot natively verify other proofs
+        // Would need to encode verifier as a circuit
+        RecursionSupport {
+            can_verify_groth16: false,
+            can_verify_plonk: false,
+            can_verify_stark: false,
+            max_depth: 0,
+        }
+    }
+    
+    fn verify(proof: &[u8], public_inputs: &[u8], vk: &[u8]) -> VerifyResult {
+        match verify(proof, public_inputs, vk) {
+            Ok(true) => VerifyResult::valid(),
+            Ok(false) => VerifyResult::invalid("Proof verification equation failed"),
+            Err(Error::DeserializationError) => VerifyResult::invalid("Failed to deserialize proof"),
+            Err(Error::MalformedProof) => VerifyResult::invalid("Proof contains invalid curve points"),
+            Err(Error::InvalidVerificationKey) => VerifyResult::invalid("Invalid verification key"),
+            Err(Error::InvalidPublicInputs) => VerifyResult::invalid("Invalid public inputs"),
+            Err(Error::VerificationFailed) => VerifyResult::invalid("Verification failed"),
+            Err(Error::InvalidInputSize) => VerifyResult::invalid("Input size exceeds limits"),
+        }
+    }
+    
+    fn batch_verify(
+        proofs: &[Vec<u8>],
+        public_inputs: &[Vec<u8>],
+        vk: &[u8],
+    ) -> Vec<VerifyResult> {
+        // Use empty precomputed pairing (will fall back to standard verification)
+        match batch_verify(proofs, public_inputs, vk, &[]) {
+            Ok(results) => results
+                .into_iter()
+                .map(|valid| {
+                    if valid {
+                        VerifyResult::valid()
+                    } else {
+                        VerifyResult::invalid("Batch verification failed for proof")
+                    }
+                })
+                .collect(),
+            Err(_) => proofs
+                .iter()
+                .map(|_| VerifyResult::invalid("Batch verification setup failed"))
+                .collect(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

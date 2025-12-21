@@ -1,6 +1,5 @@
 //! STARK verifier implementation
 
-use alloc::vec::Vec;
 use super::types::{Error, Result, SecurityLevel, GasEstimate};
 use super::fibonacci::FibonacciProof;
 

@@ -16,11 +16,10 @@
 
 use alloc::vec::Vec;
 use ark_bn254::{Fr, G1Affine};
-use ark_ff::{Field, PrimeField};
+use ark_ff::PrimeField;
 use ark_serialize::CanonicalSerialize;
 use sha3::{Digest, Keccak256};
 
-use super::{Error, Result};
 
 /// Fiat-Shamir transcript for PLONK protocol
 ///

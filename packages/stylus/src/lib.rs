@@ -52,11 +52,20 @@ pub mod stark;
 // Universal proof protocol types (frozen binary format)
 pub mod types;
 
+// Verifier Algebra - formal interface for heterogeneous ZK verification
+pub mod verifier_traits;
+
 // Universal ZK Verifier - routes to appropriate verifier based on proof type
 pub mod uzkv;
 
 // Re-export core types for convenience
 pub use types::{ProofType, PublicStatement, UniversalProof};
+
+// Re-export Verifier Algebra types
+pub use verifier_traits::{
+    ZkVerifier, SecurityModel, SetupType, CryptoAssumption,
+    RecursionSupport, GasCost, VerifyResult,
+};
 
 /// Error types for UZKV operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -159,7 +168,7 @@ fn emit_proof_verified_event(
     caller: Address,
     success: bool,
 ) {
-    use stylus_sdk::call::RawCall;
+    
     
     // Event signature: ProofVerified(uint8,uint32,bytes32,address,bool,uint256)
     let topic0 = FixedBytes::<32>::from([
@@ -210,7 +219,7 @@ fn emit_vk_registered_event(
     vk_hash: FixedBytes<32>,
     registrar: Address,
 ) {
-    use stylus_sdk::call::RawCall;
+    
     
     // Event signature: VKRegistered(uint8,uint32,bytes32,address,uint256)
     let topic0 = FixedBytes::<32>::from([

@@ -13,7 +13,7 @@
 
 use ark_bn254::{Bn254, G1Affine, G2Affine};
 use ark_ec::{AffineRepr, pairing::Pairing, CurveGroup, VariableBaseMSM};
-use ark_ff::{PrimeField, Field, BigInteger};
+use ark_ff::{PrimeField, BigInteger};
 use sha3::{Digest, Keccak256};
 use alloc::vec::Vec;
 
