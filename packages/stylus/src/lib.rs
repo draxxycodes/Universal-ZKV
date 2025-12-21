@@ -58,6 +58,9 @@ pub mod verifier_traits;
 // Universal ZK Verifier - routes to appropriate verifier based on proof type
 pub mod uzkv;
 
+// Cost-Aware Verification - gas estimation and path selection
+pub mod cost_model;
+
 
 // Re-export core types for convenience
 pub use types::{ProofType, PublicStatement, UniversalProof};
@@ -71,6 +74,13 @@ pub use types::{
 pub use verifier_traits::{
     ZkVerifier, SecurityModel, SetupType, CryptoAssumption,
     RecursionSupport, GasCost, VerifyResult,
+};
+
+// Re-export Cost-Aware Verification types
+pub use cost_model::{
+    VerificationCost, CostBreakdown, CostComparison,
+    compare_costs, select_cheapest, should_verify,
+    estimate_batch_cost, GasLimitRecommendation,
 };
 
 /// Error types for UZKV operations
