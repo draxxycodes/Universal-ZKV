@@ -556,3 +556,427 @@ mod tests {
         assert_eq!(proof.encoded_size(), 290); // 46 + 128 + 116
     }
 }
+
+// ============================================================================
+// Universal Proof Descriptor (UPD) v2 - Self-Describing Proof Format
+// ============================================================================
+
+/// Elliptic curve identifier for proof systems
+///
+/// Different curves have different security parameters and gas costs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum CurveId {
+    /// BN254 (alt_bn128) - 128-bit security, EVM-native
+    BN254 = 0,
+    /// BLS12-381 - 128-bit security, larger field
+    BLS12_381 = 1,
+    /// Pasta curves (Pallas/Vesta) - for Halo2/Nova
+    Pasta = 2,
+    /// Ed25519 - for EdDSA signatures
+    Ed25519 = 3,
+    /// Goldilocks - 64-bit prime for STARK
+    Goldilocks = 4,
+    /// None - for hash-based systems (STARK)
+    None = 255,
+}
+
+impl CurveId {
+    pub fn from_u8(value: u8) -> Option<Self> {
+        match value {
+            0 => Some(CurveId::BN254),
+            1 => Some(CurveId::BLS12_381),
+            2 => Some(CurveId::Pasta),
+            3 => Some(CurveId::Ed25519),
+            4 => Some(CurveId::Goldilocks),
+            255 => Some(CurveId::None),
+            _ => None,
+        }
+    }
+}
+
+/// Hash function identifier for Fiat-Shamir transcript
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum HashFunctionId {
+    /// Poseidon hash - SNARK-friendly
+    Poseidon = 0,
+    /// SHA256 - ubiquitous but expensive in circuits
+    SHA256 = 1,
+    /// Blake3 - fast, parallelizable
+    Blake3 = 2,
+    /// Keccak256 - EVM native
+    Keccak256 = 3,
+    /// Rescue Prime - arithmetic-friendly
+    RescuePrime = 4,
+}
+
+impl HashFunctionId {
+    pub fn from_u8(value: u8) -> Option<Self> {
+        match value {
+            0 => Some(HashFunctionId::Poseidon),
+            1 => Some(HashFunctionId::SHA256),
+            2 => Some(HashFunctionId::Blake3),
+            3 => Some(HashFunctionId::Keccak256),
+            4 => Some(HashFunctionId::RescuePrime),
+            _ => None,
+        }
+    }
+}
+
+/// Descriptor validation errors
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DescriptorError {
+    /// Invalid UPD version
+    InvalidVersion,
+    /// Unknown proof system ID
+    UnknownProofSystem,
+    /// Unknown curve ID
+    UnknownCurve,
+    /// Unknown hash function
+    UnknownHashFunction,
+    /// Proof length mismatch
+    ProofLengthMismatch,
+    /// Too many public inputs
+    TooManyPublicInputs,
+    /// Recursion depth too deep
+    ExcessiveRecursionDepth,
+    /// Buffer too short to decode
+    BufferTooShort,
+}
+
+/// Universal Proof Descriptor (UPD) v2
+///
+/// Self-describing proof header that enables:
+/// - **Safe dispatch** before parsing proof bytes
+/// - **Cost prediction** for gas estimation
+/// - **Future-proof extensibility** via version field
+/// - **Recursion tracking** via depth field
+///
+/// # Binary Layout (75 bytes)
+/// ```text
+/// [upd_version: 1 byte]
+/// [proof_system_id: 1 byte]
+/// [curve_id: 1 byte]
+/// [hash_function_id: 1 byte]
+/// [recursion_depth: 1 byte]
+/// [public_input_count: 2 bytes (u16 big-endian)]
+/// [proof_length: 4 bytes (u32 big-endian)]
+/// [vk_commitment: 32 bytes]
+/// [circuit_id: 32 bytes]
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UniversalProofDescriptor {
+    /// UPD format version (2 for this format)
+    pub upd_version: u8,
+
+    /// Proof system identifier (matches ProofType enum)
+    pub proof_system_id: u8,
+
+    /// Elliptic curve identifier
+    pub curve_id: CurveId,
+
+    /// Hash function used for Fiat-Shamir transcript
+    pub hash_function_id: HashFunctionId,
+
+    /// Recursion depth (0 = base proof, 1+ = recursive)
+    pub recursion_depth: u8,
+
+    /// Number of public inputs
+    pub public_input_count: u16,
+
+    /// Proof byte length (for validation before parsing)
+    pub proof_length: u32,
+
+    /// VK commitment (keccak256 of verification key)
+    pub vk_commitment: [u8; 32],
+
+    /// Application-specific circuit identifier
+    pub circuit_id: [u8; 32],
+}
+
+impl UniversalProofDescriptor {
+    /// Encoded size in bytes
+    pub const ENCODED_SIZE: usize = 75;
+
+    /// Current UPD version
+    pub const CURRENT_VERSION: u8 = 2;
+
+    /// Maximum allowed public inputs
+    pub const MAX_PUBLIC_INPUTS: u16 = 1024;
+
+    /// Maximum recursion depth
+    pub const MAX_RECURSION_DEPTH: u8 = 16;
+
+    /// Create a new descriptor with current version
+    pub fn new(
+        proof_system_id: u8,
+        curve_id: CurveId,
+        hash_function_id: HashFunctionId,
+        recursion_depth: u8,
+        public_input_count: u16,
+        proof_length: u32,
+        vk_commitment: [u8; 32],
+        circuit_id: [u8; 32],
+    ) -> Self {
+        Self {
+            upd_version: Self::CURRENT_VERSION,
+            proof_system_id,
+            curve_id,
+            hash_function_id,
+            recursion_depth,
+            public_input_count,
+            proof_length,
+            vk_commitment,
+            circuit_id,
+        }
+    }
+
+    /// Convenience constructor for Groth16 proofs
+    pub fn groth16(
+        public_input_count: u16,
+        vk_commitment: [u8; 32],
+        circuit_id: [u8; 32],
+    ) -> Self {
+        Self::new(
+            0, // Groth16
+            CurveId::BN254,
+            HashFunctionId::Poseidon,
+            0, // No recursion
+            public_input_count,
+            256, // Standard Groth16 proof size
+            vk_commitment,
+            circuit_id,
+        )
+    }
+
+    /// Convenience constructor for PLONK proofs
+    pub fn plonk(
+        public_input_count: u16,
+        vk_commitment: [u8; 32],
+        circuit_id: [u8; 32],
+    ) -> Self {
+        Self::new(
+            1, // PLONK
+            CurveId::BN254,
+            HashFunctionId::Keccak256,
+            0,
+            public_input_count,
+            800, // Typical PLONK proof size
+            vk_commitment,
+            circuit_id,
+        )
+    }
+
+    /// Convenience constructor for STARK proofs
+    pub fn stark(
+        public_input_count: u16,
+        proof_length: u32,
+        circuit_id: [u8; 32],
+    ) -> Self {
+        Self::new(
+            2, // STARK
+            CurveId::None,
+            HashFunctionId::Blake3,
+            0,
+            public_input_count,
+            proof_length,
+            [0u8; 32], // STARKs don't use VKs
+            circuit_id,
+        )
+    }
+
+    /// Validate descriptor before dispatching to verifier
+    pub fn validate(&self) -> Result<(), DescriptorError> {
+        // Check version
+        if self.upd_version != Self::CURRENT_VERSION {
+            return Err(DescriptorError::InvalidVersion);
+        }
+
+        // Check proof system
+        if ProofType::from_u8(self.proof_system_id).is_none() {
+            return Err(DescriptorError::UnknownProofSystem);
+        }
+
+        // Check public input count
+        if self.public_input_count > Self::MAX_PUBLIC_INPUTS {
+            return Err(DescriptorError::TooManyPublicInputs);
+        }
+
+        // Check recursion depth
+        if self.recursion_depth > Self::MAX_RECURSION_DEPTH {
+            return Err(DescriptorError::ExcessiveRecursionDepth);
+        }
+
+        Ok(())
+    }
+
+    /// Estimate verification gas from descriptor alone
+    ///
+    /// This enables gas estimation BEFORE parsing the full proof.
+    pub fn estimate_gas(&self) -> u64 {
+        use crate::verifier_traits::GasCost;
+
+        let model = match self.proof_system_id {
+            0 => GasCost::groth16(),
+            1 => GasCost::plonk(),
+            2 => GasCost::stark(),
+            _ => return u64::MAX, // Unknown system
+        };
+
+        model.estimate(self.public_input_count as usize, self.proof_length as usize)
+    }
+
+    /// Encode descriptor to bytes (big-endian for network compatibility)
+    pub fn encode(&self) -> [u8; Self::ENCODED_SIZE] {
+        let mut buf = [0u8; Self::ENCODED_SIZE];
+        let mut offset = 0;
+
+        // Single-byte fields
+        buf[offset] = self.upd_version;
+        offset += 1;
+        buf[offset] = self.proof_system_id;
+        offset += 1;
+        buf[offset] = self.curve_id as u8;
+        offset += 1;
+        buf[offset] = self.hash_function_id as u8;
+        offset += 1;
+        buf[offset] = self.recursion_depth;
+        offset += 1;
+
+        // Multi-byte fields (big-endian for network order)
+        buf[offset..offset + 2].copy_from_slice(&self.public_input_count.to_be_bytes());
+        offset += 2;
+        buf[offset..offset + 4].copy_from_slice(&self.proof_length.to_be_bytes());
+        offset += 4;
+
+        // 32-byte fields
+        buf[offset..offset + 32].copy_from_slice(&self.vk_commitment);
+        offset += 32;
+        buf[offset..offset + 32].copy_from_slice(&self.circuit_id);
+
+        buf
+    }
+
+    /// Decode descriptor from bytes
+    pub fn decode(bytes: &[u8]) -> Result<Self, DescriptorError> {
+        if bytes.len() < Self::ENCODED_SIZE {
+            return Err(DescriptorError::BufferTooShort);
+        }
+
+        let mut offset = 0;
+
+        // Single-byte fields
+        let upd_version = bytes[offset];
+        offset += 1;
+        let proof_system_id = bytes[offset];
+        offset += 1;
+        let curve_id = CurveId::from_u8(bytes[offset]).ok_or(DescriptorError::UnknownCurve)?;
+        offset += 1;
+        let hash_function_id =
+            HashFunctionId::from_u8(bytes[offset]).ok_or(DescriptorError::UnknownHashFunction)?;
+        offset += 1;
+        let recursion_depth = bytes[offset];
+        offset += 1;
+
+        // Multi-byte fields (big-endian)
+        let public_input_count =
+            u16::from_be_bytes([bytes[offset], bytes[offset + 1]]);
+        offset += 2;
+        let proof_length = u32::from_be_bytes([
+            bytes[offset],
+            bytes[offset + 1],
+            bytes[offset + 2],
+            bytes[offset + 3],
+        ]);
+        offset += 4;
+
+        // 32-byte fields
+        let vk_commitment: [u8; 32] = bytes[offset..offset + 32]
+            .try_into()
+            .map_err(|_| DescriptorError::BufferTooShort)?;
+        offset += 32;
+        let circuit_id: [u8; 32] = bytes[offset..offset + 32]
+            .try_into()
+            .map_err(|_| DescriptorError::BufferTooShort)?;
+
+        Ok(Self {
+            upd_version,
+            proof_system_id,
+            curve_id,
+            hash_function_id,
+            recursion_depth,
+            public_input_count,
+            proof_length,
+            vk_commitment,
+            circuit_id,
+        })
+    }
+
+    /// Get proof type enum from descriptor
+    pub fn proof_type(&self) -> Option<ProofType> {
+        ProofType::from_u8(self.proof_system_id)
+    }
+}
+
+#[cfg(test)]
+mod upd_tests {
+    use super::*;
+
+    #[test]
+    fn test_upd_encode_decode_roundtrip() {
+        let original = UniversalProofDescriptor::groth16(4, [1u8; 32], [2u8; 32]);
+
+        let encoded = original.encode();
+        assert_eq!(encoded.len(), UniversalProofDescriptor::ENCODED_SIZE);
+
+        let decoded = UniversalProofDescriptor::decode(&encoded).unwrap();
+        assert_eq!(original, decoded);
+    }
+
+    #[test]
+    fn test_upd_validation() {
+        let valid = UniversalProofDescriptor::plonk(10, [0u8; 32], [0u8; 32]);
+        assert!(valid.validate().is_ok());
+
+        let too_many_inputs = UniversalProofDescriptor::new(
+            0,
+            CurveId::BN254,
+            HashFunctionId::Poseidon,
+            0,
+            2000, // > MAX_PUBLIC_INPUTS
+            256,
+            [0u8; 32],
+            [0u8; 32],
+        );
+        assert_eq!(
+            too_many_inputs.validate(),
+            Err(DescriptorError::TooManyPublicInputs)
+        );
+    }
+
+    #[test]
+    fn test_upd_gas_estimation() {
+        let groth16 = UniversalProofDescriptor::groth16(4, [0u8; 32], [0u8; 32]);
+        let plonk = UniversalProofDescriptor::plonk(4, [0u8; 32], [0u8; 32]);
+        let stark = UniversalProofDescriptor::stark(4, 50_000, [0u8; 32]);
+
+        // Groth16 should be cheapest for small proofs
+        let groth16_gas = groth16.estimate_gas();
+        let plonk_gas = plonk.estimate_gas();
+        let stark_gas = stark.estimate_gas();
+
+        assert!(groth16_gas < plonk_gas);
+        assert!(plonk_gas < stark_gas);
+    }
+
+    #[test]
+    fn test_upd_stark_constructor() {
+        let stark = UniversalProofDescriptor::stark(8, 100_000, [3u8; 32]);
+
+        assert_eq!(stark.proof_system_id, 2);
+        assert_eq!(stark.curve_id, CurveId::None);
+        assert_eq!(stark.hash_function_id, HashFunctionId::Blake3);
+        assert_eq!(stark.proof_length, 100_000);
+    }
+}

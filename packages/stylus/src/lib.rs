@@ -58,8 +58,14 @@ pub mod verifier_traits;
 // Universal ZK Verifier - routes to appropriate verifier based on proof type
 pub mod uzkv;
 
+
 // Re-export core types for convenience
 pub use types::{ProofType, PublicStatement, UniversalProof};
+
+// Re-export Universal Proof Descriptor (UPD v2) types
+pub use types::{
+    UniversalProofDescriptor, CurveId, HashFunctionId, DescriptorError,
+};
 
 // Re-export Verifier Algebra types
 pub use verifier_traits::{
