@@ -315,6 +315,19 @@ sol_storage! {
         
         // Nullifier tracking (prevent replay attacks)
         mapping(bytes32 => bool) nullifiers;
+        
+        // === PLONK SRS Registry (Powers of Tau) ===
+        // SRS Registry: srs_hash => srs_data (compressed Powers of Tau)
+        // Powers of Tau parameter format:
+        // - g1_powers: G1 points [τ^0, τ^1, ..., τ^n]
+        // - g2_powers: G2 points [τ^0, τ^1] (for pairing checks)
+        mapping(bytes32 => bytes) srs_registry;
+        
+        // SRS Registration Status: srs_hash => isRegistered
+        mapping(bytes32 => bool) srs_registered;
+        
+        // SRS Metadata: srs_hash => max_circuit_size (log2)
+        mapping(bytes32 => uint8) srs_max_degree;
     }
 }
 
@@ -470,6 +483,85 @@ impl UZKVContract {
         }
 
         Ok(vk_hash)
+    }
+
+    /// Register a PLONK Structured Reference String (SRS) from Powers of Tau ceremony
+    ///
+    /// The SRS contains the powers of tau [τ^0, τ^1, ..., τ^n] in G1 and [τ^0, τ^1] in G2.
+    /// This is a one-time operation per circuit size class.
+    ///
+    /// ## Format
+    /// - First 8 bytes: max_degree (u64 little-endian) - log2 of max circuit size
+    /// - Remaining bytes: serialized G1/G2 points (compressed)
+    ///
+    /// ## Security
+    /// - SRS must come from trusted Powers of Tau ceremony
+    /// - Multiple ceremonies can be combined for stronger security
+    /// - Common sources: Hermez, Aztec Ignition, Zcash Powers of Tau
+    ///
+    /// @param srs_bytes - Serialized SRS (Powers of Tau) data
+    /// @return srs_hash - Keccak256 hash of the SRS
+    pub fn register_srs(&mut self, srs_bytes: Vec<u8>) -> Result<[u8; 32]> {
+        // Validate minimum size (8 bytes header + at least some data)
+        if srs_bytes.len() < 72 { // 8 bytes header + 64 bytes min for one G1 point
+            return Err(Error::InvalidInputSize);
+        }
+        
+        // Maximum SRS size: 64MB (supports circuits up to 2^26)
+        if srs_bytes.len() > 64 * 1024 * 1024 {
+            return Err(Error::InvalidInputSize);
+        }
+        
+        // Parse max_degree from first 8 bytes
+        let max_degree_bytes: [u8; 8] = srs_bytes[0..8].try_into()
+            .map_err(|_| Error::DeserializationError)?;
+        let max_degree = u64::from_le_bytes(max_degree_bytes);
+        
+        // Validate max_degree is reasonable (1 to 30)
+        if max_degree < 1 || max_degree > 30 {
+            return Err(Error::InvalidInputSize);
+        }
+        
+        // Compute SRS hash
+        let srs_hash = keccak256(&srs_bytes);
+        let srs_hash_fixed = FixedBytes::from(srs_hash);
+        
+        // Check if already registered (idempotent)
+        if !self.srs_registered.get(srs_hash_fixed) {
+            // Store SRS data
+            self.srs_registry.setter(srs_hash_fixed).set_bytes(&srs_bytes);
+            self.srs_registered.insert(srs_hash_fixed, true);
+            self.srs_max_degree.insert(srs_hash_fixed, U8::from(max_degree as u8));
+        }
+        
+        Ok(srs_hash)
+    }
+    
+    /// Get registered SRS data by hash
+    ///
+    /// @param srs_hash - Keccak256 hash of the SRS
+    /// @return srs_data - Serialized SRS bytes (empty if not registered)
+    pub fn get_srs(&self, srs_hash: [u8; 32]) -> Vec<u8> {
+        let srs_hash_fixed = FixedBytes::from(srs_hash);
+        self.srs_registry.get(srs_hash_fixed).get_bytes()
+    }
+    
+    /// Check if SRS is registered
+    ///
+    /// @param srs_hash - Keccak256 hash of the SRS
+    /// @return is_registered - True if SRS is registered
+    pub fn is_srs_registered(&self, srs_hash: [u8; 32]) -> bool {
+        let srs_hash_fixed = FixedBytes::from(srs_hash);
+        self.srs_registered.get(srs_hash_fixed)
+    }
+    
+    /// Get max circuit degree for registered SRS
+    ///
+    /// @param srs_hash - Keccak256 hash of the SRS
+    /// @return max_degree - Log2 of max circuit size (0 if not registered)
+    pub fn get_srs_max_degree(&self, srs_hash: [u8; 32]) -> u8 {
+        let srs_hash_fixed = FixedBytes::from(srs_hash);
+        self.srs_max_degree.get(srs_hash_fixed).to::<u8>()
     }
 
     /// Get total number of successful verifications
