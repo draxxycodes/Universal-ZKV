@@ -16,6 +16,41 @@ import { arbitrumSepolia } from "viem/chains";
 // Export Universal Proof Protocol types
 export { ProofType, PublicStatement, UniversalProof } from "./types";
 
+// Export Universal Proof Descriptor (UPD v2) types
+export {
+  CurveId,
+  HashFunctionId,
+  DescriptorError,
+  UniversalProofDescriptor,
+} from "./upd";
+
+// Export Cost Model types
+export {
+  VerificationCost,
+  CostBreakdown,
+  CostComparison,
+  GasLimitRecommendation,
+  compareCosts,
+  selectCheapest,
+  shouldVerify,
+  estimateBatchCost,
+  getGasLimitRecommendation,
+} from "./cost-model";
+
+// Export Security types
+export {
+  SecurityError,
+  SetupType,
+  CryptoAssumption,
+  SecurityModel,
+  RegisteredVK,
+  DispatchValidator,
+  ValidationError,
+  SecurityAuditRecord,
+  hashDescriptor,
+  createAuditRecord,
+} from "./security";
+
 // Export Circuit Helpers
 export {
   circuitInputsToPublicStatement,

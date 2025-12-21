@@ -5,9 +5,12 @@ TypeScript SDK for the Universal ZK Verifier (UZKV) platform.
 ## Features
 
 - ✅ **Universal Proof Protocol** - Frozen binary format for Groth16, PLONK, and STARK proofs
+- ✅ **UPD v2 (Universal Proof Descriptor)** - Self-describing 75-byte proof header with gas estimation
+- ✅ **Cost-Aware Verification** - Pre-verification gas estimation and path selection
+- ✅ **Security Formalization** - Dispatch validation with formal threat model
 - ✅ **Type-Safe** - Full TypeScript support with comprehensive types
 - ✅ **Cross-Language Compatible** - Byte-for-byte encoding matches Rust implementation
-- ✅ **Fully Tested** - 22 unit tests covering all encoding/decoding scenarios
+- ✅ **Fully Tested** - 103 unit tests covering all scenarios
 - ✅ **Viem Integration** - Ready for on-chain interactions with Arbitrum Stylus
 
 ## Installation
@@ -130,6 +133,97 @@ class UniversalProof {
   static decode(bytes: Uint8Array): UniversalProof;
   decodePublicStatement(): PublicStatement;
   encodedSize(): number;
+}
+```
+
+### UniversalProofDescriptor Class (UPD v2)
+
+Self-describing 75-byte proof header for safe dispatch and cost prediction.
+
+```typescript
+import { UniversalProofDescriptor, CurveId, HashFunctionId } from "@uzkv/sdk";
+
+// Create using convenience constructors
+const descriptor = UniversalProofDescriptor.groth16(4, vkCommitment, circuitId);
+
+// Estimate gas before verification
+const gasEstimate = descriptor.estimateGas(); // Returns bigint
+
+// Validate before dispatch
+descriptor.validate(); // Throws on invalid
+
+// Encode for transmission
+const encoded = descriptor.encode(); // 75 bytes
+const decoded = UniversalProofDescriptor.decode(encoded);
+```
+
+### VerificationCost Class (Cost Model)
+
+Gas estimation and verification path selection.
+
+```typescript
+import {
+  VerificationCost,
+  compareCosts,
+  selectCheapest,
+  shouldVerify,
+  estimateBatchCost,
+} from "@uzkv/sdk";
+
+// Calculate costs for different proof types
+const groth16Cost = VerificationCost.forGroth16(4); // 4 public inputs
+const plonkCost = VerificationCost.forPlonk(4);
+const starkCost = VerificationCost.forStark(1024, 100);
+
+// Compare costs
+console.log("Groth16 cheaper:", groth16Cost.cheaperThan(plonkCost));
+console.log("Savings:", groth16Cost.savingsVs(plonkCost), "gas");
+
+// Select cheapest path
+const options = [groth16Cost, plonkCost, starkCost];
+const cheapestIndex = selectCheapest(options); // Returns index
+
+// Budget-aware routing
+if (shouldVerify(groth16Cost, 500_000n, 10)) {
+  // Proceed with verification (10% safety margin)
+}
+
+// Batch cost with discounts (5% per additional proof, max 30%)
+const batchTotal = estimateBatchCost([groth16Cost, groth16Cost, groth16Cost]);
+```
+
+### DispatchValidator Class (Security)
+
+Dispatch boundary security validation.
+
+```typescript
+import {
+  DispatchValidator,
+  RegisteredVK,
+  SecurityModel,
+  SecurityError,
+} from "@uzkv/sdk";
+
+// Create validator
+const validator = DispatchValidator.default(); // or .strict() for high-value ops
+
+// Register VK metadata
+const registeredVK = new RegisteredVK({
+  proofType: ProofType.Groth16,
+  vkHash: vkHashBytes,
+  circuitId: circuitIdBytes,
+  curveId: CurveId.BN254,
+  maxPublicInputs: 16,
+});
+
+// Validate before dispatch
+try {
+  validator.validateAll(descriptor, registeredVK, SecurityModel.groth16Bn254());
+  // Safe to proceed
+} catch (error) {
+  if (error.code === SecurityError.ProofTypeMismatch) {
+    // Handle specific error
+  }
 }
 ```
 
