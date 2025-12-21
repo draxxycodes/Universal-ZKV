@@ -61,6 +61,9 @@ pub mod uzkv;
 // Cost-Aware Verification - gas estimation and path selection
 pub mod cost_model;
 
+// Security Formalization - dispatch validation and threat model
+pub mod security;
+
 
 // Re-export core types for convenience
 pub use types::{ProofType, PublicStatement, UniversalProof};
@@ -81,6 +84,12 @@ pub use cost_model::{
     VerificationCost, CostBreakdown, CostComparison,
     compare_costs, select_cheapest, should_verify,
     estimate_batch_cost, GasLimitRecommendation,
+};
+
+// Re-export Security types
+pub use security::{
+    SecurityError, RegisteredVK, DispatchValidator,
+    SecurityAuditRecord, hash_descriptor,
 };
 
 /// Error types for UZKV operations
