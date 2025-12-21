@@ -301,13 +301,89 @@ The security module implements a formal threat model covering:
 
 ---
 
-## � Roadmap
+## 📋 Scope and Limitations
+
+> **Honest Declarations for Patent Defensibility**
+
+| Verifier | Status | Scope |
+|----------|--------|-------|
+| **Groth16** | ✅ Production | BN254, snarkjs-compatible, arkworks backend |
+| **PLONK** | 🔶 Infrastructure Ready | KZG/transcript implemented, requires on-chain SRS registry |
+| **STARK** | 🔶 Fibonacci-AIR | Single constraint system (F(i+2) = F(i+1) + F(i)) |
+
+### What This Project IS:
+- Protocol-level framework for heterogeneous ZK verification
+- Formal interface (Verifier Algebra) for machine-readable security
+- Self-describing proof format (UPD v2) for safe dispatch
+- Cost-aware verification routing infrastructure
+
+### What This Project IS NOT:
+- A new cryptographic proof system
+- Arbitrary AIR STARK verifier (limited to Fibonacci)
+- Production PLONK verifier (requires SRS deployment)
+
+---
+
+## 🏛️ Patent Claims (Novelty)
+
+This project contains **systems-level novelty** suitable for patent protection.
+
+### 1. Universal Proof Descriptor (UPD v2)
+
+**Claim**: Fixed-length, self-describing proof header enabling safe multi-verifier dispatch.
+
+| Aspect | Existing Systems | UZKV |
+|--------|------------------|------|
+| Proof Metadata | Out-of-band | Embedded in 75-byte header |
+| Dispatch Safety | Relies on caller | Protocol-enforced |
+| Gas Estimation | After parsing | Before parsing |
+
+**No widely adopted ZK standard uses this approach.**
+
+### 2. Verifier Algebra with Declared Semantics
+
+**Claim**: Verifier abstraction requiring formal security/cost/recursion declarations.
+
+```rust
+trait ZkVerifier {
+    fn security_model() -> SecurityModel;  // Formal security declaration
+    fn gas_cost_model() -> GasCost;        // Normalized cost model
+    fn recursion_support() -> RecursionSupport; // Cross-system capabilities
+}
+```
+
+This is **novel architecture**, similar to how type systems changed programming languages.
+
+### 3. Cost-Aware Verification as Protocol Primitive
+
+**Claim**: Pre-verification gas estimation and budget-aware routing at verifier boundary.
+
+| Feature | Prior Art | UZKV |
+|---------|-----------|------|
+| Gas Estimation | Post-verification | Pre-verification |
+| Cross-System Comparison | Manual | Normalized |
+| Budget Routing | Application-level | Protocol-level |
+
+---
+
+## 📚 Academic References
+
+| Component | Reference |
+|-----------|-----------|
+| Groth16 | "On the Size of Pairing-Based Non-Interactive Arguments" (Groth, 2016) |
+| PLONK | "PLONK: Permutations over Lagrange-bases" (Gabizon et al., 2019) |
+| STARK | "Scalable, transparent, and post-quantum secure computational integrity" (Ben-Sasson et al., 2018) |
+| FRI | "Fast Reed-Solomon Interactive Oracle Proofs of Proximity" (Ben-Sasson et al., 2018) |
+
+---
+
+## 🗺 Roadmap
 
 - [x] **Phase 0-1:** Verifier Algebra + PLONK/STARK enhancements
 - [x] **Phase 2:** Universal Proof Descriptor (UPD v2)
 - [x] **Phase 3:** Cost-Aware Verification
 - [x] **Phase 4:** Security Formalization
-- [ ] **Phase 5:** SDK TypeScript updates
+- [x] **Phase 5:** SDK TypeScript updates
 - [ ] **Phase 6:** Mainnet deployment
 
 ---

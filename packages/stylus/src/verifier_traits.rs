@@ -11,8 +11,22 @@
 //! - Recursion compatibility declarations
 //! - Future-proof extensibility
 //!
-//! # Patent Potential
-//! "System and method for abstract verification of heterogeneous zero-knowledge proof systems"
+//! # Novelty Statement (Patent-Relevant)
+//! This is a **novel systems-level abstraction** that formalizes verifier metadata.
+//! Unlike existing systems that expose only `verify()`, this requires verifiers to:
+//! - Declare security model (setup type, crypto assumptions, formal verification status)
+//! - Declare cost model (base, per-input, per-byte gas costs)
+//! - Declare recursion support (which proof systems can be verified recursively)
+//!
+//! This enables **machine-readable security analysis** and **cost-aware routing**.
+//!
+//! # References
+//! - "On the Size of Pairing-Based Non-Interactive Arguments" (Groth, 2016) - Groth16
+//! - "PLONK: Permutations over Lagrange-bases" (Gabizon et al., 2019) - PLONK
+//! - "Scalable, transparent, and post-quantum secure computational integrity"
+//!   (Ben-Sasson et al., 2018) - STARK foundations
+//! - "Fast Reed-Solomon Interactive Oracle Proofs of Proximity"
+//!   (Ben-Sasson et al., 2018) - FRI protocol
 
 extern crate alloc;
 
