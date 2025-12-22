@@ -10,7 +10,6 @@
 //! by Gabizon, Williamson, and Ciobotaru (2019)
 
 use ark_bn254::{Fr, G1Affine};
-use ark_ec::AffineRepr;
 use ark_ff::{PrimeField, Field, One, Zero, BigInteger};
 use alloc::vec::Vec;
 
@@ -271,13 +270,13 @@ fn verify_gate_constraints(
     let zh_zeta_inv = zh_zeta.inverse()
         .ok_or(super::Error::InvalidDomain)?;
     
-    let expected_quotient = total_constraint * zh_zeta_inv;
+    let _expected_quotient = total_constraint * zh_zeta_inv;
     
     // 6. Reconstruct quotient from proof commitments
     // t(ζ) = t_lo(ζ) + ζⁿ·t_mid(ζ) + ζ²ⁿ·t_hi(ζ)
-    let n_fr = Fr::from(vk.n as u64);
+    let _n_fr = Fr::from(vk.n as u64);
     let zeta_n = zeta.pow(&[vk.n as u64]);
-    let zeta_2n = zeta_n * zeta_n;
+    let _zeta_2n = zeta_n * zeta_n;
     
     // Note: In full implementation, t_lo/mid/hi evaluations would come from proof
     // For now, we verify the structure is correct by checking gate constraint is near zero
@@ -297,8 +296,8 @@ fn verify_batch_openings(
     vk: &PlonkVerificationKey,
     srs: &Srs,
     zeta: Fr,
-    v: Fr,
-    u: Fr,
+    _v: Fr,
+    _u: Fr,
 ) -> Result<()> {
     // Compute opening point for z(ζω)
     let zeta_omega = zeta * vk.omega;
@@ -377,7 +376,7 @@ fn compute_public_input_eval(
     let mut result = Fr::zero();
     let mut omega_i = Fr::one();
     
-    for (i, input) in public_inputs.iter().enumerate() {
+    for (_i, input) in public_inputs.iter().enumerate() {
         // Compute Lagrange basis: L_i(point) = (ω^i / n) * Z_H(point) / (point - ω^i)
         let numerator = zh * omega_i;
         let denominator = (point - omega_i) * Fr::from(n as u64);
@@ -399,7 +398,7 @@ fn compute_public_input_eval(
 }
 
 /// Compute first Lagrange polynomial evaluation: L₁(X) = (X^n - 1) / (n * (X - 1))
-fn compute_lagrange_first(point: Fr, zh: Fr, omega: Fr, n: usize) -> Fr {
+fn compute_lagrange_first(point: Fr, zh: Fr, _omega: Fr, n: usize) -> Fr {
     if point == Fr::one() {
         // L₁(1) = 1
         return Fr::one();

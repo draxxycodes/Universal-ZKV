@@ -213,7 +213,7 @@ pub fn verify(proof_bytes: &[u8], public_inputs_bytes: &[u8], vk_bytes: &[u8]) -
 }
 
 /// Batch verify PLONK proofs from byte arrays
-pub fn batch_verify(proofs: &[alloc::vec::Vec<u8>], public_inputs: &[alloc::vec::Vec<u8>], vk_bytes: &[u8]) -> Result<alloc::vec::Vec<bool>> {
+pub fn batch_verify(_proofs: &[alloc::vec::Vec<u8>], _public_inputs: &[alloc::vec::Vec<u8>], _vk_bytes: &[u8]) -> Result<alloc::vec::Vec<bool>> {
     // TODO: Implement batch verification
     Err(Error::VerificationFailed)
 }

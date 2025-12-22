@@ -21,7 +21,6 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
 use crate::types::{ProofType, UniversalProofDescriptor, CurveId};
 use crate::verifier_traits::SecurityModel;
 

@@ -15,7 +15,7 @@
 
 use alloc::vec::Vec;
 use ark_bn254::{Bn254, Fr, G1Affine, G2Affine};
-use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup, Group};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{PrimeField, Zero};
 use ark_serialize::CanonicalDeserialize;
 
