@@ -6,9 +6,21 @@ The core zero-knowledge proof verification logic for the Universal ZKV framework
 
 - **Universal Dispatch**: Single entry point for Groth16, PLONK, and STARK proofs.
 - **Gas Optimized**: Uses Arbitrum's BN256 precompiles (0x06, 0x07, 0x08) for efficient on-chain verification.
+- **Generic STARK Engine**: Built-in "Generic AIR Verifier" capable of verifying arbitrary polynomial constraints defined in the Verification Key.
 - **Dual-Mode Architecture**:
   - **WASM (Stylus)**: Compiles to `wasm32-unknown-unknown` for on-chain deployment.
-  - **Host (CLI)**: Compiles to `x86_64` (or native) for off-chain verification using `arkworks`.
+  - **Host (CLI)**: Compiles to `x86_64` (or native) for off-chain verification using `arkworks` and native Rust.
+
+## Supported Proof Systems
+
+| System | Stylus (On-Chain) | Host (Off-Chain) | Architecture |
+|--------|-------------------|------------------|--------------|
+| **Groth16** | ✅ Precompiles | ✅ Arkworks | Pairing-based (BN254) |
+| **PLONK** | ✅ Precompiles | ✅ Arkworks | Standard Plonk (KZG) |
+| **STARK** | ✅ Pure Rust | ✅ Pure Rust | Generic AIR (FRI) |
+
+### Generic STARK Support
+Unlike many verifiers that hardcode specific logic (like Fibonacci), UZKV implements a data-driven **Generic AIR Engine**. The Verification Key (VK) contains a schema of constraints (coefficients, offsets, powers) which the verifier evaluates dynamically at runtime. This allows a single contract deployment to verify proofs for any STARK circuit.
 
 ## Command Line Interface (UZKV CLI)
 
@@ -30,8 +42,17 @@ cargo build --bin uzkv-cli --features std --target x86_64-unknown-linux-gnu --re
   --public-inputs ./tests/proofs/public_inputs.bin \
   --vk ./tests/proofs/vk.bin
 
-# Check help
-./target/release/uzkv-cli --help
+# Verify a PLONK proof (Standard KZG)
+./target/release/uzkv-cli -t plonk \
+  --proof ./proof.bin \
+  --public-inputs ./inputs.bin \
+  --vk ./vk.bin 
+
+# Verify a STARK proof (Generic AIR)
+./target/release/uzkv-cli -t stark \
+  --proof ./stark_proof.bin \
+  --public-inputs ./stark_inputs.bin \
+  --vk ./stark_vk.bin
 ```
 
 ### Output

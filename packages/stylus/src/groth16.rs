@@ -233,6 +233,7 @@ pub fn batch_verify<S: StaticCallContext + Copy>(
     _vk: &[u8],
     _pre: &[u8],
 ) -> Result<Vec<bool>> {
+    use alloc::vec;
     Ok(vec![true; proofs.len()])
 }
 

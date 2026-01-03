@@ -247,45 +247,7 @@ fn negate_g1(point: &[u8]) -> Option<Vec<u8>> {
     Some(encoded)
 }
 
-/// Verify KZG batch opening (multiple evaluations at same point)
-/// Aggregates commitments and evaluations using random linear combination then verifies single opening.
-pub fn verify_kzg_batch_opening<S: StaticCallContext + Copy>(
-    context: S,
-    commitments: &[&[u8]], // Vector of 64-byte G1 points
-    eval_point: U256,
-    claimed_evals: &[U256],
-    proof: &[u8],
-    srs_g2: &[u8],
-) -> Result<bool> {
-    if commitments.len() != claimed_evals.len() || commitments.is_empty() {
-        return Err(Error::InvalidInputSize);
-    }
 
-    // Compute random linear combination coefficients
-    // For now, simple powers of r = 2. 
-    // In production, this should come from Transcript, but for batching inside verify_plonk, 
-    // the 'v' challenge is usually provided.
-    // However, verify_kzg_batch_opening signature in plonk.rs previously took internal logic.
-    // We will assume simpler logic here or take a challenge 'r' as argument?
-    // Let's use powers of a random r (e.g. hash of inputs? or just passed in?)
-    // Standard PLONK passes 'v' challenge for this batching.
-    // Let's update signature to accept `r: U256`.
-    
-    // For now, implementing simple powers of 2 for demonstration if no r provided.
-    // But better to let caller handle the aggregation? 
-    // No, the trait/function abstraction usually does it.
-    // Let's stick to the previous signature but add `r_challenge` argument.
-    // Actually, I'll update the signature in plonk.rs refactor to pass `v`.
-    // For now, use a constant or simple distinct factors.
-    
-    // Let's assume r=2 for this strictly internal helper if not passed.
-    // Wait, PLONK Security depends on this being random from transcript.
-    // I should change signature to accept `challenge: U256`.
-    let r = U256::from(2); // PLACEHOLDER if not passed. 
-    // Actually, I will modify this to take `challenge`.
-    
-    verify_kzg_batch_opening_with_challenge(context, commitments, eval_point, claimed_evals, proof, srs_g2, r)
-}
 
 pub fn verify_kzg_batch_opening_with_challenge<S: StaticCallContext + Copy>(
     context: S,

@@ -8,3 +8,9 @@ pub mod plonk;
 
 // Re-export main verification function to match uzkv.rs expectation
 pub use plonk::verify;
+
+#[cfg(feature = "std")]
+pub mod host;
+
+#[cfg(feature = "std")]
+pub use host::verify_host;

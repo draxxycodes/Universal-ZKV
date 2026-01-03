@@ -4,6 +4,8 @@
 //! Uses Keccak256 for EVM compatibility (can verify proofs on-chain).
 
 use alloc::vec::Vec;
+use alloc::vec;
+use super::types::Error;
 use sha3::{Keccak256, Digest};
 
 /// Merkle tree for committing to trace values

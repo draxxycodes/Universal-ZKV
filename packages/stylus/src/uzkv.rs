@@ -49,11 +49,12 @@ pub mod stylus_impl {
                     .map_err(|_| b"Groth16 verification failed".to_vec())
             }
             ProofSystem::Plonk => {
-                // crate::plonk::verify(context, proof, public_inputs, vk)
-                Err(b"Plonk not implemented".to_vec())
+                crate::plonk::verify(context, proof, public_inputs, vk)
+                    .map_err(|_| b"Plonk verification failed".to_vec())
             }
             ProofSystem::Stark => {
-                Err(b"Proof type not supported".to_vec())
+                crate::stark::verify_proof(proof, public_inputs, vk)
+                    .map_err(|_| b"STARK verification failed".to_vec())
             }
         }
     }
@@ -144,10 +145,13 @@ pub mod host_impl {
                     .map_err(|_| b"Groth16 verification failed".to_vec())
             }
             ProofSystem::Plonk => {
-                Err(b"Plonk not implemented".to_vec())
+                crate::plonk::verify_host(proof, public_inputs, vk)
+                    .map_err(|e| e.into_bytes())
             }
+
             ProofSystem::Stark => {
-                Err(b"Proof type not supported".to_vec())
+                crate::stark::verify_proof(proof, public_inputs, vk)
+                    .map_err(|_| b"STARK verification failed".to_vec())
             }
         }
     }

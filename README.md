@@ -30,9 +30,9 @@ By leveraging Stylus (WASM), we achieve **10x gas savings** compared to Solidity
 
 | System | Gas Cost | Setup | Security | Status |
 |--------|----------|-------|----------|--------|
-| **Groth16** | ~200k | Trusted | 128-bit | ✅ **Production** (EVM Precompiles) |
-| **PLONK** | ~320k | Universal | 128-bit | ✅ **Production** (EIP-1108 Optimized) |
-| **STARK** | ~500k | Transparent | Post-Quantum | ✅ **Production** (Keccak-based) |
+| **Groth16** | ~200k | Trusted | 128-bit | ✅ **Production** (Precompiles / Arkworks) |
+| **PLONK** | ~320k | Universal | 128-bit | ✅ **Production** (KZG / Arkworks) |
+| **STARK** | ~500k | Transparent | Post-Quantum | ✅ **Production** (Generic AIR Engine) |
 
 ---
 

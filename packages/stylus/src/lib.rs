@@ -49,7 +49,7 @@ pub mod groth16;
 pub mod plonk;
 
 // STARK implementation - transparent setup, post-quantum security
-// pub mod stark;
+pub mod stark;
 
 // Universal proof protocol types (frozen binary format)
 pub mod types;

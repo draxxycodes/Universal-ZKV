@@ -58,7 +58,7 @@ pub fn verify<S: StaticCallContext + Copy>(
     verify_plonk_proof(context, &proof, &vk, &public_inputs, srs_g2)
 }
 
-fn deserialize_plonk_proof(bytes: &[u8]) -> Option<PlonkProof> {
+pub fn deserialize_plonk_proof(bytes: &[u8]) -> Option<PlonkProof> {
     if bytes.len() != 896 { return None; }
     
     let mut offset = 0;
@@ -89,7 +89,7 @@ fn deserialize_plonk_proof(bytes: &[u8]) -> Option<PlonkProof> {
     })
 }
 
-fn deserialize_plonk_vk(bytes: &[u8]) -> Option<PlonkVerificationKey> {
+pub fn deserialize_plonk_vk(bytes: &[u8]) -> Option<PlonkVerificationKey> {
     if bytes.len() < 752 { return None; }
     
     let mut offset = 0;
