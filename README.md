@@ -97,7 +97,21 @@ npm test src/e2e.test.ts
 
 ---
 
-## 💻 SDK Usage
+## 💻 SDK & CLI Usage
+
+### Command Line Interface (CLI)
+
+Verify proofs off-chain using the Rust-based CLI:
+
+```bash
+# Build
+cargo build --bin uzkv-cli --features std --release
+
+# Verify
+./target/release/uzkv-cli -t groth16 -p proof.bin -i inputs.bin -v vk.bin
+```
+
+### SDK Usage
 
 Interact with the system using our Type-Safe SDK:
 

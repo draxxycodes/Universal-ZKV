@@ -1,16 +1,15 @@
-//! Groth16 Verifier using Arbitrum BN256 Precompiles
+//! Groth16 Verifier
 //!
-//! Implementation bypasses `arkworks` to avoid WASM runtime panics and reduce binary size.
-//! Uses addresses 0x06 (Add), 0x07 (Mul), 0x08 (Pairing).
+//! Dual-mode implementation:
+//! 1. WASM (Stylus): Uses Arbitrum BN256 precompiles (0x06, 0x07, 0x08)
+//! 2. Host (CLI): Uses arkworks (ark-groth16) for pure Rust verification
 
 use alloc::vec::Vec;
-use alloc::vec;
-use stylus_sdk::{
-    alloy_primitives::{address, Address, U256},
-    call::{static_call, StaticCallContext},
-};
 
-// Error type
+// =========================================================================
+// SHARED TYPES
+// =========================================================================
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
     InvalidProof,
@@ -18,172 +17,199 @@ pub enum Error {
     VerificationFailed,
     PrecompileFailed,
     InvalidVerificationKey,
+    DeserializationError,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-// Precompile Addresses
-const BN256_ADD: Address = address!("0000000000000000000000000000000000000006");
-const BN256_MUL: Address = address!("0000000000000000000000000000000000000007");
-const BN256_PAIRING: Address = address!("0000000000000000000000000000000000000008");
+// =========================================================================
+// STYLUS IMPLEMENTATION (WASM / Precompiles)
+// =========================================================================
 
-// Data sizes
-// const G1_SIZE: usize = 64;   // X, Y (32 bytes each)
-// const G2_SIZE: usize = 128;  // X1, X2, Y1, Y2 (32 bytes each)
-// const SCALAR_SIZE: usize = 32;
+#[cfg(not(feature = "std"))]
+pub mod stylus_impl {
+    use super::*;
+    use stylus_sdk::{
+        alloy_primitives::{address, Address, U256},
+        call::{static_call, StaticCallContext},
+    };
+    use alloc::vec;
 
-/// Verify a Groth16 proof using precompiles
-pub fn verify<S: StaticCallContext + Copy>(
-    context: S,
-    proof_bytes: &[u8],
-    public_inputs_bytes: &[u8],
-    vk_bytes: &[u8],
-) -> Result<bool> {
-    // 1. Parsing
-    // Proof: [A (64), B (128), C (64)] = 256 bytes
-    if proof_bytes.len() != 256 {
-        return Err(Error::InvalidProof);
+    const BN256_ADD: Address = address!("0000000000000000000000000000000000000006");
+    const BN256_MUL: Address = address!("0000000000000000000000000000000000000007");
+    const BN256_PAIRING: Address = address!("0000000000000000000000000000000000000008");
+
+    pub fn verify<S: StaticCallContext + Copy>(
+        context: S,
+        proof_bytes: &[u8],
+        public_inputs_bytes: &[u8],
+        vk_bytes: &[u8],
+    ) -> Result<bool> {
+        // 1. Parsing
+        if proof_bytes.len() != 256 {
+            return Err(Error::InvalidProof);
+        }
+        let a = &proof_bytes[0..64];
+        let b = &proof_bytes[64..192];
+        let c = &proof_bytes[192..256];
+
+        if public_inputs_bytes.len() % 32 != 0 {
+            return Err(Error::InvalidInputs);
+        }
+        let input_count = public_inputs_bytes.len() / 32;
+
+        let vk_header_size = 448;
+        if vk_bytes.len() < vk_header_size {
+            return Err(Error::InvalidVerificationKey);
+        }
+        
+        let expected_ic_len = (input_count + 1) * 64;
+        if vk_bytes.len() != vk_header_size + expected_ic_len {
+            return Err(Error::InvalidVerificationKey);
+        }
+
+        let alpha = &vk_bytes[0..64];
+        let beta = &vk_bytes[64..192];
+        let gamma = &vk_bytes[192..320];
+        let delta = &vk_bytes[320..448];
+        let ic = &vk_bytes[448..];
+
+        // 2. Compute Linear Combination L
+        // L = IC_0 + sum(input[i] * IC[i+1])
+        let mut l = ic[0..64].to_vec();
+
+        for i in 0..input_count {
+            let input_scalar = &public_inputs_bytes[i*32..(i+1)*32];
+            let ic_point = &ic[(i+1)*64..(i+2)*64];
+
+            let term = bn256_mul(context, ic_point, input_scalar)?;
+            l = bn256_add(context, &l, &term)?;
+        }
+
+        // 3. Pairing Check
+        let neg_gamma = negate_g2(gamma);
+        let neg_delta = negate_g2(delta);
+        let neg_beta = negate_g2(beta);
+
+        let mut pairing_input = Vec::with_capacity(768);
+        pairing_input.extend_from_slice(a);
+        pairing_input.extend_from_slice(b);
+        pairing_input.extend_from_slice(alpha);
+        pairing_input.extend_from_slice(&neg_beta);
+        pairing_input.extend_from_slice(&l);
+        pairing_input.extend_from_slice(&neg_gamma);
+        pairing_input.extend_from_slice(c);
+        pairing_input.extend_from_slice(&neg_delta);
+
+        let result_data = static_call(context, BN256_PAIRING, &pairing_input)
+            .map_err(|_| Error::PrecompileFailed)?;
+        
+        if result_data.len() != 32 {
+             return Err(Error::PrecompileFailed);
+        }
+        
+        Ok(result_data[31] == 1)
     }
-    let a = &proof_bytes[0..64];
-    let b = &proof_bytes[64..192];
-    let c = &proof_bytes[192..256];
 
-    // Inputs: Vector of 32-byte scalars
-    if public_inputs_bytes.len() % 32 != 0 {
-        return Err(Error::InvalidInputs);
-    }
-    let input_count = public_inputs_bytes.len() / 32;
-
-    // VK: [alpha (64), beta (128), gamma (128), delta (128), IC_0 (64), IC_1 (64)...]
-    // Header size = 64 + 128*3 = 448 bytes
-    // IC size = (input_count + 1) * 64
-    let vk_header_size = 448;
-    if vk_bytes.len() < vk_header_size {
-        return Err(Error::InvalidVerificationKey);
-    }
-    
-    // Check internal consistency of VK size (must match inputs + 1 for IC_0)
-    // Gamma_abc length = input_count + 1
-    let expected_ic_len = (input_count + 1) * 64;
-    if vk_bytes.len() != vk_header_size + expected_ic_len {
-        return Err(Error::InvalidVerificationKey);
+    fn bn256_add<S: StaticCallContext + Copy>(context: S, p1: &[u8], p2: &[u8]) -> Result<Vec<u8>> {
+        let mut input = Vec::with_capacity(128);
+        input.extend_from_slice(p1);
+        input.extend_from_slice(p2);
+        static_call(context, BN256_ADD, &input).map_err(|_| Error::PrecompileFailed)
     }
 
-    let alpha = &vk_bytes[0..64];
-    let beta = &vk_bytes[64..192];
-    let gamma = &vk_bytes[192..320];
-    let delta = &vk_bytes[320..448];
-    let ic = &vk_bytes[448..];
-
-    // 2. Compute Linear Combination L
-    // L = IC_0 + sum(input[i] * IC[i+1])
-    
-    // Start with IC_0
-    let mut l = ic[0..64].to_vec();
-
-    for i in 0..input_count {
-        let input_scalar = &public_inputs_bytes[i*32..(i+1)*32];
-        let ic_point = &ic[(i+1)*64..(i+2)*64];
-
-        // Compute input[i] * IC[i+1]
-        let term = bn256_mul(context, ic_point, input_scalar)?;
-
-        // Add to L
-        l = bn256_add(context, &l, &term)?;
+    fn bn256_mul<S: StaticCallContext + Copy>(context: S, p: &[u8], s: &[u8]) -> Result<Vec<u8>> {
+        let mut input = Vec::with_capacity(96);
+        input.extend_from_slice(p);
+        input.extend_from_slice(s);
+        static_call(context, BN256_MUL, &input).map_err(|_| Error::PrecompileFailed)
     }
 
-    // 3. Pairing Check
-    
-    let neg_gamma = negate_g2(gamma);
-    let neg_delta = negate_g2(delta);
-    let neg_beta = negate_g2(beta);
+    fn negate_g2(p: &[u8]) -> Vec<u8> {
+        let mut output = p.to_vec();
+        let y1_bytes = &p[64..96];
+        let y2_bytes = &p[96..128];
+        let p_modulus = U256::from_str_radix("30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47", 16).unwrap();
 
-    let mut pairing_input = Vec::with_capacity(768);
-    // Pair 1: A, B
-    pairing_input.extend_from_slice(a);
-    pairing_input.extend_from_slice(b);
-    
-    // Pair 2: Alpha, -Beta
-    pairing_input.extend_from_slice(alpha);
-    pairing_input.extend_from_slice(&neg_beta);
+        fn try_into32(s: &[u8]) -> [u8; 32] {
+            let mut arr = [0u8; 32];
+            arr.copy_from_slice(&s[0..32]);
+            arr
+        }
 
-    // Pair 3: L, -Gamma
-    pairing_input.extend_from_slice(&l);
-    pairing_input.extend_from_slice(&neg_gamma);
+        let y1 = U256::from_be_bytes(try_into32(y1_bytes));
+        let y2 = U256::from_be_bytes(try_into32(y2_bytes));
 
-    // Pair 4: C, -Delta
-    pairing_input.extend_from_slice(c);
-    pairing_input.extend_from_slice(&neg_delta);
+        let neg_y1 = if y1 == U256::ZERO { U256::ZERO } else { p_modulus - y1 };
+        let neg_y2 = if y2 == U256::ZERO { U256::ZERO } else { p_modulus - y2 };
 
-    // Call Pairing Precompile
-    let result_data = static_call(context, BN256_PAIRING, &pairing_input)
-        .map_err(|_| Error::PrecompileFailed)?;
-    
-    // EVM precompile returns 1 (true) or 0 (false) as U256.
-    if result_data.len() != 32 {
-         return Err(Error::PrecompileFailed);
+        output[64..96].copy_from_slice(&neg_y1.to_be_bytes::<32>());
+        output[96..128].copy_from_slice(&neg_y2.to_be_bytes::<32>());
+        output
     }
-    
-    let success = result_data[31] == 1; 
-    
-    Ok(success)
 }
 
-// Helpers
+// Re-export specific Stylus functions when compiling for WASM
+#[cfg(not(feature = "std"))]
+pub use stylus_impl::verify;
 
-fn bn256_add<S: StaticCallContext + Copy>(context: S, p1: &[u8], p2: &[u8]) -> Result<Vec<u8>> {
-    let mut input = Vec::with_capacity(128);
-    input.extend_from_slice(p1);
-    input.extend_from_slice(p2);
+// =========================================================================
+// HOST IMPLEMENTATION (CLI / Tests using arkworks)
+// =========================================================================
 
-    static_call(context, BN256_ADD, &input).map_err(|_| Error::PrecompileFailed)
+#[cfg(feature = "std")]
+pub mod host_impl {
+    use super::*;
+    use ark_bn254::{Bn254, Fr};
+    use ark_groth16::{Proof, VerifyingKey, Groth16};
+    use ark_serialize::CanonicalDeserialize;
+    use ark_snark::SNARK;
+
+    pub fn verify_host(
+        proof_bytes: &[u8],
+        public_inputs_bytes: &[u8],
+        vk_bytes: &[u8],
+    ) -> Result<bool> {
+        // 1. Deserialize Proof
+        let proof = Proof::<Bn254>::deserialize_compressed(proof_bytes)
+            .map_err(|_| Error::DeserializationError)?;
+
+        // 2. Deserialize VK
+        let vk = VerifyingKey::<Bn254>::deserialize_compressed(vk_bytes)
+            .map_err(|_| Error::InvalidVerificationKey)?;
+
+        // 3. Deserialize Public Inputs
+        if public_inputs_bytes.len() % 32 != 0 {
+            return Err(Error::InvalidInputs);
+        }
+        let input_count = public_inputs_bytes.len() / 32;
+        let mut inputs = Vec::with_capacity(input_count);
+
+        for chunk in public_inputs_bytes.chunks(32) {
+            let input = Fr::deserialize_compressed(chunk)
+                .map_err(|_| Error::InvalidInputs)?;
+            inputs.push(input);
+        }
+
+        // 4. Verify using arkworks
+        match Groth16::<Bn254>::verify(&vk, &inputs, &proof) {
+            Ok(valid) => Ok(valid),
+            Err(_) => Err(Error::VerificationFailed),
+        }
+    }
 }
 
-fn bn256_mul<S: StaticCallContext + Copy>(context: S, p: &[u8], s: &[u8]) -> Result<Vec<u8>> {
-    let mut input = Vec::with_capacity(96);
-    input.extend_from_slice(p);
-    input.extend_from_slice(s);
+#[cfg(feature = "std")]
+pub use host_impl::{verify_host};
 
-    static_call(context, BN256_MUL, &input).map_err(|_| Error::PrecompileFailed)
-}
+// =========================================================================
+// COMMON STUBS / HELPERS
+// =========================================================================
 
-fn negate_g2(p: &[u8]) -> Vec<u8> {
-    // G2 point: X1(32), X2(32), Y1(32), Y2(32)
-    // Field is Fq.
-    // We need to negate Y coordinate. (x, -y).
-    // Y is (y1, y2) in Fq2.
-    // Negate means P - Y (mod P). P is field modulus.
-    // BN254 Field Modulus P = 21888242871839275222246405745257275088696311157297823662689037894645226208583
-    let mut output = p.to_vec();
-    let y1_bytes = &p[64..96];
-    let y2_bytes = &p[96..128];
+#[cfg(not(feature = "std"))]
+use stylus_sdk::call::StaticCallContext;
 
-    // 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-    let p_modulus = U256::from_str_radix("30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47", 16).unwrap();
-
-    let y1 = U256::from_be_bytes(try_into32(y1_bytes));
-    let y2 = U256::from_be_bytes(try_into32(y2_bytes));
-
-    // Negate: P - y (if y != 0)
-    let neg_y1 = if y1 == U256::ZERO { U256::ZERO } else { p_modulus - y1 };
-    let neg_y2 = if y2 == U256::ZERO { U256::ZERO } else { p_modulus - y2 };
-
-    let neg_y1_bytes = neg_y1.to_be_bytes::<32>();
-    let neg_y2_bytes = neg_y2.to_be_bytes::<32>();
-
-    output[64..96].copy_from_slice(&neg_y1_bytes);
-    output[96..128].copy_from_slice(&neg_y2_bytes);
-
-    output
-}
-
-fn try_into32(s: &[u8]) -> [u8; 32] {
-    let mut arr = [0u8; 32];
-    arr.copy_from_slice(&s[0..32]);
-    arr
-}
-
-// Stubs for other functions
+#[cfg(not(feature = "std"))]
 pub fn verify_with_precomputed<S: StaticCallContext + Copy>(
     _context: S,
     _proof_bytes: &[u8],
@@ -191,13 +217,15 @@ pub fn verify_with_precomputed<S: StaticCallContext + Copy>(
     _vk_bytes: &[u8],
     _precomputed: &[u8],
 ) -> Result<bool> {
-    Ok(true)
+    Ok(true) // Stub
 }
 
+#[cfg(not(feature = "std"))]
 pub fn compute_precomputed_pairing(_vk_bytes: &[u8]) -> Result<Vec<u8>> {
-    Ok(Vec::new())
+    Ok(Vec::new()) // Stub
 }
 
+#[cfg(not(feature = "std"))]
 pub fn batch_verify<S: StaticCallContext + Copy>(
     _context: S,
     proofs: &[Vec<u8>],
@@ -207,3 +235,4 @@ pub fn batch_verify<S: StaticCallContext + Copy>(
 ) -> Result<Vec<bool>> {
     Ok(vec![true; proofs.len()])
 }
+

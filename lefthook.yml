@@ -23,5 +23,7 @@ pre-push:
   commands:
     rust-test:
       run: cd packages/stylus && cargo test --target x86_64-unknown-linux-gnu --features std
+    rust-cli-build:
+      run: cd packages/stylus && cargo build --bin uzkv-cli --features std --target x86_64-unknown-linux-gnu
     # solidity-test:
     #   run: cd packages/contracts && forge test

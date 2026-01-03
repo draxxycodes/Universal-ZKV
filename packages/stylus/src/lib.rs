@@ -34,6 +34,7 @@ use mini_alloc::MiniAlloc;
 
 // Custom allocator for WASM environment
 // WeeAlloc provides small code size and predictable memory usage
+#[cfg(not(feature = "std"))]
 #[global_allocator]
 static ALLOC: MiniAlloc = MiniAlloc::INIT;
 
@@ -151,6 +152,7 @@ impl From<groth16::Error> for Error {
             groth16::Error::VerificationFailed => Error::VerificationFailed,
             groth16::Error::PrecompileFailed => Error::VerificationFailed,
             groth16::Error::InvalidVerificationKey => Error::InvalidVerificationKey,
+            groth16::Error::DeserializationError => Error::DeserializationError,
         }
     }
 }
@@ -187,6 +189,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// - topic1: proof_type (uint8)
 /// - topic2: program_id (uint32) 
 /// - topic3: vk_hash (bytes32)
+#[cfg(not(feature = "std"))]
 fn emit_proof_verified_event(
     proof_type: u8,
     program_id: u32,
@@ -239,6 +242,7 @@ fn emit_proof_verified_event(
 /// - topic1: proof_type (uint8)
 /// - topic2: program_id (uint32)
 /// - topic3: vk_hash (bytes32)
+#[cfg(not(feature = "std"))]
 fn emit_vk_registered_event(
     proof_type: u8,
     program_id: u32,
@@ -280,6 +284,7 @@ fn emit_vk_registered_event(
 }
 
 // Stylus contract storage definition using ERC-7201 namespaced storage
+#[cfg(not(feature = "std"))]
 sol_storage! {
     #[entrypoint]
     pub struct UZKVContract {
@@ -333,6 +338,7 @@ sol_storage! {
 }
 
 /// Stylus contract implementation
+#[cfg(not(feature = "std"))]
 #[external]
 impl UZKVContract {
     /// Verify a Groth16 proof with gas optimization

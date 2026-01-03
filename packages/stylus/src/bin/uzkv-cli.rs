@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use std::process;
 
 // Import UZKV library functions
-use uzkv_stylus::uzkv::{ProofSystem, verify_universal_proof};
+use uzkv_stylus::uzkv::{ProofSystem, verify_offchain};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -150,7 +150,7 @@ fn main() {
     let proof_system_u8 = proof_system as u8;
     
     // Verify proof
-    match verify_universal_proof(proof_system_u8, &proof_bytes, &public_inputs_bytes, &vk_bytes) {
+    match verify_offchain(proof_system_u8, &proof_bytes, &public_inputs_bytes, &vk_bytes) {
         Ok(is_valid) => {
             // Output result as JSON for easy parsing by Node.js
             let result = serde_json::json!({
