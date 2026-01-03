@@ -6,7 +6,7 @@
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/draxxycodes/Universal-ZKV)
 [![Rust](https://img.shields.io/badge/rust-1.84%2B-orange)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Proprietary-red)](./LICENSE)
 [![Stylus](https://img.shields.io/badge/arbitrum-stylus-8A2BE2)](https://arbitrum.io/stylus)
 
 **A formally-structured universal ZK verification framework supporting heterogeneous proof systems**
@@ -390,7 +390,9 @@ This is **novel architecture**, similar to how type systems changed programming 
 
 ## 📄 License
 
-MIT License — see [LICENSE](./LICENSE) for details.
+**Proprietary / All Rights Reserved.**
+
+This software is **UNLICENSED** for public use. You may not copy, modify, or distribute this software without express written permission from the copyright holder (`draxxycodes`). See [LICENSE](./LICENSE) for details.
 
 ---
 

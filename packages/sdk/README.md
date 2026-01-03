@@ -157,6 +157,12 @@ const encoded = descriptor.encode(); // 75 bytes
 const decoded = UniversalProofDescriptor.decode(encoded);
 ```
 
+### License
+
+**Proprietary / All Rights Reserved.**
+
+This software is **UNLICENSED** for public use. You may not copy, modify, or distribute this software without express written permission from the copyright holder (`draxxycodes`). See [LICENSE](../../LICENSE) for details.)
+
 ### VerificationCost Class (Cost Model)
 
 Gas estimation and verification path selection.
