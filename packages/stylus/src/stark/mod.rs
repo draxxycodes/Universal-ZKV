@@ -26,6 +26,7 @@ use alloc::vec;
 pub mod types;
 pub mod fibonacci;
 pub mod verifier;
+pub mod merkle;
 
 // Re-exports
 pub use types::{Error, Result, SecurityLevel, GasEstimate};

@@ -88,13 +88,38 @@ impl StarkVerifier {
     
     /// Verify Merkle proofs for query positions
     fn verify_merkle_proofs(&self, proof: &FibonacciProof) -> Result<()> {
-        // Simplified: In production, verify each Merkle path
-        // For now, just check structure
+        use super::merkle::MerkleProof;
+        use sha3::{Keccak256, Digest};
         
-        for merkle_proof in &proof.merkle_proofs {
-            // Each proof should have log2(trace_length) siblings
-            // Simplified check: proof exists
-            let _ = merkle_proof;
+        // Helper to hash a leaf value
+        let hash_leaf = |value: u64| -> [u8; 32] {
+            let mut hasher = Keccak256::new();
+            hasher.update(b"leaf:");
+            hasher.update(&value.to_le_bytes());
+            let result = hasher.finalize();
+            let mut output = [0u8; 32];
+            output.copy_from_slice(&result);
+            output
+        };
+        
+        // Verify each query's Merkle proof
+        for (i, (pos, value)) in proof.query_values.iter().enumerate() {
+            // Skip if no Merkle proofs provided (simplified mode)
+            if i >= proof.merkle_proofs.len() || proof.merkle_proofs[i].is_empty() {
+                continue; // Allow simplified proofs without Merkle verification
+            }
+            
+            // Construct MerkleProof from siblings
+            let merkle_proof = MerkleProof {
+                leaf_index: *pos,
+                siblings: proof.merkle_proofs[i].clone(),
+            };
+            
+            // Verify the proof
+            let leaf_hash = hash_leaf(*value);
+            if !merkle_proof.verify(&leaf_hash, &proof.trace_commitment) {
+                return Err(Error::MerkleProofFailed);
+            }
         }
         
         Ok(())
