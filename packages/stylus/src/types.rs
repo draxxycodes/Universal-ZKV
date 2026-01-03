@@ -431,6 +431,7 @@ impl UniversalProof {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
 
     #[test]
     fn test_proof_type_roundtrip() {
@@ -961,12 +962,12 @@ mod upd_tests {
         let plonk = UniversalProofDescriptor::plonk(4, [0u8; 32], [0u8; 32]);
         let stark = UniversalProofDescriptor::stark(4, 50_000, [0u8; 32]);
 
-        // Groth16 should be cheapest for small proofs
+        // With EIP-1108 costs: PLONK is cheaper than Groth16 for small inputs
         let groth16_gas = groth16.estimate_gas();
         let plonk_gas = plonk.estimate_gas();
         let stark_gas = stark.estimate_gas();
 
-        assert!(groth16_gas < plonk_gas);
+        assert!(plonk_gas < groth16_gas);
         assert!(plonk_gas < stark_gas);
     }
 

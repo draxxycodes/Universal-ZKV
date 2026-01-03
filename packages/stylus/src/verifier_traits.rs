@@ -283,24 +283,24 @@ impl GasCost {
             + (self.per_proof_byte * proof_bytes as u64)
     }
     
-    /// Groth16 gas cost model (BN254 on Stylus)
-    /// - Base: ~250k gas (pairing operations)
-    /// - Per input: ~40k gas (MSM)
+    /// Groth16 gas cost model (BN254 on Stylus with Precompiles)
+    /// - Base: ~200k gas (4 Pairings: 181k + Overhead)
+    /// - Per input: ~6.5k gas (1 Mul: 6k + 1 Add: 150 + Overhead)
     pub const fn groth16() -> Self {
         Self {
-            base: 250_000,
-            per_public_input: 40_000,
+            base: 200_000,
+            per_public_input: 6_500,
             per_proof_byte: 0, // Fixed-size proof
         }
     }
     
     /// PLONK gas cost model (KZG on BN254)
-    /// - Base: ~350k gas (more pairing operations)
-    /// - Per input: ~10k gas (lookup)
+    /// - Base: ~180k gas (2 Pairings: 113k + Batching MSMs + Scalar Logic)
+    /// - Per input: ~500 gas (Scalar Ops + Keccak, no Curve Ops)
     pub const fn plonk() -> Self {
         Self {
-            base: 350_000,
-            per_public_input: 10_000,
+            base: 180_000,
+            per_public_input: 500,
             per_proof_byte: 0, // Fixed-size proof
         }
     }
@@ -424,7 +424,7 @@ mod tests {
         let groth16 = GasCost::groth16();
         // 2 public inputs, 256 byte proof
         let estimated = groth16.estimate(2, 256);
-        assert_eq!(estimated, 250_000 + 2 * 40_000 + 0); // 330k gas
+        assert_eq!(estimated, 200_000 + 2 * 6_500 + 0); // 213k gas
     }
 
     #[test]

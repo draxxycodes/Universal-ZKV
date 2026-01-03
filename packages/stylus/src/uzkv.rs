@@ -4,7 +4,9 @@
 use alloc::vec::Vec;
 
 // Import existing verifiers
+// Import existing verifiers
 use crate::groth16;
+use crate::cost_model::{self, VerificationCost};
 // use crate::plonk;
 // use crate::stark;
 
@@ -48,12 +50,39 @@ pub fn verify_universal_proof<S: StaticCallContext + Copy>(
                 .map_err(|_| b"Groth16 verification failed".to_vec())
         }
         ProofSystem::Plonk => {
-            Err(b"Proof type not supported".to_vec())
+            crate::plonk::verify(context, proof, public_inputs, vk)
+                .map_err(|_| b"Plonk verification failed".to_vec())
         }
         ProofSystem::Stark => {
             Err(b"Proof type not supported".to_vec())
         }
     }
+}
+
+/// Verify with gas budget check
+pub fn verify_universal_proof_with_budget<S: StaticCallContext + Copy>(
+    context: S,
+    proof_system: u8,
+    proof: &[u8],
+    public_inputs: &[u8],
+    vk: &[u8],
+    gas_budget: u64,
+) -> Result<bool, Vec<u8>> {
+    let system = ProofSystem::from_u8(proof_system)
+        .ok_or_else(|| b"Invalid proof system".to_vec())?;
+        
+    // Estimate cost
+    let cost = match system {
+        ProofSystem::Groth16 => VerificationCost::for_groth16(public_inputs.len() / 32), // Assuming 32-byte inputs
+        ProofSystem::Plonk => VerificationCost::for_plonk(public_inputs.len() / 32, 65536), // Estimate
+        ProofSystem::Stark => VerificationCost::for_stark(1024, 128),
+    };
+    
+    if cost.estimated_total > gas_budget {
+        return Err(b"Gas budget exceeded".to_vec());
+    }
+    
+    verify_universal_proof(context, proof_system, proof, public_inputs, vk)
 }
 
 /// Batch verification - verify multiple proofs of potentially different systems

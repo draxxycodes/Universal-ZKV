@@ -45,7 +45,7 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 }
 
 pub mod groth16;
-// pub mod plonk;
+pub mod plonk;
 
 // STARK implementation - transparent setup, post-quantum security
 // pub mod stark;
@@ -58,6 +58,7 @@ pub mod verifier_traits;
 
 // Universal ZK Verifier - routes to appropriate verifier based on proof type
 pub mod uzkv;
+pub mod utils;
 
 // Cost-Aware Verification - gas estimation and path selection
 pub mod cost_model;
@@ -616,59 +617,48 @@ impl UZKVContract {
         }
         let vk_data = vk_storage.get_bytes();
 
-        // Route to appropriate verifier based on proof type
-        let is_valid = match ptype {
-            ProofType::Groth16 => {
-                // Check if precomputed pairing is available for gas optimization
-                let precomp_proof_type = self.precomputed_data.getter(proof_type_uint);
-                let precomp_program = precomp_proof_type.getter(program_id_uint);
-                let precomputed_storage = precomp_program.get(vk_hash_fixed);
-                let precomputed_pairing = precomputed_storage.get_bytes();
+        // Route to appropriate verifier based on proof type via UZKV dispatcher
+        // This ensures consistent behavior, gas tracking, and security checks
+        
+        // 1. Construct Security Descriptor
+        let curve_id = crate::types::CurveId::BN254; // Default to BN254 for now
+        
+        let descriptor = crate::types::UniversalProofDescriptor::new(
+            proof_type_u8,
+            curve_id,
+            crate::types::HashFunctionId::Keccak256, // Default
+            0, // No recursion yet
+            (universal_proof.public_inputs_bytes.len() / 32) as u16, // Approx input count
+            universal_proof.proof_bytes.len() as u32,
+            universal_proof.vk_hash,
+            universal_proof.vk_hash, // Use vk_hash as circuit_id proxy for now
+        );
 
-                if !precomputed_pairing.is_empty() {
-                    // Use optimized verification with precomputed e(α, β) (~80k gas savings)
-                    groth16::verify_with_precomputed(
-                        &*self,
-                        &universal_proof.proof_bytes,
-                        &universal_proof.public_inputs_bytes,
-                        &vk_data,
-                        &precomputed_pairing,
-                    )?
-                } else {
-                    // Fall back to standard verification
-                    groth16::verify(
-                        &*self,
-                        &universal_proof.proof_bytes,
-                        &universal_proof.public_inputs_bytes,
-                        &vk_data,
-                    )?
-                }
-            }
-            ProofType::PLONK => {
-                // PLONK verification (universal setup)
-                /*
-                plonk::verify(
-                    &universal_proof.proof_bytes,
-                    &universal_proof.public_inputs_bytes,
-                    &vk_data,
-                )
-                .map_err(|_| Error::VerificationFailed)?
-                */
-                return Err(Error::ProofTypeNotSupported);
-            }
-            ProofType::STARK => {
-                // STARK doesn't use VKs (transparent setup)
-                // But we still validate registration for consistency
-                /*
-                stark::verify_proof(
-                    &universal_proof.proof_bytes,
-                    &universal_proof.public_inputs_bytes,
-                )
-                .map_err(|_| Error::VerificationFailed)?
-                */
-                return Err(Error::ProofTypeNotSupported);
-            }
-        };
+        // 2. Construct RegisteredVK for validation
+        let registered_vk = crate::security::RegisteredVK::new(
+            ptype,
+            universal_proof.vk_hash,
+            universal_proof.vk_hash, // circuit_id proxy
+            curve_id,
+            1024, // Max inputs default
+        );
+
+        // 3. Run Security Validation
+        let validator = crate::security::DispatchValidator::new();
+        validator.validate_proof_type_binding(&descriptor, &registered_vk)
+            .map_err(|_| Error::InvalidProofFormat)?;
+
+        // 4. Delegate to Universal Verifier (with cost check)
+        let gas_budget = stylus_sdk::evm::gas_left();
+        
+        let is_valid = crate::uzkv::verify_universal_proof_with_budget(
+            &*self,
+            proof_type_u8,
+            &universal_proof.proof_bytes,
+            &universal_proof.public_inputs_bytes,
+            &vk_data,
+            gas_budget
+        ).map_err(|_| Error::VerificationFailed)?;
 
         // Increment verification counter for valid proofs
         if is_valid {
@@ -901,16 +891,15 @@ impl UZKVContract {
         self.paused.get()
     }
 
-    /// Pause the contract (admin only)
-    pub fn pause(&mut self) -> Result<()> {
-        // Check admin authorization
-        if msg::sender() != self.admin.get() {
-            return Err(Error::Unauthorized);
-        }
-
-        self.paused.set(true);
-        Ok(())
+    /// Estimate verification cost view function
+    pub fn estimate_verification_cost(&self, proof_type: u8, input_count: u32) -> core::result::Result<u64, Vec<u8>> {
+        let ptype = ProofType::from_u8(proof_type)
+            .ok_or_else(|| b"Invalid proof type".to_vec())?;
+            
+        let cost = crate::cost_model::GasLimitRecommendation::for_proof_type(ptype, input_count as usize);
+        Ok(cost.recommended)
     }
+
 
     /// Unpause the contract (admin only)
     pub fn unpause(&mut self) -> Result<()> {
