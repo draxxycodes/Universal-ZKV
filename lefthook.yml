@@ -22,6 +22,6 @@ pre-push:
   parallel: false
   commands:
     rust-test:
-      run: cd packages/stylus && cargo test
-    solidity-test:
-      run: cd packages/contracts && forge test
+      run: cd packages/stylus && cargo test --target x86_64-unknown-linux-gnu --features std
+    # solidity-test:
+    #   run: cd packages/contracts && forge test

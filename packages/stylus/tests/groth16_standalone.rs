@@ -13,7 +13,7 @@ mod groth16_tests {
     use ark_ec::{AffineRepr, CurveGroup};
     use ark_groth16::{Proof, VerifyingKey};
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
-    use ark_std::UniformRand;
+    use ark_std::{UniformRand, Zero};
 
     // Constants from main implementation
     const MAX_PUBLIC_INPUTS: usize = 256;
@@ -125,7 +125,7 @@ mod groth16_tests {
         let mut rng = ark_std::test_rng();
 
         // Generate proof
-        let original_proof = Proof {
+        let original_proof: Proof<Bn254> = Proof {
             a: G1Projective::rand(&mut rng).into_affine(),
             b: G2Projective::rand(&mut rng).into_affine(),
             c: G1Projective::rand(&mut rng).into_affine(),
@@ -231,6 +231,9 @@ mod groth16_tests {
             Ok(_) => {
                 // Also acceptable if zeros are valid
             }
+            _ => {
+                panic!("Unexpected error variant");
+            }
         }
     }
 
@@ -239,7 +242,7 @@ mod groth16_tests {
         let mut rng = ark_std::test_rng();
 
         // Create a minimal verification key
-        let vk = VerifyingKey {
+        let vk: VerifyingKey<Bn254> = VerifyingKey {
             alpha_g1: G1Projective::rand(&mut rng).into_affine(),
             beta_g2: G2Projective::rand(&mut rng).into_affine(),
             gamma_g2: G2Projective::rand(&mut rng).into_affine(),
