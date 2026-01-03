@@ -29,12 +29,13 @@ use stylus_sdk::{
     prelude::*,
     msg,
 };
-use wee_alloc::WeeAlloc;
+// use wee_alloc::WeeAlloc;
+use mini_alloc::MiniAlloc;
 
 // Custom allocator for WASM environment
 // WeeAlloc provides small code size and predictable memory usage
 #[global_allocator]
-static ALLOC: WeeAlloc = WeeAlloc::INIT;
+static ALLOC: MiniAlloc = MiniAlloc::INIT;
 
 // Panic handler for no_std environment (not used in tests)
 #[cfg(all(not(feature = "std"), not(test)))]
@@ -44,10 +45,10 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 }
 
 pub mod groth16;
-pub mod plonk;
+// pub mod plonk;
 
 // STARK implementation - transparent setup, post-quantum security
-pub mod stark;
+// pub mod stark;
 
 // Universal proof protocol types (frozen binary format)
 pub mod types;
@@ -144,12 +145,11 @@ impl core::fmt::Display for Error {
 impl From<groth16::Error> for Error {
     fn from(err: groth16::Error) -> Self {
         match err {
-            groth16::Error::DeserializationError => Error::DeserializationError,
-            groth16::Error::MalformedProof => Error::MalformedProof,
-            groth16::Error::InvalidVerificationKey => Error::InvalidVerificationKey,
-            groth16::Error::InvalidPublicInputs => Error::InvalidPublicInputs,
+            groth16::Error::InvalidProof => Error::MalformedProof,
+            groth16::Error::InvalidInputs => Error::InvalidPublicInputs,
             groth16::Error::VerificationFailed => Error::VerificationFailed,
-            groth16::Error::InvalidInputSize => Error::InvalidInputSize,
+            groth16::Error::PrecompileFailed => Error::VerificationFailed,
+            groth16::Error::InvalidVerificationKey => Error::InvalidVerificationKey,
         }
     }
 }
@@ -368,10 +368,10 @@ impl UZKVContract {
         
         let is_valid = if !precomputed_pairing.is_empty() {
             // Use optimized verification with precomputed e(α, β) (~80k gas savings)
-            groth16::verify_with_precomputed(&proof, &public_inputs, &vk_data, &precomputed_pairing)?
+            groth16::verify_with_precomputed(&*self, &proof, &public_inputs, &vk_data, &precomputed_pairing)?
         } else {
             // Fall back to standard verification (computes all 4 pairings)
-            groth16::verify(&proof, &public_inputs, &vk_data)?
+            groth16::verify(&*self, &proof, &public_inputs, &vk_data)?
         };
 
         // Only increment counter for valid proofs
@@ -628,6 +628,7 @@ impl UZKVContract {
                 if !precomputed_pairing.is_empty() {
                     // Use optimized verification with precomputed e(α, β) (~80k gas savings)
                     groth16::verify_with_precomputed(
+                        &*self,
                         &universal_proof.proof_bytes,
                         &universal_proof.public_inputs_bytes,
                         &vk_data,
@@ -636,6 +637,7 @@ impl UZKVContract {
                 } else {
                     // Fall back to standard verification
                     groth16::verify(
+                        &*self,
                         &universal_proof.proof_bytes,
                         &universal_proof.public_inputs_bytes,
                         &vk_data,
@@ -644,21 +646,27 @@ impl UZKVContract {
             }
             ProofType::PLONK => {
                 // PLONK verification (universal setup)
+                /*
                 plonk::verify(
                     &universal_proof.proof_bytes,
                     &universal_proof.public_inputs_bytes,
                     &vk_data,
                 )
                 .map_err(|_| Error::VerificationFailed)?
+                */
+                return Err(Error::ProofTypeNotSupported);
             }
             ProofType::STARK => {
                 // STARK doesn't use VKs (transparent setup)
                 // But we still validate registration for consistency
+                /*
                 stark::verify_proof(
                     &universal_proof.proof_bytes,
                     &universal_proof.public_inputs_bytes,
                 )
                 .map_err(|_| Error::VerificationFailed)?
+                */
+                return Err(Error::ProofTypeNotSupported);
             }
         };
 
@@ -727,13 +735,14 @@ impl UZKVContract {
                 let precomputed_pairing = precomputed_storage.get_bytes();
 
                 if !precomputed_pairing.is_empty() {
-                    groth16::verify_with_precomputed(&proof, &public_inputs, &vk_data, &precomputed_pairing)?
+                    groth16::verify_with_precomputed(&*self, &proof, &public_inputs, &vk_data, &precomputed_pairing)?
                 } else {
-                    groth16::verify(&proof, &public_inputs, &vk_data)?
+                    groth16::verify(&*self, &proof, &public_inputs, &vk_data)?
                 }
             }
             ProofType::PLONK => {
                 // PLONK verification (universal setup)
+                /*
                 let vk_hash_fixed = FixedBytes::from(vk_hash);
                 let vk_storage = self.verification_keys.get(vk_hash_fixed);
                 if vk_storage.is_empty() {
@@ -743,11 +752,16 @@ impl UZKVContract {
                 
                 plonk::verify(&proof, &public_inputs, &vk_data)
                     .map_err(|_| Error::VerificationFailed)?
+                */
+                return Err(Error::ProofTypeNotSupported);
             }
             ProofType::STARK => {
                 // STARK doesn't use VKs (transparent setup)
+                /*
                 stark::verify_proof(&proof, &public_inputs)
                     .map_err(|_| Error::VerificationFailed)?
+                */
+                return Err(Error::ProofTypeNotSupported);
             }
         };
 
@@ -843,10 +857,11 @@ impl UZKVContract {
                 let precomputed_pairing = precomputed_storage.get_bytes();
 
                 // Batch verify all proofs
-                groth16::batch_verify(&proofs, &public_inputs, &vk_data, &precomputed_pairing)?
+                groth16::batch_verify(&*self, &proofs, &public_inputs, &vk_data, &precomputed_pairing)?
             }
             ProofType::PLONK => {
                 // PLONK batch verification
+                /*
                 let vk_hash_fixed = FixedBytes::from(vk_hash);
                 let vk_storage = self.verification_keys.get(vk_hash_fixed);
                 if vk_storage.is_empty() {
@@ -856,11 +871,16 @@ impl UZKVContract {
                 
                 plonk::batch_verify(&proofs, &public_inputs, &vk_data)
                     .map_err(|_| Error::VerificationFailed)?
+                */
+                return Err(Error::ProofTypeNotSupported);
             }
             ProofType::STARK => {
                 // STARK batch verification
+                /*
                 stark::batch_verify_proofs(&proofs, &public_inputs)
                     .map_err(|_| Error::VerificationFailed)?
+                */
+                return Err(Error::ProofTypeNotSupported);
             }
         };
 

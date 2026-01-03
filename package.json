@@ -12,7 +12,7 @@
     "plonk",
     "stark"
   ],
-  "license": "MIT",
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
