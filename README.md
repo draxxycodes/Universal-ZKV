@@ -22,49 +22,73 @@
 
 ## 🎯 Overview
 
-Universal-ZKV is a **research-grade** zero-knowledge proof verification engine built for **Arbitrum Stylus**. It allows you to verify proofs from **any** major system (Groth16, PLONK, STARK) through a single, unified smart contract interface.
+Universal-ZKV is a high-performance zero-knowledge proof verification engine designed for **Arbitrum Stylus**. It enables a single smart contract to verify proofs from multiple cryptographic protocols (Groth16, PLONK, STARK) by leveraging a modular dispatch architecture and environment-specific optimizations.
 
-By leveraging Stylus (WASM), we achieve **10x gas savings** compared to Solidity implementations, enabling complex verifiers (like STARKs) that were previously too expensive for EVM.
+### Key Technical Achievements
+
+1.  **Dual-Mode Compilation**: The codebase compiles to extensive WASM (`wasm32-unknown-unknown`) for on-chain execution and native code (`x86_64`) for off-chain auditing and testing.
+2.  **Hybrid Cryptographic Backend**:
+    *   **On-Chain (Stylus)**: Utilizes direct calls to Arbitrum's EVM precompiles (`0x06`, `0x07`, `0x08`) for elliptic curve operations, achieving significantly lower gas costs than pure Solidity implementations.
+    *   **Off-Chain (Host)**: Falls back to the `arkworks` ecosystem (specifically `ark-bn254`) for purely arithmetic verification, enabling identical logic to check proofs without a blockchain connection.
+3.  **Generic AIR Engine**: Includes a custom STARK verifier capable of evaluating arbitrary Algebraic Intermediate Representation (AIR) constraints defined at runtime via the Verification Key, rather than hardcoded logic.
 
 ### Proof System Support
 
-| System | Gas Cost | Setup | Security | Status |
-|--------|----------|-------|----------|--------|
-| **Groth16** | ~200k | Trusted | 128-bit | ✅ **Production** (Precompiles / Arkworks) |
-| **PLONK** | ~320k | Universal | 128-bit | ✅ **Production** (KZG / Arkworks) |
-| **STARK** | ~500k | Transparent | Post-Quantum | ✅ **Production** (Generic AIR Engine) |
+| System | Protocol | Gas Cost | Security | Status |
+|--------|----------|----------|----------|--------|
+| **Groth16** | Pairing-Based (BN254) | ~200k | 128-bit | ✅ **Production** (Precompiles / Arkworks) |
+| **PLONK** | KZG (BN254) | ~320k | 128-bit | ✅ **Production** (KZG / Arkworks) |
+| **STARK** | FRI (Keccak) | ~500k | Post-Quantum | ✅ **Production** (Generic AIR Engine) |
 
 ---
 
 ## 🏗 Architecture
 
+The system is architected as a layered pipeline that enforces type safety and resource constraints before creating any cryptographic objects.
+
 ```mermaid
 graph TD
-    User[User / SDK] -->|UniversalProof| Contract[UZKV Contract (Stylus)]
+    User["User / SDK"] -->|UniversalProof| Contract["UZKV Contract (Stylus)"]
     
     subgraph "Universal ZKV Engine"
-        Contract --> Dispatch[Unified Dispatcher]
+        Contract --> Dispatch["Unified Dispatcher"]
         
-        Dispatch --> Security[Security Validator]
-        Security -->|Binding Check| Registry[VK Registry]
+        Dispatch --> Security["Security Validator"]
+        Security -->|Binding Check| Registry["VK Registry"]
         
-        Dispatch --> Cost[Cost Model]
+        Dispatch --> Cost["Cost Model"]
         Cost -->|Gas Check| Verifiers
         
-        subgraph "Verifiers"
-            Verifiers -->|Route| G16[Groth16 Verifier]
-            Verifiers -->|Route| PLONK[PLONK Verifier]
-            Verifiers -->|Route| STARK[STARK Verifier]
+        subgraph "Verifiers & Backends"
+            Verifiers -->|Route| G16["Groth16 Verifier"]
+            Verifiers -->|Route| PLONK["PLONK Verifier"]
+            Verifiers -->|Route| STARK["STARK Verifier"]
+            
+            G16 -.->|Stylus| PC1["EVM Precompiles"]
+            G16 -.->|Host| AK1["Arkworks"]
+            
+            PLONK -.->|Stylus| PC2["EVM Precompiles (KZG)"]
+            PLONK -.->|Host| AK2["Arkworks (KZG)"]
+            
+            STARK -->|Both| GE["Generic AIR (Pure Rust)"]
         end
     end
 ```
 
-### Core Components
+### 1. Unified Dispatcher (`uzkv.rs`)
+The entry point `verify_universal_proof` accepts a byte-encoded `UniversalProof`. It deserializes the header to determine the `ProofSystem` (u8 enum) and routes the payload to the appropriate sub-module. This eliminates the need for separate contracts for each proof type.
 
-1.  **Unified Dispatcher**: A single entry point (`verifyUniversalProof`) that routes proofs based on type and version.
-2.  **Dispatch Validator**: A formal security layer that enforces **Triple Binding** `(ProofType, ProgramID, VKHash)` to prevent cross-protocol attacks.
-3.  **Cost-Aware Routing**: Calculates exact gas costs *before* verification begins, rejecting transactions that would run out of gas.
-4.  **EVM Precompiles**: Uses raw `ECADD`, `ECMUL`, and `ECPAIRING` precompiles for maximum performance in Groth16 and PLONK.
+### 2. Environmental Abstraction
+To support both WASM and Native environments, we use extensive conditional compilation (`#[cfg(target_arch = "wasm32")]` vs `#[cfg(feature = "std")]`).
+
+*   **Stylus Mode**: In `no_std` environments, the verifiers (specifically Groth16 and PLONK) delegate scalar multiplication and pairing checks to `stylus_sdk::call::static_call` targeting address `0x08` (Pairing). This avoids the heavy code footprint of bundling a pairing engine.
+*   **Host Mode**: In `std` environments, we substitute the precompile calls with `ark_bn254::Bn254::pairing`. This allows the `uzkv-cli` tool to verify the mathematical correctness of a proof using the exact same inputs as the contract.
+
+### 3. Generic STARK Engine
+Unlike Groth16/PLONK which have standard circuit formats, STARKs often require custom verifiers for different AIRs. We implemented a data-driven approach:
+*   **Verification Key (VK)**: Contains a serialized list of `AirConstraint` objects. Each constraint describes a polynomial relationship between trace cells (e.g., `C0 * x^2 + C1 * y - z = 0`).
+*   **Constraint Evaluator**: The verifier iterates over these descriptors and evaluates them against the generic trace provided in the proof.
+*   **FRI Protocol**: We implement Fast Reed-Solomon Interactive Oracle Proofs of Proximity (FRI) verification in pure Rust, using Keccak256 for the Merkle commitments.
 
 ---
 
@@ -101,7 +125,7 @@ npm test src/e2e.test.ts
 
 ### Command Line Interface (CLI)
 
-Verify proofs off-chain using the Rust-based CLI:
+Verify proofs off-chain using the Rust-based CLI. This is useful for debugging proofs before paying gas fees.
 
 ```bash
 # Build
@@ -155,19 +179,6 @@ We enforce a **Triple Binding Invariant** to ensure cryptographic safety in a mu
 | **VK Substitution** | Use a valid VK from a different circuit | `ProgramID` namespaces all Verification Keys. |
 | **Recursion Bomb** | Infinite recursion depth | Formal depth limit (max 8) checked at entry. |
 | **Gas Griefing** | Submit computationally heavy invalid proofs | Cost model validates budget *before* complex math. |
-
----
-
-## 🗺 Roadmap
-
-- [x] **Phase 1:** Groth16 Core (Precompiled)
-- [x] **Phase 2:** PLONK Verifier (KZG + EIP-1108)
-- [x] **Phase 3:** Cost-Aware Gas Model
-- [x] **Phase 4:** Security Formalization & Dispatch
-- [x] **Phase 5:** STARK Verifier (FRI + Merkle)
-- [x] **Phase 6:** SDK & Contract Clients
-- [x] **Phase 7:** Deployment Tooling
-- [ ] **Phase 8:** Mainnet Audit & Launch
 
 ---
 

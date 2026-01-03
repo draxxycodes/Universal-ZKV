@@ -2,14 +2,32 @@
 
 The core zero-knowledge proof verification logic for the Universal ZKV framework, built for Arbitrum Stylus.
 
+## Implementation Details
+
+This library is designed to run in two distinct environments:
+1.  **Stylus (WASM)**: The production environment. It runs on the Arbitrum One/Sepolia chains inside the WASM VM.
+2.  **Host (Native)**: The development environment. It runs on `x86_64` (Linux/macOS) for testing, CLI usage, and CI/CD pipelines.
+
+### Module Structure
+
+*   `uzkv.rs`: **The Gateway**. Contains the main dispatch logic that routes proofs to the correct sub-module based on the `ProofSystem` identifier. It handles feature-flagging between `stylus_impl` and `host_impl`.
+*   `groth16.rs`: Implements Groth16 verification.
+    *   **Stylus**: Uses `stylus_sdk::call` to invoke the precompile at address `0x08` (Alt-BN128 Pairing).
+    *   **Host**: Uses `ark_bn254::Bn254` to perform the pairing check locally.
+*   `plonk/`: Implements PLONK verification with KZG commitments.
+    *   `plonk.rs`: Core logic (Gate checks, linearization).
+    *   `kzg.rs`: Manages the polynomial commitment opening checks via precompiles (on Stylus).
+    *   `host.rs`: (**Host-Only**) Replicates the KZG and Gate logic using `arkworks` for off-chain verification.
+*   `stark/`: Implements a Generic AIR Verifier.
+    *   `constraints.rs`: A dynamic evaluator that processes `AirConstraint` structs (from the VK) against the execution trace.
+    *   `merkle.rs`: Custom Merkle tree verification using Keccak256.
+    *   `verifier.rs`: The main STARK verification loop (FRI + Query Phase).
+
 ## Features
 
 - **Universal Dispatch**: Single entry point for Groth16, PLONK, and STARK proofs.
 - **Gas Optimized**: Uses Arbitrum's BN256 precompiles (0x06, 0x07, 0x08) for efficient on-chain verification.
 - **Generic STARK Engine**: Built-in "Generic AIR Verifier" capable of verifying arbitrary polynomial constraints defined in the Verification Key.
-- **Dual-Mode Architecture**:
-  - **WASM (Stylus)**: Compiles to `wasm32-unknown-unknown` for on-chain deployment.
-  - **Host (CLI)**: Compiles to `x86_64` (or native) for off-chain verification using `arkworks` and native Rust.
 
 ## Supported Proof Systems
 
