@@ -51,6 +51,15 @@ export {
   createAuditRecord,
 } from "./security";
 
+// Export Contract Client
+export {
+  UZKVContractClient,
+  createContractClient,
+  type ContractClientConfig,
+  type UniversalProofData,
+  type VKRegistration,
+} from "./contract-client";
+
 // Export Circuit Helpers
 export {
   circuitInputsToPublicStatement,
