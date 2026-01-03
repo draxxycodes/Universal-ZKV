@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 // Import existing verifiers
 // Import existing verifiers
 use crate::groth16;
-use crate::cost_model::{self, VerificationCost};
+use crate::cost_model::VerificationCost;
 // use crate::plonk;
 // use crate::stark;
 

@@ -14,7 +14,7 @@
 //! - Manual serialization for points (BigEndian).
 
 use alloc::vec::Vec;
-use stylus_sdk::alloy_primitives::{U256, B256};
+use stylus_sdk::alloy_primitives::U256;
 use sha3::{Digest, Keccak256};
 use crate::utils::{fr_from_be_bytes_mod};
 

@@ -14,10 +14,10 @@
 
 use alloc::vec::Vec;
 use stylus_sdk::{
-    alloy_primitives::{U256, B256},
+    alloy_primitives::U256,
     call::{static_call, StaticCallContext},
 };
-use crate::utils::{fr_from_be_bytes_mod, fr_mul};
+use crate::utils::fr_mul;
 
 // Precompile Addresses
 const BN256_ADD:  u64 = 0x06;
@@ -74,15 +74,8 @@ pub fn verify_kzg_opening<S: StaticCallContext + Copy>(
     // Negation: (x, -y) mod p.
     
     // Generator G1
-    let g1_gen = [
-        1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // X = 1
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2  // Y = 2
-    ];
-    // This is technically correct for BN254? No. BN254 Generator X=1, Y=2.
-    // Need to pad to 32 bytes each.
-    // Wait, G1 Generator is just (1, 2).
+    // Generator G1 explanation: Standard G1 Generator is just (1, 2)
+    // We compute yG1 directly below using precompile.
     let mut g1_gen_bytes = [0u8; 64];
     g1_gen_bytes[31] = 1;
     g1_gen_bytes[63] = 2; // Check if this is correct Y for X=1
@@ -96,14 +89,11 @@ pub fn verify_kzg_opening<S: StaticCallContext + Copy>(
         
     // Negate yG1 to subtract? Or C - yG1 = C + (-yG1).
     // Negate point (x, y) -> (x, p - y).
-    let neg_y_g1 = negate_g1(&y_g1_bytes).ok_or(Error::PrecompileFailed)?;
+    // let neg_y_g1 = negate_g1(&y_g1_bytes).ok_or(Error::PrecompileFailed)?;
+    // neg_y_g1 is unused because we sum yG1 (positive) later.
     
-    // C - yG1 = C + (-yG1)
-    let mut input_add = Vec::with_capacity(128);
-    input_add.extend_from_slice(commitment);
-    input_add.extend_from_slice(&neg_y_g1);
-    let p1_c_minus_y = static_call(context, stylus_sdk::alloy_primitives::Address::with_last_byte(BN256_ADD as u8), &input_add)
-        .map_err(|_| Error::PrecompileFailed)?;
+    // 2. Compute Term2 for pairing: yG1 - z*proof - C
+    // We skip intermediate p1_c_minus_y variable as it's computed as part of sum below.
         
     // 2. Compute P2 = τG₂ - zG₂
     // We have srs_g2 (τG₂). Need -zG₂.

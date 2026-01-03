@@ -5,7 +5,7 @@
 
 use alloc::vec::Vec;
 use stylus_sdk::{
-    alloy_primitives::{U256, B256},
+    alloy_primitives::U256,
     call::StaticCallContext,
 };
 

@@ -28,9 +28,9 @@ const BN256_MUL: Address = address!("0000000000000000000000000000000000000007");
 const BN256_PAIRING: Address = address!("0000000000000000000000000000000000000008");
 
 // Data sizes
-const G1_SIZE: usize = 64;   // X, Y (32 bytes each)
-const G2_SIZE: usize = 128;  // X1, X2, Y1, Y2 (32 bytes each)
-const SCALAR_SIZE: usize = 32;
+// const G1_SIZE: usize = 64;   // X, Y (32 bytes each)
+// const G2_SIZE: usize = 128;  // X1, X2, Y1, Y2 (32 bytes each)
+// const SCALAR_SIZE: usize = 32;
 
 /// Verify a Groth16 proof using precompiles
 pub fn verify<S: StaticCallContext + Copy>(

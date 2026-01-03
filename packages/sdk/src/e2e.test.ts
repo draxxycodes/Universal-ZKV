@@ -71,9 +71,9 @@ runE2E("End-to-End Protocol Verification", () => {
             version: 1,
             proofType: ProofType.Groth16,
             programId: 100, // Test program ID
-            vkHash: "0x" + "00".repeat(32),
-            proofBytes: "0x" + Buffer.from(proofBytes).toString("hex"),
-            publicInputsBytes: "0x" + Buffer.from(inputsBytes).toString("hex"),
+            vkHash: ("0x" + "00".repeat(32)) as `0x${string}`,
+            proofBytes: ("0x" + Buffer.from(proofBytes).toString("hex")) as `0x${string}`,
+            publicInputsBytes: ("0x" + Buffer.from(inputsBytes).toString("hex")) as `0x${string}`,
         };
 
         // We expect this to execute but return false (or revert depending on contract logic)

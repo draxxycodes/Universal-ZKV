@@ -44,6 +44,9 @@ opt-level = "z"
 strip = "symbols"
 lto = "fat"
 
+[profile.dev]
+panic = "abort"
+
 [features]
 default = []
 export-abi = ["stylus-sdk/export-abi"]
